@@ -116,6 +116,13 @@ export function LoginForm() {
                             ¿Olvidaste tu contraseña?
                         </MuiLink>
                     </Grid>
+                    <Grid>
+                    <Link href="/auth/register">
+                        <Typography variant="body2">
+                            Registrar
+                        </Typography>
+                    </Link>
+                    </Grid>
                 </Grid>
             </Paper>
         </Container>

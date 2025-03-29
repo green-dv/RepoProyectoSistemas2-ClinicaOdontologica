@@ -9,7 +9,7 @@ export const findUserByEmail = async (email: string): Promise<User | null> => {
 // !!IMPORTANTE!! CAMBIAR A UN PROCEDIMIENTO ALMACENADO ESTA QUERY
 //============================================================================
         const result = await connection.query(
-            "SELECT * FROM users WHERE email = $1 LIMIT 1", 
+            "SELECT * FROM usuarios WHERE email = $1 LIMIT 1", 
         [email]
         );
     
