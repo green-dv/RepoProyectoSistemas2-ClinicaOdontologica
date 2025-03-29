@@ -19,6 +19,7 @@ const getConnection = (): Pool => {
       host: process.env.DB_HOST,
       port: parseInt(process.env.DB_PORT || '5432'),
       database: process.env.DB_DATABASE,
+      ssl: process.env.DB_SSL === 'true' ? { rejectUnauthorized: false } : false,
     });
   }
   return conn;
