@@ -1,6 +1,7 @@
 import Image from "next/image";
 import styles from "./page.module.css";
 import LogoutButton from "@/components/logoutBtn";
+import TreatmentsButton from "@/components/treatmentsBtn";
 
 export default function Home() {
   return (
@@ -46,6 +47,7 @@ export default function Home() {
             Read our docs
           </a>
         </div>
+        <TreatmentsButton/>
         <LogoutButton/>
       </main>
       <footer className={styles.footer}>

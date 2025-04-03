@@ -58,6 +58,13 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
       );
     }
 
+    if (precio < 0) {
+      return NextResponse.json(
+        { message: "El precion no puede ser menor a 0" },
+        { status: 400 }
+      );
+    }
+
     const query = `
       UPDATE tratamientos SET 
       nombre = $1, 

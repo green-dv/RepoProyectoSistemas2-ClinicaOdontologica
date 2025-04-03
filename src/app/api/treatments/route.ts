@@ -56,6 +56,12 @@ export async function POST(req:NextRequest) {
                 { status: 400}
             );
         }
+        if (precio < 0) {
+          return NextResponse.json(
+            { message: "El precion no puede ser menor a 0" },
+            { status: 400 }
+          );
+        }
 // QUERY Y POR N VEZ TIENE QUE SER PROCEDIMIENTO ALMACENADO
         const query = `
             INSERT INTO tratamientos

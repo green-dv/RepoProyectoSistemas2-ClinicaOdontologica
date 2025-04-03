@@ -5,7 +5,7 @@ import { getConnection } from "@/infrastructure/db/db";
 export async function GET() {
     try {
       const connection = await getConnection();
-  
+      
       const query = `
         SELECT 
             idtratamiento,

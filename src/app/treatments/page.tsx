@@ -176,7 +176,9 @@ export default function TreatmentsPage() {
   };
 // esta funcion se encarga de eliminar el tratamiento de forma permanente
   const handleDeletePermanently = async (id: number) => {
+    if (!window.confirm('¿Está seguro de eliminar este producto permanentemente? Esta acción no se puede deshacer.')) return;
     try {
+      
       const response = await fetch(`/api/treatments/${id}?type=physical`, {
         method: 'DELETE',
       });
@@ -189,6 +191,7 @@ export default function TreatmentsPage() {
       showMessage('Error al eliminar el Tratamiento', 'error');
     }
   };
+ 
 
 // esta funcion se encarga de guardar el tratamiento ya sea nuevo o editado
   // y se encarga de validar los campos del formulario
