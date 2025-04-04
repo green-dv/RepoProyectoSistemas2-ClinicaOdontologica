@@ -1,7 +1,12 @@
+"use client";
+import { useEffect } from 'react';
 import * as React from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { signIn } from "next-auth/react";
+import { useRouter, useSearchParams } from 'next/navigation';
+import { signIn, useSession } from "next-auth/react";
+import GoogleButton from "react-google-button";
+import { FacebookLoginButton } from "react-social-login-buttons";
+
 import {
     Box, 
     TextField, 
@@ -28,6 +33,17 @@ export function LoginForm() {
     const [error, setError] = React.useState('');
     const [isLoading, setIsLoading] = React.useState(false);
     const router = useRouter();
+    const { data: session, status } = useSession();
+    useEffect(() => {
+        if (status === "authenticated") {
+            router.push("/");
+        }
+    }, [status, router]);
+    
+    const searchParams = useSearchParams();
+    if(searchParams.get('error') === 'usernotfound'){
+        setError("Usuario no encontrado")
+    }
 
     const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
@@ -109,6 +125,17 @@ export function LoginForm() {
                     >
                         {isLoading ? 'Iniciando Sesión...' : 'Iniciar Sesión'}
                     </Button>
+
+                    <Button
+                        color="primary" 
+                        fullWidth 
+                        sx={{ mt: 1 }}
+                        onClick={() => signIn('google')}
+                        disabled={isLoading}
+                    >
+                        <GoogleButton style={{ width: '100%' }} />
+                    </Button>
+                    <FacebookLoginButton onClick={() => signIn('facebook')}/>
                 </Box>
                 <Grid container justifyContent={'space-between'} sx={{ mt: 1 }}>
                     <Grid item>

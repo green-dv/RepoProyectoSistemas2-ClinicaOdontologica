@@ -5,6 +5,7 @@ import type { NextAuthOptions } from "next-auth";
 // con bcrypt se encripta la contraseña para compararla con la de la bd
 //============================================================================
 import GoogleProvider from "next-auth/providers/google";
+import FacebookProvider from "next-auth/providers/facebook";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { findUserByEmail } from "@/infrastructure/repositories/userRepository";
 import bcrypt from 'bcryptjs';
@@ -18,6 +19,10 @@ export const options: NextAuthOptions = {
         GoogleProvider({
             clientId: process.env.GOOGLE_CLIENT_ID as string,
             clientSecret: process.env.GOOGLE_CLIENT_SECRET as string,
+        }),
+        FacebookProvider({
+            clientId: process.env.FACEBOOK_CLIENT_ID as string,
+            clientSecret: process.env.FACEBOOK_CLIENT_SECRET as string,
         }),
 //============================================================================
 // Este es para los inputs del formulario de login
@@ -77,6 +82,20 @@ export const options: NextAuthOptions = {
 // eslint no moleste se creo un type para la session esta en types/next-auth.d.ts
 //============================================================================
     callbacks: {
+        async signIn({ user, account }) {
+            try {
+                const existingUser = await findUserByEmail(user.email!);
+                console.log("existingUser", existingUser);
+                if (!existingUser) {
+                    throw new Error("Usuario no encontrado");
+                }
+                return true;
+              } catch (error) {
+                console.log("Error en la autenticación:", error);
+                throw new Error(error as string);
+              }
+            return true;              
+        },
         async session({ session, token }) {
             session.user = {
                 id: token.id,
@@ -99,6 +118,9 @@ export const options: NextAuthOptions = {
                 token.habilitado = user.habilitado;
             }
             return token;
+        },
+        async redirect({ url, baseUrl }) {
+            return url;
         }
     },
     pages: {
