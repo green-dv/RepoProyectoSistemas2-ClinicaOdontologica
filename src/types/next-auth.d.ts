@@ -1,5 +1,5 @@
 import "next-auth";
-import  "@/entities/user"; 
+import  "@/domain/entities/user"; 
 
 declare module "next-auth" {
   interface User {

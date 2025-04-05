@@ -1,4 +1,4 @@
-import { User } from "@/entities/user";
+import { User } from "@/domain/entities/user";
 import { getConnection } from "../db/db";
 
 export const findUserByEmail = async (email: string): Promise<User | null> => {

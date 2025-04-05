@@ -1,13 +1,15 @@
 //============================================================================
 // interfas de la entidad tratamientos
 //============================================================================
-export interface Treatments {
+export interface Treatment {
     idtratamiento: number;
     nombre: string;
     descripcion: string;
     precio: number;
     habilitado: boolean;
 }
+
+export type TreatmentDTO = Omit<Treatment, 'idtratamiento' | 'habilitado'>;
 
 // esto solo porsiacaso no funca con una interface
 // type Treatments = {
