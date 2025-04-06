@@ -5,7 +5,6 @@ import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { signIn, useSession } from "next-auth/react";
 import GoogleButton from "react-google-button";
-import { FacebookLoginButton } from "react-social-login-buttons";
 
 import {
     Box, 
@@ -135,7 +134,9 @@ export function LoginForm() {
                     >
                         <GoogleButton style={{ width: '100%' }} />
                     </Button>
-                    <FacebookLoginButton onClick={() => signIn('facebook')}/>
+                    <Button onClick={() => signIn('facebook')}>
+                        INICIAR SESION CON FACEBOOK
+                    </Button>
                 </Box>
                 <Grid container justifyContent={'space-between'} sx={{ mt: 1 }}>
                     <Grid item>

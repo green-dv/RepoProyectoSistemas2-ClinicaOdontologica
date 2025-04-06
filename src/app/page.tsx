@@ -2,6 +2,7 @@ import Image from "next/image";
 import styles from "./page.module.css";
 import LogoutButton from "@/components/logoutBtn";
 import TreatmentsButton from "@/components/treatmentsBtn";
+import DatesButton from "@/components/datesBtn";
 
 export default function Home() {
   return (
@@ -49,6 +50,7 @@ export default function Home() {
         </div>
         <TreatmentsButton/>
         <LogoutButton/>
+        <DatesButton/>
       </main>
       <footer className={styles.footer}>
         <a

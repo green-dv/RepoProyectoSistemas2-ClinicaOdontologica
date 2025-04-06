@@ -1,0 +1,64 @@
+import {Date, DateDTO} from "@/domain/entities/Dates";
+import {dateRepository} from "@/infrastructure/repositories/DateRepository";
+
+export const fetchDates = async (query: string, showDisabled: boolean): Promise<Date[]> => {
+    return await dateRepository.fetchAll(query, showDisabled);
+}
+
+export const createDate = async (date: DateDTO): Promise<Date> => {
+    const trimmedDate = {
+        fecha: date.fecha,
+        idpaciente: date.idpaciente,
+        idconsulta: date.idconsulta,
+        descripcion: date.descripcion,
+        idestadocita: 1,
+        fechacita: date.fechacita,
+        duracionAprox: date.duracionAprox
+    }
+    if(!trimmedDate.fecha) {
+        throw new Error('La fecha es obligatoria')
+    }
+    if(!trimmedDate.idpaciente) {
+        throw new Error('El paciente es obligatorio')
+    }
+    if(!trimmedDate.descripcion){
+        throw new Error('La descripcion es obligatoria')
+    }
+    if(!trimmedDate.fechacita){
+        throw new Error('La fecha de creacion es obligatoria')
+    }
+    return await dateRepository.create(trimmedDate);
+}
+export const updateDate = async (id: number, date: DateDTO): Promise<Date> => {
+    const trimmedDate = {
+        fecha: date.fecha.trim(),
+        idpaciente: date.idpaciente,
+        idconsulta: date.idconsulta,
+        descripcion: date.descripcion.trim(),
+        idestadocita: 1,
+        fechacita: date.fechacita.trim(),
+        duracionAprox: date.duracionAprox
+    }
+    if(!trimmedDate.fecha) {
+        throw new Error('La fecha es obligatoria')
+    }
+    if(!trimmedDate.idpaciente) {
+        throw new Error('El paciente es obligatorio')
+    }
+    if(!trimmedDate.descripcion){
+        throw new Error('La descripcion es obligatoria')
+    }
+    if(!trimmedDate.fechacita){
+        throw new Error('La fecha de creacion es obligatoria')
+    }
+    return await dateRepository.update(id, trimmedDate);
+}
+export const deleteDate = async (id: number): Promise<void> => {
+    await dateRepository.delete(id);
+}
+export const restoreDate = async (id: number): Promise<void> => {
+    await dateRepository.restore(id);
+}
+export const deleteDatePermanently = async (id: number): Promise<void> => {
+    await dateRepository.deletePermanently(id);
+}
