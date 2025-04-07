@@ -14,22 +14,23 @@ export interface Dates {
 
 export interface Date {
     idcita: number;
-    idconsulta?: number;
+    idconsulta: number | null;
     fecha: DateTime;
     fechacita: DateTime;
     idpaciente: number;
     paciente: string;
-    fechaconsulta?: DateTime;
+    fechaconsulta: DateTime | null;
     descripcion: string;
-    estadocita: string;
+    estado: string;
     duracionaprox: number;
+    idestado: number;
 }
 export interface DateDTO{
     fecha: DateTime;
     idpaciente: number;
-    idconsulta: number;
+    idconsulta: number | null;
     descripcion: string;
     idestadocita: number;
     fechacita: DateTime;
-    duracionAprox: number;
+    duracionaprox: number | null;
 }

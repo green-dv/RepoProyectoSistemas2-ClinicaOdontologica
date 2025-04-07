@@ -1,22 +1,15 @@
 'use client';
-import React from 'react';
+import React, {useEffect} from 'react';
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Paper,
-  IconButton,
-  Typography,
-  Box,
-  CircularProgress
+  Table, TableBody, TableCell, TableContainer, TableHead,
+  TableRow, Paper, IconButton, Typography, Box, CircularProgress
 } from '@mui/material';
 import { Edit, Delete, Restore, DeleteForever } from '@mui/icons-material';
-import { Date, DateDTO } from '@/domain/entities/Dates';
-
-
+import { Date } from '@/domain/entities/Dates';
+import { StatusDropDown } from '@/components/dates/StatusDropDown';
+import { updateDateStatus } from '@/application/usecases/dates';
+import { Status } from '@/domain/entities/Status';
+import { fetchStatus } from '@/application/usecases/status'
 
 interface DatesProps {
   dates: Date[];
@@ -26,6 +19,7 @@ interface DatesProps {
   onDelete: (id: number) => void;
   onRestore: (id: number) => void;
   onDeletePermanently: (id: number) => void;
+  onUpdate: () => void;
 }
 
 export function DatesTable({
@@ -35,8 +29,33 @@ export function DatesTable({
   onEdit,
   onDelete,
   onRestore,
-  onDeletePermanently
+  onDeletePermanently,
+  onUpdate
 }: DatesProps) {
+  const [status, setStatus] = React.useState<Status[]>([]);
+  const [updatingId, setUpdatingId] = React.useState<number | null>(null);
+
+  useEffect(() => {
+    const fetchStatuses = async () => {
+      const statuses = await fetchStatus();
+      setStatus(statuses);
+    };
+
+    fetchStatuses();
+  }, []);
+
+  const handleStatusChange = async (idcita: number, newStatus: number) => {
+    setUpdatingId(idcita);
+    try {
+      await updateDateStatus(idcita, newStatus);
+      onUpdate();
+    } catch (error) {
+      console.error('Error actualizando estado:', error);
+    } finally {
+      setUpdatingId(null);
+    }
+  };
+
   if (isLoading) {
     return (
       <Box display="flex" justifyContent="center" my={4}>
@@ -44,8 +63,9 @@ export function DatesTable({
       </Box>
     );
   }
-  if(dates.length === 0){
-    return(
+
+  if (dates.length === 0) {
+    return (
       <Box display="flex" justifyContent="center" my={4}>
         <Typography variant="h6" color="textSecondary">
           {showDisabled ? 'No hay fechas inhabilitadas' : 'No hay fechas disponibles'}
@@ -53,8 +73,8 @@ export function DatesTable({
       </Box>
     );
   }
-  else if(dates.length > 0){
-    return(
+
+  return (
     <TableContainer component={Paper}>
       <Table>
         <TableHead>
@@ -66,46 +86,63 @@ export function DatesTable({
             <TableCell>Estado</TableCell>
             <TableCell>Fecha Consulta</TableCell>
             <TableCell>Duración Aproximada</TableCell>
+            <TableCell>Acciones</TableCell>
           </TableRow>
         </TableHead>
         <TableBody>
-          {Array.isArray(dates) && dates.length > 0 ? 
-            (dates.map((date, index) => (
-              <TableRow key={index}>
-                <TableCell>{date.paciente}</TableCell>
-                <TableCell>{date.fecha}</TableCell>
-                <TableCell>{date.fechacita}</TableCell>
-                <TableCell>{date.descripcion}</TableCell>
-                <TableCell>{date.estadocita}</TableCell>
-                <TableCell>{!date.fechaconsulta ? ' - ': date.fechaconsulta}</TableCell>
-                <TableCell>
-                  {(()=> {
-                    let tiempo = "";
-                    const totalMinutos = date.duracionaprox * 60;
-                    const horas = Math.floor(totalMinutos / 60);
-                    const minutos = Math.round(totalMinutos % 60);
-                    if(horas == 1) tiempo += `${horas} hora`;
-                    else if(horas > 1) tiempo += `${horas} horas`; 
-                    if(horas > 0 && minutos > 0) tiempo += ' - ';
-                    if(minutos == 1) tiempo += `${minutos} minuto`;
-                    else if(minutos > 1) tiempo += `${minutos} minutos`;
-                    return tiempo
-                  })()}
-                </TableCell>
-              </TableRow>
-            ))
-            ) : (
-              <TableRow>
-                <TableCell colSpan={5} align="center">
-                  No hay tratamientos disponibles
-                </TableCell>
-              </TableRow>
-              )
-          }
+          {dates.map((date) => (
+            <TableRow key={date.idcita}>
+              <TableCell>{date.paciente}</TableCell>
+              <TableCell>{date.fecha}</TableCell>
+              <TableCell>{date.fechacita}</TableCell>
+              <TableCell>{date.descripcion}</TableCell>
+              <TableCell>{date.estado}</TableCell>
+              <TableCell>{date.fechaconsulta || ' - '}</TableCell>
+              <TableCell>
+                {(() => {
+                  const totalMin = date.duracionaprox * 60;
+                  const h = Math.floor(totalMin / 60);
+                  const m = Math.round(totalMin % 60);
+                  return `${h ? `${h} hora${h > 1 ? 's' : ''}` : ''}${h && m ? ' - ' : ''}${m ? `${m} minuto${m > 1 ? 's' : ''}` : ''}`;
+                })()}
+              </TableCell>
+              <TableCell>
+                <StatusDropDown
+                  idcita={date.idcita}
+                  idstatus={date.idestado}
+                  isDropDownLoading={isLoading}
+                  status={status}
+                  selectedStatus={date.idestado}
+                  onChange={handleStatusChange}
+                />
+              </TableCell>
+              <TableCell>
+                {!showDisabled ? (
+                  <>
+                    <IconButton color="primary" onClick={() => onEdit(date)}>
+                      <Edit />
+                    </IconButton>
+                    <IconButton color="error" onClick={() => onDelete(date.idcita)}>
+                      <Delete />
+                    </IconButton>
+                  </>
+                ) : (
+                  <>
+                    <IconButton color="primary" onClick={() => onRestore(date.idcita)} title="Restaurar Tratamiento">
+                      <Restore />
+                    </IconButton>
+                    <IconButton color="error" onClick={() => onDeletePermanently(date.idcita)} title="Eliminar Permanentemente">
+                      <DeleteForever />
+                    </IconButton>
+                    
+                  </>
+                )}
+              </TableCell>
+            </TableRow>
+          ))}
         </TableBody>
       </Table>
     </TableContainer>
-        )
-  }
+  );
 }
 export default DatesTable;

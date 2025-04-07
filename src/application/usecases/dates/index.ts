@@ -9,11 +9,11 @@ export const createDate = async (date: DateDTO): Promise<Date> => {
     const trimmedDate = {
         fecha: date.fecha,
         idpaciente: date.idpaciente,
-        idconsulta: date.idconsulta,
+        idconsulta: date.idconsulta ?? null,
         descripcion: date.descripcion,
         idestadocita: 1,
         fechacita: date.fechacita,
-        duracionAprox: date.duracionAprox
+        duracionaprox: date.duracionaprox ?? null
     }
     if(!trimmedDate.fecha) {
         throw new Error('La fecha es obligatoria')
@@ -26,18 +26,21 @@ export const createDate = async (date: DateDTO): Promise<Date> => {
     }
     if(!trimmedDate.fechacita){
         throw new Error('La fecha de creacion es obligatoria')
+    }
+    if(!trimmedDate.idconsulta){
+        trimmedDate.idconsulta = null;
     }
     return await dateRepository.create(trimmedDate);
 }
 export const updateDate = async (id: number, date: DateDTO): Promise<Date> => {
-    const trimmedDate = {
+    let trimmedDate = {
         fecha: date.fecha.trim(),
         idpaciente: date.idpaciente,
         idconsulta: date.idconsulta,
         descripcion: date.descripcion.trim(),
-        idestadocita: 1,
+        idestadocita: date.idestadocita,
         fechacita: date.fechacita.trim(),
-        duracionAprox: date.duracionAprox
+        duracionaprox: date.duracionaprox
     }
     if(!trimmedDate.fecha) {
         throw new Error('La fecha es obligatoria')
@@ -51,8 +54,13 @@ export const updateDate = async (id: number, date: DateDTO): Promise<Date> => {
     if(!trimmedDate.fechacita){
         throw new Error('La fecha de creacion es obligatoria')
     }
+    
     return await dateRepository.update(id, trimmedDate);
 }
+export const updateDateStatus = async (idDate: number, idStatus: number): Promise<Date> =>{
+    return await dateRepository.updateStatus(idDate, idStatus);
+}
+
 export const deleteDate = async (id: number): Promise<void> => {
     await dateRepository.delete(id);
 }
