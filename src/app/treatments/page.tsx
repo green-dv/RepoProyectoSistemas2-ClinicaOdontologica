@@ -3,7 +3,6 @@
 import { useEffect } from 'react';
 import useTreatments from '@/presentation/hooks/useTreatment';
 import useTreatmentHandlers from '@/presentation/handlers/useTreatmentHandlers';
-// Import Material UI components
 import {
   Box,
   Button,
@@ -18,9 +17,8 @@ import {
 } from '@mui/material';
 import { Add, Search, Visibility, VisibilityOff } from '@mui/icons-material';
 
-// Import your custom components
-import TreatmentTable from '@/components/treatments/TreatmentTable'; // Update path if necessary
-import TreatmentDialog from '@/components/treatments/TreatmentDialog'; // Update path if necessary
+import TreatmentTable from '@/components/treatments/TreatmentTable'; 
+import TreatmentDialog from '@/components/treatments/TreatmentDialog'; 
 
 export default function TreatmentsPage() {
   const treatmentsState = useTreatments();
@@ -53,7 +51,7 @@ export default function TreatmentsPage() {
     handleFetchTreatments(searchTerm);
   }, [searchTerm, showDisabled, handleFetchTreatments]);
 
-  // Function to handle search changes
+  // funtion para manejar el cambio en el input de busqueda
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     treatmentsState.setSearchTerm(e.target.value);
   };
@@ -65,7 +63,7 @@ export default function TreatmentsPage() {
           Gestión de Tratamientos
         </Typography>
         
-        {/* Search and Action Controls */}
+        {/* buscadro y handlers de eventos */}
         <Grid container spacing={2} alignItems="center" sx={{ mb: 3 }}>
           <Grid item xs={12} md={6}>
             <TextField
@@ -103,7 +101,7 @@ export default function TreatmentsPage() {
           </Grid>
         </Grid>
         
-        {/* Treatment Table */}
+        {/* Treatment tablass */}
         <TreatmentTable 
           treatments={treatments}
           isLoading={isLoading}
@@ -115,7 +113,7 @@ export default function TreatmentsPage() {
         />
       </Paper>
       
-      {/* Treatment Dialog for Create/Edit */}
+      {/* dialog para editar e informaccion */}
       <TreatmentDialog 
         open={open}
         onClose={handleClose}
@@ -125,7 +123,7 @@ export default function TreatmentsPage() {
         isEditing={!!selectedTreatment}
       />
       
-      {/* Snackbar for notifications */}
+      {/* Snackbar para notificacionesss */}
       {snackbar && (
         <Snackbar 
           open={!!snackbar} 

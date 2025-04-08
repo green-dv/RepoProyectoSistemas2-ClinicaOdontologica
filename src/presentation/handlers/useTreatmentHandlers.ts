@@ -22,7 +22,7 @@ interface TreatmentsState {
   selectedTreatment: Treatment | null;
   snackbar: { message: string; severity: AlertColor } | null;
   
-  // Setters
+  //Losss Setters
   setTreatments: React.Dispatch<React.SetStateAction<Treatment[]>>;
   setOpen: React.Dispatch<React.SetStateAction<boolean>>;
   setSearchTerm: React.Dispatch<React.SetStateAction<string>>;
@@ -32,12 +32,12 @@ interface TreatmentsState {
   setSelectedTreatment: React.Dispatch<React.SetStateAction<Treatment | null>>;
   setSnackbar: React.Dispatch<React.SetStateAction<{ message: string; severity: AlertColor } | null>>;
   
-  // Métodos auxiliares
+  // Métodos auxiliaresss
   resetForm: () => void;
   showMessage: (message: string, severity: AlertColor) => void;
 }
 
-// Creamos una función debounce fuera del componente para que no se recree en cada render
+//  función debounce fuera del componente para que no se recree en cada render
 const debouncedFetchTreatments = debounce(async (
   query: string, 
   showDisabled: boolean, 
@@ -75,7 +75,6 @@ export default function useTreatmentHandlers(state: TreatmentsState) {
     state.setSnackbar(null);
   };
 
-  // Optimizado para evitar recreaciones innecesarias
   const handleFetchTreatments = useCallback(
     (query: string) => {
       debouncedFetchTreatments(

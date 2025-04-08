@@ -2,13 +2,11 @@ import { useState } from 'react';
 import { Treatment, TreatmentDTO } from '@/domain/entities/Treatments';
 import { AlertColor } from '@mui/material';
 
-// Definimos el tipo para el mensaje de snackbar
 export interface SnackbarMessage {
   message: string;
   severity: AlertColor;
 }
 
-// Esta interfaz debe coincidir con la definida en useTreatmentHandlers.ts
 export interface TreatmentsState {
   treatments: Treatment[];
   open: boolean;
@@ -29,7 +27,6 @@ export interface TreatmentsState {
   setSelectedTreatment: React.Dispatch<React.SetStateAction<Treatment | null>>;
   setSnackbar: React.Dispatch<React.SetStateAction<SnackbarMessage | null>>;
   
-  // Métodos auxiliares
   resetForm: () => void;
   showMessage: (message: string, severity: AlertColor) => void;
 }
@@ -62,7 +59,7 @@ export default function useTreatments(): TreatmentsState {
   };
 
   return {
-    // Estado
+    // Estados
     treatments,
     open,
     searchTerm,
@@ -82,7 +79,6 @@ export default function useTreatments(): TreatmentsState {
     setSelectedTreatment,
     setSnackbar,
     
-    // Métodos auxiliares
     resetForm,
     showMessage
   };

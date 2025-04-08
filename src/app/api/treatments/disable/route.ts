@@ -11,14 +11,12 @@ export async function GET(request: NextRequest) {
       const values = [];
       
       if (searchTerm) {
-        // Use the function but add a WHERE clause for filtering
         query = `
           SELECT * FROM getTreatmentsDisabled() AS t
           WHERE t.nombre ILIKE $1
         `;
         values.push(`%${searchTerm}%`);
       } else {
-        // If no search term, just get all disabled treatments
         query = `SELECT * FROM getTreatmentsDisabled()`;
       }
 
