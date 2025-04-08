@@ -14,13 +14,8 @@ export async function GET(request: NextRequest) {
       const searchTerm = url.searchParams.get('q') || '';
       
       let query = `
-        SELECT 
-          idtratamiento,
-          nombre,
-          descripcion,
-          precio
-        FROM tratamientos 
-        WHERE habilitado = TRUE
+        SELECT *
+        FROM getTreatments() AS t
       `;
       
       const values = [];
@@ -29,7 +24,7 @@ export async function GET(request: NextRequest) {
         // y a los valores
         // el searchTerm es para filtrar por nombre de tratamiento
       if (searchTerm) {
-        query += ` AND nombre ILIKE $1`;
+        query += `WHERE t.nombre ILIKE $1`;
         values.push(`%${searchTerm}%`);
       }
       
@@ -62,11 +57,15 @@ export async function POST(req:NextRequest) {
             { status: 400 }
           );
         }
-// QUERY Y POR N VEZ TIENE QUE SER PROCEDIMIENTO ALMACENADO
+        if (descripcion.length > 255) {
+          return NextResponse.json(
+            { message: "La descripcion no puede ser mayor a 255 caracteres" },
+            { status: 400 }
+          );
+        }
         const query = `
-            INSERT INTO tratamientos
-            (nombre, descripcion, precio) 
-            VALUES ($1, $2, $3) RETURNING *`;
+          SELECT * FROM addTreatment($1, $2, $3)     
+        `;
 
         const values = [
             nombre,

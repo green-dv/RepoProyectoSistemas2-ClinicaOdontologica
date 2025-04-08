@@ -1,3 +1,4 @@
+//infrastructure/repositories/TreatmentRepository.ts
 import { Treatment, TreatmentDTO } from "@/domain/entities/Treatments";
 import { ITreatmentRepository } from "@/domain/repositories/TreatmentRepository";
 

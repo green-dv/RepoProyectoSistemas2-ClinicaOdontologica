@@ -1,28 +1,28 @@
-import { NextResponse } from "next/server";
+import { NextResponse, NextRequest } from "next/server";
 import { getConnection } from "@/infrastructure/db/db"; 
 
-// AQUI LO MAS SIMPLE UNA QUERY PARA VER LOS TRATAMEINTOS DESAHABILITADOS Y YA
-export async function GET() {
+export async function GET(request: NextRequest) {
     try {
       const connection = await getConnection();
+      const url = new URL(request.url);
+      const searchTerm = url.searchParams.get('q') || '';
       
-      const query = `
-        SELECT 
-            idtratamiento,
-            nombre,
-            descripcion,
-            precio
-        FROM tratamientos 
-        WHERE habilitado = FALSE
-      `;
-            //   CREATE TABLE tratamientos(
-    //     idtratamiento SERIAL PRIMARY KEY,
-    //     nombre VARCHAR(50),
-    //     descripcion TEXT,
-    //     precio NUMERIC(10,2),
-    //     habilitado BOOLEAN DEFAULT TRUE
-    //   );
-      const result = await connection.query(query);
+      let query = '';
+      const values = [];
+      
+      if (searchTerm) {
+        // Use the function but add a WHERE clause for filtering
+        query = `
+          SELECT * FROM getTreatmentsDisabled() AS t
+          WHERE t.nombre ILIKE $1
+        `;
+        values.push(`%${searchTerm}%`);
+      } else {
+        // If no search term, just get all disabled treatments
+        query = `SELECT * FROM getTreatmentsDisabled()`;
+      }
+
+      const result = await connection.query(query, values);
   
       if (result.rows.length === 0) {
         return NextResponse.json({ treatments: [] }, { status: 200 });
