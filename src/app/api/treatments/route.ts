@@ -45,7 +45,7 @@ export async function POST(req:NextRequest) {
         const connection = await getConnection();
         const {nombre, descripcion, precio,} = body;
         //VALIDACIONESSS
-        if(!nombre|| !precio){
+        if(!nombre || !precio){
             return NextResponse.json(
                 { message: "El nombre, precio son requeridos"},
                 { status: 400}
