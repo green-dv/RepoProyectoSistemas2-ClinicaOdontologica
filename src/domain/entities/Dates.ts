@@ -32,5 +32,5 @@ export interface DateDTO{
     descripcion: string;
     idestadocita: number;
     fechacita: DateTime;
-    duracionaprox: number | null;
+    duracionaprox: number;
 }

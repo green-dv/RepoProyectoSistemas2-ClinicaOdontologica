@@ -4,7 +4,7 @@ import { IDatesRepository } from "@/domain/repositories/DateRepository";
 export class DateRepository implements IDatesRepository {
   async fetchAll(query: string, showDisabled: boolean): Promise<Date[]> {
     const endpoint = showDisabled 
-      ? `/api/dates/disable?q=${query}` 
+      ? `/api/dates/disables?q=${query}` 
       : `/api/dates?q=${query}`;
     
     const res = await fetch(endpoint);

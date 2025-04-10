@@ -1,7 +1,6 @@
 "use client";
 import{ Calendar } from '@/components/dates/BigCalendar';
-import {Event as CalendarEvent} from 'react-big-calendar'
-import DatesTable  from '@/components/dates/DatesTable';
+import DateCard  from '@/components/dates/DateCard';
 import { toZonedTime } from 'date-fns-tz';
 import { useEffect, useState, useCallback } from 'react';
 import { useSession } from 'next-auth/react';
@@ -10,6 +9,7 @@ import debounce from 'lodash/debounce';
 import {Date as DateObj, DateDTO} from '@/domain/entities/Dates';
 import * as React from 'react';
 import { Add, Preview } from '@mui/icons-material';
+import ToggleButtonGroupComponent from '@/components/calendar/ToggleButtonGroup';
 import {
     Box,
     Paper,
@@ -31,16 +31,10 @@ import DatesDialog from './DatesDialog';
 
 
 
-export function CalendarComponent(){
-    interface IEventoCalendario{
-      title:string;
-      start: globalThis.Date;
-      end: globalThis.Date;
-    }
+export function DatesComponent(){
     const timeZone = 'America/La_Paz';
     const [dates, setDates] = useState<DateObj[]>([]);
     const [open, setOpen] = useState(false);
-    const [events, setEvents] = useState<IEventoCalendario[]>([]);
     const [showDisabled, setShowDisabled] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [snackbar, setSnackbar] = useState<SnackbarMessage | null>(null);
@@ -49,7 +43,7 @@ export function CalendarComponent(){
     const [newDate, setNewDate] = useState<DateDTO>({
         fecha: '',   
         idpaciente: 1,
-        idconsulta: 1,
+        idconsulta: 0,
         descripcion: '',
         idestadocita: 1,
         fechacita: '',
@@ -71,7 +65,7 @@ export function CalendarComponent(){
                 setDates(data);
                 console.log(dates);
                 const ev = data.map((data) => {
-                    const start = moment(data.fechacita).add(4, 'hours').toDate(); 
+                    const start = moment(data.fechacita).toDate(); 
                     const end = new Date(start.getTime() + data.duracionaprox * 60 * 60 * 1000); 
                     return {
                         title: data.descripcion,
@@ -79,7 +73,6 @@ export function CalendarComponent(){
                         end,
                     };
                 });
-                setEvents(ev);
             } catch (error) {
                 showMessage('Error al cargar las citas', 'error');
             } finally {
@@ -109,7 +102,7 @@ export function CalendarComponent(){
         setNewDate({
             fecha: '',   
             idpaciente: 1,
-            idconsulta: 1,
+            idconsulta: 0,
             descripcion: '',
             idestadocita: 1,
             fechacita: '',
@@ -122,7 +115,7 @@ export function CalendarComponent(){
         setNewDate({
           fecha: date.fecha ? moment(date.fecha).format('YYYY-MM-DDTHH:mm') : '',   
           idpaciente: date.idpaciente || 1,
-          idconsulta: date.idconsulta || 1,
+          idconsulta: date.idconsulta || 0,
           descripcion: date.descripcion || '',
           idestadocita: 1, // Adjust this if `idestadocita` is part of the `DateObj`
           fechacita: date.fechacita ? moment(date.fechacita).format('YYYY-MM-DDTHH:mm') : '',
@@ -136,9 +129,9 @@ export function CalendarComponent(){
         try {
           await deleteDate(id);
           setDates((prev) => prev.filter((date) => date.idcita !== id));
-          showMessage('Tratamiento eliminado correctamente', 'success');
+          showMessage('Cita eliminada correctamente', 'success');
         } catch {
-          showMessage('Error al eliminar el tratamiento', 'error');
+          showMessage('Error al eliminar la cita', 'error');
         }
       };
     
@@ -146,9 +139,9 @@ export function CalendarComponent(){
         try {
           await restoreDate(id);
           setDates((prev) => prev.filter((date) => date.idcita !== id));
-          showMessage('Tratamiento restaurado correctamente', 'success');
+          showMessage('Cita restaurada correctamente', 'success');
         } catch {
-          showMessage('Error al restaurar el Tratamiento', 'error');
+          showMessage('Error al restaurar la cita', 'error');
         }
       };
     
@@ -156,31 +149,39 @@ export function CalendarComponent(){
         if (!window.confirm('¿Está seguro de eliminar este producto permanentemente? no hay vuelta atras.')) return;
         try {
           await deleteDatePermanently(id);
-          showMessage('Tratamiento eliminado permanentemente', 'success');
+          showMessage('Cita eliminada permanentemente', 'success');
           handleFetchDates(searchTerm);
         } catch {
-          showMessage('Error al eliminar el Tratamiento', 'error');
+          showMessage('Error al eliminar la cita', 'error');
         }
       };
     
       const handleSubmit = async () => { 
         try {
+            // Restar 4 horas a las fechas
+            const adjustedFecha = moment(newDate.fecha).subtract(4, 'hours').toISOString();
+            const adjustedFechacita = moment(newDate.fechacita).subtract(4, 'hours').toISOString();
+    
+            // Actualizar las fechas ajustadas en el objeto `newDate`
+            const adjustedNewDate = {
+                ...newDate,
+                fecha: adjustedFecha,
+                fechacita: adjustedFechacita
+            };
           const isRegisteredDateDuplicated = dates.some(
             date => 
               date.fechacita === newDate.fechacita
           );
           const isRegisteredAppointmentDuplicated = dates.some(
             date => 
-              Number(date.idconsulta) === Number(newDate.idconsulta)
+              Number(date.idconsulta) === Number(newDate.idconsulta) && Number(newDate.idconsulta!= null) && Number(newDate.idconsulta != 0)
           );
           /*const isDuplicated = dates.some(
             date =>
               date.idcita === newDate.id
           );*/
-          console.log('fecha duplicada?', isRegisteredDateDuplicated);
-          console.log('consulta duplicada?', isRegisteredAppointmentDuplicated);
-
           if(isRegisteredDateDuplicated){
+
             showMessage('Ya hay una cita registrada para esta fecha', 'error');
             return;
           }
@@ -188,39 +189,43 @@ export function CalendarComponent(){
             showMessage('Ya hay una cita registrada para esta consulta', 'error');
             return;
           }
+          if(newDate.duracionaprox <= 0){
+            showMessage('Ingrese una duración aproximada correcta', 'error');
+            return;
+          }
+          if(!selectedDate){
+            if(moment(newDate.fecha).toDate() < moment(Date.now()).toDate()||
+              moment(newDate.fechacita).toDate() < moment(Date.now()).toDate()){
+              showMessage('No se puede ingresar una fecha anterior a la actual', 'error');
+              return;
+            }
+            if(moment(newDate.fechacita).toDate() < moment(newDate.fecha).toDate()){
+              showMessage('La fecha de registro no puede ser anterior a la fecha acordada', 'error');
+              return;
+            }
+          }
+          
           /*if(isDuplicated){
             showMessage('La cita ya existe', 'error');
             return;
           }*/
           if(selectedDate){
-            const updatedDate = await updateDate(selectedDate.idcita, newDate)
+            const updatedDate = await updateDate(selectedDate.idcita, adjustedNewDate)
             setDates(prev => 
               prev.map((d) => d.idcita === updatedDate.idcita ? updatedDate : d)
             );
             showMessage('Se actualizó la cita correctamente', 'success');
           } else {
-            const addedDate = await createDate(newDate);
+            const addedDate = await createDate(adjustedNewDate);
           
             setDates(prev => {
               const updated = [...prev, addedDate];
               return updated.sort((a, b) => new Date(a.fechacita).getTime() - new Date(b.fechacita).getTime());
             });
           
-            const start = new Date(addedDate.fechacita);
-            const end = new Date(start.getTime() + addedDate.duracionaprox * 60 * 60 * 1000);
-          
-            setEvents(prev => [
-              ...prev,
-              {
-                title: addedDate.descripcion,
-                start,
-                end
-              }
-            ]);
-          
             showMessage('Se agregó la cita correctamente', 'success');
           }
-          //await handleFetchDates(searchTerm);
+          await handleFetchDates(searchTerm);
           handleClose();
         } catch (error) {
           if(error instanceof Error){
@@ -254,37 +259,30 @@ export function CalendarComponent(){
       };
 
     return (
-        <Box sx={{ flexGrow: 1 }}>
-            <Grid container spacing={2}>
-                <Grid item xs={4}>
-                    <Paper elevation={3} sx={{ padding: 2, height: '100%' }}>
-
-                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                            <Button variant="outlined" color="primary" onClick={toggleView}>
-                                {showDisabled ? 'Ver Habilitados' : 'Ver Inhabilitados'}
-                            </Button>
-                            {!showDisabled && (
-                            <Button variant="contained" startIcon={<Add />} onClick={handleOpen}>
-                                Añadir Cita
-                            </Button>
-                        )}
-                        </Box>
-                        <DatesTable
-                            dates={dates}
-                            isLoading={isLoading}
-                            showDisabled={showDisabled}
-                            onEdit={handleEdit}
-                            onDelete={handleDelete}
-                            onRestore={handleRestore}
-                            onDeletePermanently={handleDeletePermanently}
-                            onUpdate={()=>handleFetchDates(searchTerm)}
-                        />
-                    </Paper>
-                </Grid>
-                <Grid item xs={8}>
-                  <Calendar events={events} />
-                </Grid> 
-            </Grid>
+      <Box sx={{ flexGrow: 1 }}>
+        <Paper elevation={3} sx={{ padding: 2, height: '100%' }}>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                <Button variant="outlined" color="primary" onClick={toggleView}>
+                    {showDisabled ? 'Ver Habilitados' : 'Ver Inhabilitados'}
+                </Button>
+                {!showDisabled && (
+                <Button variant="contained" startIcon={<Add />} onClick={handleOpen}>
+                    Añadir Cita
+                </Button>
+            )}
+            <ToggleButtonGroupComponent/>
+            </Box>
+            <DateCard
+                dates={dates}
+                isLoading={isLoading}
+                showDisabled={showDisabled}
+                onEdit={handleEdit}
+                onDelete={handleDelete}
+                onRestore={handleRestore}
+                onDeletePermanently={handleDeletePermanently}
+                onUpdate={()=>handleFetchDates(searchTerm)}
+            />
+          </Paper>
             <DatesDialog 
               open={open}
               onClose={handleClose}
@@ -292,8 +290,7 @@ export function CalendarComponent(){
               date={newDate}
               handleChange={handleChange}
               isEditing={!!selectedDate}
-            />
-            
+            /> 
             <SnackbarAlert 
               snackbar={snackbar}
               onClose={handleSnackbarClose}
@@ -302,4 +299,4 @@ export function CalendarComponent(){
         
     );
 }
-export default CalendarComponent;
+export default DatesComponent;

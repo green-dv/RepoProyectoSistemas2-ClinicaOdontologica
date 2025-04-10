@@ -1,0 +1,95 @@
+.rbc-header {
+  overflow: hidden;
+  flex: 1 0;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  padding: 0 3px;
+  text-align: center;
+  vertical-align: middle;
+  font-weight: bold;
+  font-size: 90%;
+  min-height: 0;
+  border-bottom: 0px solid #ddd;
+}
+.rbc-month-view {
+  position: relative;
+  border: 1px solid #ddd;
+  display: flex;
+  border-radius: 28px 28px 0px 0px;
+  flex-direction: column;
+  flex: 1 0;
+  width: 100%;
+  -moz-user-select: none;
+  user-select: none;
+  -webkit-user-select: none;
+  height: 100%;
+  box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+}
+.rbc-date-cell{
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.rbc-day-bg.rbc-today{
+  background-color: white;
+}
+
+.rbc-date-cell.rbc-now.rbc-current .rbc-button-link{
+  margin-top: 3px;
+  height: 24px;
+  width: 24px;
+  line-height: 24px;
+  color: white;
+  background-color: #0b57d0; /* Color de fondo del número del día actual */
+  border-radius: 50%; /* Hace que el número sea un círculo */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+}
+
+.rbc-event{
+  background-color: green;
+  margin-top: 5px;
+}
+
+.rbc-off-range-bg {
+  background: #f2f2f2;
+}
+
+.rbc-off-range-bg {
+  background: #f2f2f2;
+}
+.rbc-off-range-bg {
+  background: #f2f2f2;
+}
+
+.rbc-off-range-bg {
+  background: #f2f2f2;
+}
+.rbc-off-range-bg {
+  background: #f2f2f2;
+}
+.rbc-day-bg.rbc-off-range-bg{
+  background: #f2f2f2;
+}
+.rbc-row-bg .rbc-off-range-bg{
+  background: #f2f2f2;
+}
+
+/*rbc-header .rbc-button-link span{
+  font-size: 3em;
+  white-space: normal; 
+  text-align: center;
+  word-wrap: break-word;
+  line-height: 1.2;
+  overflow: visible;
+}
+.rbc-time-view .rbc-allday-cell{
+  height: 0%;
+}
+.rbc-time-view .rbc-row {
+  box-sizing: border-box;
+  min-height: 0;
+}*/

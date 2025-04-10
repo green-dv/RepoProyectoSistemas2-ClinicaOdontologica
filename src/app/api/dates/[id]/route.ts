@@ -70,7 +70,7 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
         idcita,
         fecha,
         idpaciente,
-        idconsulta,
+        idconsulta || null,
         descripcion,
         idestadocita,
         fechacita,
@@ -117,11 +117,7 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
 export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
   try {
     const connection = await getConnection();
-    const id = parseInt(params.id);
-
-    const url = new URL(req.url);
-
-    const deleteType = url.searchParams.get('type') || 'logical';
+    const id = parseInt(await params.id);
     
     let body = {} as { type?: string };
     try {

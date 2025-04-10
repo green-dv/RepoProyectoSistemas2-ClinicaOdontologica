@@ -1,10 +1,10 @@
 'use client';
-import CalendarComponent from "@/components/dates/DatesCalendar";
+import DatesComponent from "@/components/dates/DatesComponent";
 
 export default function DatesPage(){
     return(
         <main>
-            <CalendarComponent/>
+            <DatesComponent/>
         </main>
     );
 }
