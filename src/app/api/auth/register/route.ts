@@ -38,7 +38,7 @@ export async function POST(request: Request) {
     const insertQuery = `
         INSERT INTO usuarios (nombre, apellido, email, password, habilitado)
         VALUES ($1, $2, $3, $4, $5)
-        RETURNING idusuario, nombre, apellido, email, habilitado, fecha_registro
+        RETURNING idusuario, nombre, apellido, email, habilitado, fecharegistro
     `;
         
     const values = [nombre, apellido, email, hashedPassword, true];
