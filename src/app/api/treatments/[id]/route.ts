@@ -4,7 +4,7 @@ import { getConnection } from "@/infrastructure/db/db";
 export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
   try {
     const connection = await getConnection();
-    const { id } = params;
+    const { id } = await params;
     const query = `
       SELECT *
       FROM getTreatmentById($1)
