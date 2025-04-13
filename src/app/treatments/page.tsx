@@ -1,5 +1,4 @@
 'use client';
-
 import { useEffect } from 'react';
 import useTreatments from '@/presentation/hooks/useTreatment';
 import useTreatmentHandlers from '@/presentation/handlers/useTreatmentHandlers';
@@ -7,7 +6,6 @@ import {
   Box,
   Button,
   TextField,
-  AlertColor,
   Typography,
   Container,
   Grid,

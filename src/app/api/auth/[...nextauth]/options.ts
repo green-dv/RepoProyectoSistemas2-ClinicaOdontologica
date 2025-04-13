@@ -82,7 +82,7 @@ export const options: NextAuthOptions = {
 // eslint no moleste se creo un type para la session esta en types/next-auth.d.ts
 //============================================================================
     callbacks: {
-        async signIn({ user, account }) {
+        async signIn({ user }) {
             try {
                 const existingUser = await findUserByEmail(user.email!);
                 console.log("existingUser", existingUser);
@@ -119,7 +119,7 @@ export const options: NextAuthOptions = {
             }
             return token;
         },
-        async redirect({ url, baseUrl }) {
+        async redirect({ url }) {
             return url;
         }
     },
