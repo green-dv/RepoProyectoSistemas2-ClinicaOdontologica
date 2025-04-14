@@ -92,14 +92,15 @@ export default function PatientsTable({
                 <TableCell>{patient.telefonopersonal}</TableCell>
                 <TableCell>{patient.sexo ? 'Masculino' : 'Femenino'}</TableCell>
                 <TableCell>
-                  <IconButton onClick={() => onEdit(patient)} color="primary" aria-label="editar">
-                    <EditIcon />
-                  </IconButton>
-                  
                   {!showDisabled ? (
-                    <IconButton onClick={() => onDelete(patient.idpaciente)} color="error" aria-label="eliminar">
-                      <DeleteIcon />
-                    </IconButton>
+                    <>
+                      <IconButton onClick={() => onEdit(patient)} color="primary" aria-label="editar">
+                        <EditIcon />
+                      </IconButton>
+                      <IconButton onClick={() => onDelete(patient.idpaciente)} color="error" aria-label="eliminar">
+                        <DeleteIcon />
+                      </IconButton>
+                    </>
                   ) : (
                     <>
                       <IconButton onClick={() => onRestore(patient.idpaciente)} color="success" aria-label="restaurar">
