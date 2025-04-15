@@ -1,302 +1,255 @@
 "use client";
-import{ Calendar } from '@/components/dates/BigCalendar';
-import DateCard  from '@/components/dates/DateCard';
-import { toZonedTime } from 'date-fns-tz';
-import { useEffect, useState, useCallback } from 'react';
-import { useSession } from 'next-auth/react';
-import { useRouter } from 'next/navigation';
-import debounce from 'lodash/debounce';
-import {Date as DateObj, DateDTO} from '@/domain/entities/Dates';
-import * as React from 'react';
-import { Add, Preview } from '@mui/icons-material';
-import ToggleButtonGroupComponent from '@/components/calendar/ToggleButtonGroup';
-import {
-    Box,
-    Paper,
-    Grid,
-    AlertColor,
-    Button
-} from '@mui/material';
+import { useEffect } from 'react';
 import moment from 'moment';
-import { 
-  fetchDates,
-  createDate,
-  updateDate,
-  deleteDate,
-  restoreDate,
-  deleteDatePermanently
-} from '@/application/usecases/dates';
-import SnackbarAlert, { SnackbarMessage } from '@/components/SnackbarAlert';
+import { Add } from '@mui/icons-material';
+import { useState, useMemo } from 'react';
+import {
+  Box,
+  Paper,
+  Button,
+  Typography,
+  TextField,
+  InputLabel,
+  Select,
+  MenuItem,
+  Autocomplete
+} from '@mui/material';
+
+import DateCard from '@/components/dates/DateCard';
+import { Status } from '@/domain/entities/Status'
+import ToggleButtonGroupComponent from '@/components/calendar/ToggleButtonGroup';
+import SnackbarAlert from '@/components/SnackbarAlert';
 import DatesDialog from './DatesDialog';
 
+import useDates from '@/presentation/hooks/useDate';
+import useDatesHandlers from '@/presentation/handlers/useDateHandler';
+import StatusDropDown from './StatusDropDown';
+import { Patient } from '@/domain/entities/Patient';
+import { fetchStatus } from '@/application/usecases/status'
+import { createPatientFetcher } from '@/presentation/handlers/patientsUtil';
+export function DatesComponent() {
+  const [filter, setFilter] = useState<string>('todas');
+  
+  const datesState = useDates();
 
+  const {
+    handleFetchDates,
+    handleOpen,
+    handleChange,
+    handleClose,
+    handleEdit,
+    handleDelete,
+    handleRestore,
+    handleDeletePermanently,
+    handleSubmit,
+    toggleView,
+    handleSnackbarClose,
+    handleDatesFilter,
+    setPacienteId,
+    setFechaFin,
+    setFechaInicio,
+    setEstadoFiltro
+  } = useDatesHandlers(datesState);
 
-export function DatesComponent(){
-    const timeZone = 'America/La_Paz';
-    const [dates, setDates] = useState<DateObj[]>([]);
-    const [open, setOpen] = useState(false);
-    const [showDisabled, setShowDisabled] = useState(false);
-    const [isLoading, setIsLoading] = useState(false);
-    const [snackbar, setSnackbar] = useState<SnackbarMessage | null>(null);
-    const [searchTerm, setSearchTerm] = useState<string>('');
-    const [selectedDate, setSelectedDate] = useState<DateObj | null>(null);
-    const [newDate, setNewDate] = useState<DateDTO>({
-        fecha: '',   
-        idpaciente: 1,
-        idconsulta: 0,
-        descripcion: '',
-        idestadocita: 1,
-        fechacita: '',
-        duracionaprox: 0
-      });
+  const {
+    dates,
+    searchTerm,
+    showDisabled,
+    isLoading,
+    open,
+    snackbar,
+    newDate,
+    selectedDate,
+    pacienteId,
+    fechaFin,
+    fechaInicio,
+    estadoFiltro
+  } = datesState;
+  const [filteredDates, setFilteredDates] = useState(dates);
+  const [statusList, setStatus] = useState<Status[]>([]);
+  const [patients, setPatients] = useState<Patient[]>([]);
 
-    const handleSnackbarClose = () => {
-        setSnackbar(null);
+  const fetchPatients = useMemo(() => createPatientFetcher(setPatients), []);
+  useEffect(() => {
+    handleFetchDates(searchTerm);
+    return () => handleFetchDates.cancel();
+  }, [searchTerm, handleFetchDates]);
+  
+  useEffect(() => {
+    const fetchStatuses = async () => {
+      const statuses = await fetchStatus();
+      setStatus(statuses);
     };
-    const showMessage = (message: string, severity: AlertColor) => {
-        setSnackbar({ message, severity });
-    };
+    
+  
+    fetchStatuses();
+  }, []);
 
-    const handleFetchDates = useCallback(
-        debounce(async (query: string) => {
-            setIsLoading(true);
-            try {
-                const data: DateObj[] = await fetchDates(query, showDisabled);
-                setDates(data);
-                console.log(dates);
-                const ev = data.map((data) => {
-                    const start = moment(data.fechacita).toDate(); 
-                    const end = new Date(start.getTime() + data.duracionaprox * 60 * 60 * 1000); 
-                    return {
-                        title: data.descripcion,
-                        start,
-                        end,
-                    };
-                });
-            } catch (error) {
-                showMessage('Error al cargar las citas', 'error');
-            } finally {
-                setIsLoading(false);
-            }
-        }, 300),
-        [showDisabled]
-    );
+  useEffect(() => {
+    const resultadosFiltrados = handleDatesFilter();
+    setFilteredDates(resultadosFiltrados);
+  }, [dates, estadoFiltro, pacienteId, fechaInicio, fechaFin]);
+  
 
-    useEffect(() => {
-        handleFetchDates(searchTerm);
-        return () => handleFetchDates.cancel();
-    }, [searchTerm, handleFetchDates]);
+  const today = moment().startOf('day');
+  const in7Days = moment().add(7, 'days').endOf('day');
 
-    const handleOpen = () => {
-        setSelectedDate(null);
-        setOpen(true);
-      };
-    
-      const handleClose = () => {
-        setOpen(false);
-        resetForm();
-      };
-    
-    
-      const resetForm = () => {
-        setNewDate({
-            fecha: '',   
-            idpaciente: 1,
-            idconsulta: 0,
-            descripcion: '',
-            idestadocita: 1,
-            fechacita: '',
-            duracionaprox: 0
-        });
-        setSelectedDate(null);
-      };
-    
-      const handleEdit = (date: DateObj) => {
-        setNewDate({
-          fecha: date.fecha ? moment(date.fecha).format('YYYY-MM-DDTHH:mm') : '',   
-          idpaciente: date.idpaciente || 1,
-          idconsulta: date.idconsulta || 0,
-          descripcion: date.descripcion || '',
-          idestadocita: 1, // Adjust this if `idestadocita` is part of the `DateObj`
-          fechacita: date.fechacita ? moment(date.fechacita).format('YYYY-MM-DDTHH:mm') : '',
-          duracionaprox: date.duracionaprox || 0
-      });
-        setSelectedDate(date);
-        setOpen(true);
-      };
-    
-      const handleDelete = async (id: number) => {
-        try {
-          await deleteDate(id);
-          setDates((prev) => prev.filter((date) => date.idcita !== id));
-          showMessage('Cita eliminada correctamente', 'success');
-        } catch {
-          showMessage('Error al eliminar la cita', 'error');
-        }
-      };
-    
-      const handleRestore = async (id: number) => {
-        try {
-          await restoreDate(id);
-          setDates((prev) => prev.filter((date) => date.idcita !== id));
-          showMessage('Cita restaurada correctamente', 'success');
-        } catch {
-          showMessage('Error al restaurar la cita', 'error');
-        }
-      };
-    
-      const handleDeletePermanently = async (id: number) => {
-        if (!window.confirm('¿Está seguro de eliminar este producto permanentemente? no hay vuelta atras.')) return;
-        try {
-          await deleteDatePermanently(id);
-          showMessage('Cita eliminada permanentemente', 'success');
-          handleFetchDates(searchTerm);
-        } catch {
-          showMessage('Error al eliminar la cita', 'error');
-        }
-      };
-    
-      const handleSubmit = async () => { 
-        try {
-            // Restar 4 horas a las fechas
-            const adjustedFecha = moment(newDate.fecha).subtract(4, 'hours').toISOString();
-            const adjustedFechacita = moment(newDate.fechacita).subtract(4, 'hours').toISOString();
-    
-            // Actualizar las fechas ajustadas en el objeto `newDate`
-            const adjustedNewDate = {
-                ...newDate,
-                fecha: adjustedFecha,
-                fechacita: adjustedFechacita
-            };
-          const isRegisteredDateDuplicated = dates.some(
-            date => 
-              date.fechacita === newDate.fechacita
-          );
-          const isRegisteredAppointmentDuplicated = dates.some(
-            date => 
-              Number(date.idconsulta) === Number(newDate.idconsulta) && Number(newDate.idconsulta!= null) && Number(newDate.idconsulta != 0)
-          );
-          /*const isDuplicated = dates.some(
-            date =>
-              date.idcita === newDate.id
-          );*/
-          if(isRegisteredDateDuplicated){
+  const citasProximas = filteredDates.filter(date =>
+    moment(date.fechacita).isBetween(today, in7Days, undefined, '[]')
+  );
 
-            showMessage('Ya hay una cita registrada para esta fecha', 'error');
-            return;
-          }
-          if(isRegisteredAppointmentDuplicated){
-            showMessage('Ya hay una cita registrada para esta consulta', 'error');
-            return;
-          }
-          if(newDate.duracionaprox <= 0){
-            showMessage('Ingrese una duración aproximada correcta', 'error');
-            return;
-          }
-          if(!selectedDate){
-            if(moment(newDate.fecha).toDate() < moment(Date.now()).toDate()||
-              moment(newDate.fechacita).toDate() < moment(Date.now()).toDate()){
-              showMessage('No se puede ingresar una fecha anterior a la actual', 'error');
-              return;
-            }
-            if(moment(newDate.fechacita).toDate() < moment(newDate.fecha).toDate()){
-              showMessage('La fecha de registro no puede ser anterior a la fecha acordada', 'error');
-              return;
-            }
-          }
-          
-          /*if(isDuplicated){
-            showMessage('La cita ya existe', 'error');
-            return;
-          }*/
-          if(selectedDate){
-            const updatedDate = await updateDate(selectedDate.idcita, adjustedNewDate)
-            setDates(prev => 
-              prev.map((d) => d.idcita === updatedDate.idcita ? updatedDate : d)
-            );
-            showMessage('Se actualizó la cita correctamente', 'success');
-          } else {
-            const addedDate = await createDate(adjustedNewDate);
-          
-            setDates(prev => {
-              const updated = [...prev, addedDate];
-              return updated.sort((a, b) => new Date(a.fechacita).getTime() - new Date(b.fechacita).getTime());
+  const citasFuturas = filteredDates.filter(date =>
+    moment(date.fechacita).isAfter(in7Days)
+  );
+
+  const citasPasadas = filteredDates.filter(date =>
+    moment(date.fechacita).isBefore(today)
+  );
+  const secciones = [
+    {
+      id: 'proximas',
+      title: 'Citas en los próximos 7 días',
+      dates: citasProximas,
+      show: filter === 'todas' || filter === 'proximas'
+    },
+    {
+      id: 'futuras',
+      title: 'Citas posteriores',
+      dates: citasFuturas,
+      show: filter === 'todas' || filter === 'futuras'
+    },
+    {
+      id: 'pasadas',
+      title: 'Citas pasadas',
+      dates: citasPasadas,
+      show: filter === 'todas' || filter === 'pasadas'
+    }
+  ];
+
+  return (
+    <Box sx={{ flexGrow: 1 }}>
+      <Paper elevation={3} sx={{ padding: 2, height: '100%' }}>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+          <Button variant="outlined" color="primary" onClick={toggleView}>
+            {showDisabled ? 'Ver Habilitados' : 'Ver Inhabilitados'}
+          </Button>
+          {!showDisabled && (
+            <Button variant="contained" startIcon={<Add />} onClick={handleOpen}>
+              Añadir Cita
+            </Button>
+          )}
+          <ToggleButtonGroupComponent />
+        </Box>
+        <Box sx={{ display: 'flex', gap: 1 }} mb={3}>
+          <Button variant={filter === 'todas' ? 'contained' : 'outlined'} onClick={() => setFilter('todas')}>
+            Todas
+          </Button>
+          <Button variant={filter === 'proximas' ? 'contained' : 'outlined'} onClick={() => setFilter('proximas')}>
+            Próximas
+          </Button>
+          <Button variant={filter === 'futuras' ? 'contained' : 'outlined'} onClick={() => setFilter('futuras')}>
+            Futuras
+          </Button>
+          <Button variant={filter === 'pasadas' ? 'contained' : 'outlined'} onClick={() => setFilter('pasadas')}>
+            Pasadas
+          </Button>
+        </Box>
+        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, my: 2 }}>
+          <Autocomplete
+            sx={{ width: '200px' }}
+            options={patients}
+            getOptionLabel={(option) => `${option.nombres} ${option.apellidos}`}
+            onInputChange={(_, value) => {
+              fetchPatients(value);
+            }}
+            onChange={(_, value) => {
+              setPacienteId(value ? value.idpaciente : null);
+            }}
+            
+            renderInput={(params) => <TextField {...params} label="Buscar Paciente" />}
+            isOptionEqualToValue={(option, value) => option.idpaciente === value.idpaciente}
+          />
+
+          <Box sx={{ maxWidth: '200px', width: '100%' }}>
+            <StatusDropDown
+              isDropDownLoading={false}
+              status={statusList} // Array of statuses
+              selectedStatus={estadoFiltro ?? 0}
+              onChange={(idcita, newStatus) => {
+                setEstadoFiltro(newStatus === 0 ? null : newStatus);
+              }}
+              isFilter={true}
+            />
+          </Box>
+
+          <TextField
+            label="Fecha Inicio"
+            type="date"
+            InputLabelProps={{ shrink: true }}
+            value={fechaInicio ? fechaInicio.format('YYYY-MM-DD') : ''}
+            onChange={(e) => setFechaInicio(e.target.value ? moment(e.target.value) : null)}
+          />
+
+          <TextField
+            label="Fecha Fin"
+            type="date"
+            InputLabelProps={{ shrink: true }}
+            value={fechaFin ? fechaFin.format('YYYY-MM-DD') : ''}
+            onChange={(e) => setFechaFin(e.target.value ? moment(e.target.value) : null)}
+          />
+
+          <Button variant="outlined" onClick={() => {
+            const resultadosFiltrados = dates.filter(cita => {
+              const fecha = moment(cita.fechacita);
+              const coincideEstado = estadoFiltro !== null ? Number(cita.idestado) === estadoFiltro : true;
+              const coincideFechaInicio = fechaInicio ? fecha.isSameOrAfter(fechaInicio, 'day') : true;
+              const coincideFechaFin = fechaFin ? fecha.isSameOrBefore(fechaFin, 'day') : true;
+              const coincidePaciente = pacienteId !== null ? Number(cita.idpaciente) === pacienteId : true;
+              return coincideEstado && coincideFechaInicio && coincideFechaFin && coincidePaciente;
             });
-          
-            showMessage('Se agregó la cita correctamente', 'success');
-          }
-          await handleFetchDates(searchTerm);
-          handleClose();
-        } catch (error) {
-          if(error instanceof Error){
-            showMessage(error.message, 'error');
-          } else{
-            showMessage('Ocurrió un error inesperado', 'error');
-          }
-        }
-      };
-    
-      const toggleView = () => {
-        setShowDisabled((prev) => !prev);
-        setDates([]); 
-        setSearchTerm(''); 
-      };
-      const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const { name, value } = e.target;
-          
-        if (name === 'precio') {
-          const numericValue = parseFloat(value) || 0;
-          setNewDate(prev => ({
-            ...prev,
-            [name]: numericValue
-          }));
-        } else {
-          setNewDate(prev => ({
-            ...prev, 
-            [name]: value || ''  
-          }));
-        }
-      };
-
-    return (
-      <Box sx={{ flexGrow: 1 }}>
-        <Paper elevation={3} sx={{ padding: 2, height: '100%' }}>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                <Button variant="outlined" color="primary" onClick={toggleView}>
-                    {showDisabled ? 'Ver Habilitados' : 'Ver Inhabilitados'}
-                </Button>
-                {!showDisabled && (
-                <Button variant="contained" startIcon={<Add />} onClick={handleOpen}>
-                    Añadir Cita
-                </Button>
-            )}
-            <ToggleButtonGroupComponent/>
-            </Box>
-            <DateCard
-                dates={dates}
+            setFilteredDates(resultadosFiltrados); // Nuevo estado
+          }}>
+            Aplicar filtros
+          </Button>
+        </Box>
+        {secciones
+          .filter(section => section.show)
+          .map(section => (
+            <Paper key={section.id} elevation={24} sx={{ mb: 3, p: 2 }}>
+              <Typography variant="h5" component="h2" mb={2}>
+                {section.title}
+              </Typography>
+              <DateCard
+                dates={section.dates}
                 isLoading={isLoading}
                 showDisabled={showDisabled}
                 onEdit={handleEdit}
                 onDelete={handleDelete}
                 onRestore={handleRestore}
                 onDeletePermanently={handleDeletePermanently}
-                onUpdate={()=>handleFetchDates(searchTerm)}
-            />
-          </Paper>
-            <DatesDialog 
-              open={open}
-              onClose={handleClose}
-              onSubmit={handleSubmit}
-              date={newDate}
-              handleChange={handleChange}
-              isEditing={!!selectedDate}
-            /> 
-            <SnackbarAlert 
-              snackbar={snackbar}
-              onClose={handleSnackbarClose}
-            />
-        </Box>
-        
-    );
+                onUpdate={() => handleFetchDates(searchTerm)}
+              />
+            </Paper>
+        ))}
+      </Paper>
+
+      <DatesDialog
+        patients={patients}
+        fetchPatients={createPatientFetcher(setPatients)}
+        open={open}
+        onClose={handleClose}
+        onSubmit={handleSubmit}
+        date={newDate}
+        handleChange={handleChange}
+        isEditing={!!selectedDate}
+      />
+
+      <SnackbarAlert
+        snackbar={snackbar}
+        onClose={handleSnackbarClose}
+      />
+    </Box>
+  );
 }
+
 export default DatesComponent;
