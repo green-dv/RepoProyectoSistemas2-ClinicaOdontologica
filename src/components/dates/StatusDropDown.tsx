@@ -1,15 +1,18 @@
 'use client';
 import * as React from 'react';
-import { Box, CircularProgress, Typography, FormControl, InputLabel, MenuItem, Select, SelectChangeEvent } from '@mui/material';
+import {
+  Box, CircularProgress, Typography,
+  FormControl, InputLabel, MenuItem, Select, SelectChangeEvent
+} from '@mui/material';
 import { Status } from '@/domain/entities/Status';
 
 interface StatusDropDownProps {
-  idcita: number;
-  idstatus: number;
+  idcita?: number;
   isDropDownLoading: boolean;
   status: Status[];
-  onChange: (idcita: number, newStatus: number) => void;
+  onChange: (idcita: number | null, newStatus: number) => void;
   selectedStatus: number;
+  isFilter?: boolean;
 }
 
 export function StatusDropDown({
@@ -17,12 +20,14 @@ export function StatusDropDown({
   isDropDownLoading,
   status,
   onChange,
-  selectedStatus
+  selectedStatus,
+  isFilter = false
 }: StatusDropDownProps) {
 
   const handleChange = (event: SelectChangeEvent<number>) => {
     const newStatus = Number(event.target.value);
-    onChange(idcita, newStatus);
+    const citaId = isFilter ? null : idcita ?? null;
+    onChange(citaId, newStatus);
   };
 
   if (isDropDownLoading) {
@@ -44,14 +49,15 @@ export function StatusDropDown({
   }
 
   return (
-    <FormControl fullWidth disabled={false}>
-      <InputLabel id={`status-label-${idcita}`}>Estado</InputLabel>
-      <Select
-        labelId={`status-label-${idcita}`}
+    <FormControl fullWidth>
+      <InputLabel id={`status-label-${idcita ?? 'filter'}`}>Estado</InputLabel>
+      <Select<number> // 👈 aquí le indicas que manejarás números
+        labelId={`status-label-${idcita ?? 'filter'}`}
         value={selectedStatus}
         onChange={handleChange}
         label="Estado"
       >
+        {isFilter && <MenuItem value={0}>Todos</MenuItem>}
         {status.map((estado) => (
           <MenuItem key={estado.idestado} value={estado.idestado}>
             {estado.descestado}

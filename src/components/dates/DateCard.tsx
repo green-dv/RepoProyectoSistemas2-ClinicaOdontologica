@@ -239,14 +239,21 @@ export function DateCard({
 
               <Collapse in={expandedCardId===date.idcita} timeout="auto" unmountOnExit>
               <CardContent>
-                <StatusDropDown
-                  idcita={date.idcita}
-                  idstatus={date.idestado}
-                  isDropDownLoading={isLoading}
-                  status={status}
-                  selectedStatus={date.idestado}
-                  onChange={handleStatusChange}
-                />
+              <StatusDropDown
+                idcita={date.idcita}
+                isDropDownLoading={isLoading}
+                status={status}
+                selectedStatus={date.idestado}
+                onChange={async (idcita, newStatus) => {
+                  if (idcita !== null) {
+                    try {
+                      await handleStatusChange(idcita, newStatus);
+                    } catch (error) {
+                      console.error("Error al actualizar estado", error);
+                    }
+                  }
+                }}
+              />
               </CardContent>
               {(()=> {
                 if(date.fechaconsulta != null){
