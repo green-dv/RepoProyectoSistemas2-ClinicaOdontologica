@@ -8,7 +8,6 @@ export async function GET(request: NextRequest) {
         let query = 'SELECT * FROM fGetDateStatus();';
 
         const result = await connection.query(query);
-        console.log('API result:', result.rows);
         return NextResponse.json(result.rows);
     }catch (error) {
         return NextResponse.json({ message: "Error del servidor" }, { status: 500 });

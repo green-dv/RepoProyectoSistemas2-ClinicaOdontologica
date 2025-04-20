@@ -38,7 +38,6 @@ import { StatusDropDown } from '@/components/dates/StatusDropDown';
 import { updateDateStatus } from '@/application/usecases/dates';
 import { Status } from '@/domain/entities/Status';
 import { fetchStatus } from '@/application/usecases/status'
-import { data } from 'react-router-dom';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { DateTime } from 'next-auth/providers/kakao';
@@ -239,14 +238,21 @@ export function DateCard({
 
               <Collapse in={expandedCardId===date.idcita} timeout="auto" unmountOnExit>
               <CardContent>
-                <StatusDropDown
-                  idcita={date.idcita}
-                  idstatus={date.idestado}
-                  isDropDownLoading={isLoading}
-                  status={status}
-                  selectedStatus={date.idestado}
-                  onChange={handleStatusChange}
-                />
+              <StatusDropDown
+                idcita={date.idcita}
+                isDropDownLoading={isLoading}
+                status={status}
+                selectedStatus={date.idestado}
+                onChange={async (idcita, newStatus) => {
+                  if (idcita !== null) {
+                    try {
+                      await handleStatusChange(idcita, newStatus);
+                    } catch (error) {
+                      console.error("Error al actualizar estado", error);
+                    }
+                  }
+                }}
+              />
               </CardContent>
               {(()=> {
                 if(date.fechaconsulta != null){

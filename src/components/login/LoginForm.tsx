@@ -134,9 +134,9 @@ export function LoginForm() {
                     >
                         <GoogleButton style={{ width: '100%' }} />
                     </Button>
-                    <Button onClick={() => signIn('facebook')}>
+                    {/*<Button onClick={() => signIn('facebook')}>
                         INICIAR SESION CON FACEBOOK
-                    </Button>
+                    </Button>*/}
                 </Box>
                 <Grid container justifyContent={'space-between'} sx={{ mt: 1 }}>
                     <Grid item>

@@ -27,7 +27,7 @@ export interface Date {
 }
 export interface DateDTO{
     fecha: DateTime;
-    idpaciente: number;
+    idpaciente: number | null;
     idconsulta: number | null;
     descripcion: string;
     idestadocita: number;
