@@ -48,7 +48,6 @@ const debouncedFetchMedications = debounce(async (
   setIsLoading(true);
   try {
     const data = await fetchMedicationsFunc(query, showDisabled);
-    console.log(data);
     setMedications(data);
   } catch (error) {
     console.log('Error al cargar las medicaciones', error);

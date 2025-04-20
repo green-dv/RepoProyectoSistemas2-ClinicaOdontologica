@@ -1,5 +1,5 @@
 'use client';
-import CalendarComponent from "@/components/dates/Calendar";
+import CalendarComponent from "@/components/calendar/Calendar";
 import { useSearchParams } from 'next/navigation';
 
 export default function CalendarPage() {

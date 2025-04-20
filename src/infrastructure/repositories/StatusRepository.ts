@@ -9,7 +9,7 @@ export class StatusRepository implements IStatusRepository{
 
       if(!res.ok) throw new Error('Error al cargar los estados de citas');
       
-      const data = await res.json();console.log('Status Repository: ',Array.isArray(data) ? data : []);
+      const data = await res.json();
       return Array.isArray(data) ? data : [];
   }
   async getById(id: number): Promise<Status> {

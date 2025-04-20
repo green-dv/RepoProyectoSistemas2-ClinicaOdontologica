@@ -48,7 +48,6 @@ const debouncedFetchIllnesses = debounce(async (
   setIsLoading(true);
   try {
     const data = await fetchIllnessesFunc(query, showDisabled);
-    console.log(data);
     setIllnesses(data);
   } catch (error) {
     console.log('Error al cargar las enfermedades', error);

@@ -38,7 +38,6 @@ import { StatusDropDown } from '@/components/dates/StatusDropDown';
 import { updateDateStatus } from '@/application/usecases/dates';
 import { Status } from '@/domain/entities/Status';
 import { fetchStatus } from '@/application/usecases/status'
-import { data } from 'react-router-dom';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { DateTime } from 'next-auth/providers/kakao';

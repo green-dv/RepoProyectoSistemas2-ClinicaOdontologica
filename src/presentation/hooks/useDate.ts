@@ -45,7 +45,7 @@ export default function useDates(): DatesState{
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [newDate, setNewDate] = useState<DateDTO>({
     fecha: '',   
-    idpaciente: 1,
+    idpaciente: 0,
     idconsulta: 0,
     descripcion: '',
     idestadocita: 1,
@@ -64,7 +64,7 @@ export default function useDates(): DatesState{
   const resetForm = () => {
     setNewDate({
         fecha: '',   
-        idpaciente: 1,
+        idpaciente: 0,
         idconsulta: 0,
         descripcion: '',
         idestadocita: 1,
@@ -104,6 +104,6 @@ export default function useDates(): DatesState{
     setPacienteId,
 
     resetForm,
-    showMessage
+    showMessage,
   }
 }

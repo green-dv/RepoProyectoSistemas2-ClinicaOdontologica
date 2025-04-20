@@ -1,12 +1,38 @@
+'use client';
 import Image from "next/image";
 import styles from "./page.module.css";
 import LogoutButton from "@/components/logoutBtn";
 import TreatmentsButton from "@/components/treatmentsBtn";
 import DatesButton from "@/components/datesBtn";
+import useDates from '@/presentation/hooks/useDate';
+import useDatesHandlers from '@/presentation/handlers/useDateHandler';
+import { useEffect } from "react";
+
+import NumberDatesPerStatusChart from "@/components/charts/DatesCharts";
+import { Paper } from "@mui/material";
 
 export default function Home() {
+  const datesState = useDates();
+  
+    const {
+      handleFetchDates,
+    } = useDatesHandlers(datesState);
+  
+    const {
+      dates,
+      searchTerm,
+    } = datesState;
+    useEffect(() => {
+        handleFetchDates(searchTerm);
+        return () => handleFetchDates.cancel();
+      }, [searchTerm, handleFetchDates]);
   return (
-    <div className={styles.page}>
+    <Paper elevation={3} style={{ padding: "20px", margin: "20px" }}>
+      <NumberDatesPerStatusChart
+            dates={dates}/>
+    </Paper>
+    
+    /*<div className={styles.page}>
       <main className={styles.main}>
         <Image
           className={styles.logo}
@@ -96,6 +122,6 @@ export default function Home() {
           Go to nextjs.org →
         </a>
       </footer>
-    </div>
+    </div>*/
   );
 }

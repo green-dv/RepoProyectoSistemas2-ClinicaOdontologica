@@ -62,7 +62,6 @@ export default function useCalendarHandler(state: CalendarState) {
       try {
           const data: DateObj[] = await fetchDates(query, showDisabled);
           setDates(data);
-          console.log(dates);
           const ev = data.map((data) => {
             const start = moment(data.fechacita).toDate(); 
             const end = new Date(start.getTime() + data.duracionaprox * 60 * 60 * 1000); 
@@ -147,6 +146,21 @@ export default function useCalendarHandler(state: CalendarState) {
         showMessage('Ya hay una cita registrada para esta fecha', 'error');
         return;
       }
+      const isOverlapping = dates.some(date => {
+        if(newDate.fecha === date.fecha && selectedDate) return false;
+        const start = moment(date.fechacita);
+        const end = moment(date.fechacita).add(date.duracionaprox * 60, 'minutes');
+        const newStart = moment(newDate.fechacita);
+        const newEnd = moment(newDate.fechacita).add(newDate.duracionaprox * 60, 'minutes');
+      
+        return newStart.isBefore(end) && start.isBefore(newEnd);
+      });
+      
+      
+      if (isOverlapping) {
+        showMessage('Ya hay una cita registrada durante esta hora', 'error');
+        return;
+      }
       if(isRegisteredAppointmentDuplicated){
         showMessage('Ya hay una cita registrada para esta consulta', 'error');
         return;
@@ -156,8 +170,7 @@ export default function useCalendarHandler(state: CalendarState) {
         return;
       }
       if(!selectedDate){
-        if(moment(newDate.fecha).toDate() < moment(Date.now()).toDate()||
-          moment(newDate.fechacita).toDate() < moment(Date.now()).toDate()){
+        if(moment(newDate.fechacita).toDate() < moment(Date.now()).toDate()){
           showMessage('No se puede ingresar una fecha anterior a la actual', 'error');
           return;
         }

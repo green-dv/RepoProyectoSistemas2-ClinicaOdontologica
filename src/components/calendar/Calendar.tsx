@@ -1,9 +1,9 @@
 "use client";
-import { Calendar } from "@/components/dates/BigCalendar";
+import { Calendar } from "@/components/calendar/BigCalendar";
 import { useEffect, useMemo, useState } from "react";
 import moment from "moment";
 import SnackbarAlert from "@/components/SnackbarAlert";
-import DatesDialog from "./DatesDialog";
+import DatesDialog from "@/components/dates/DatesDialog";
 import useCalendar from "@/presentation/hooks/useCalendar";
 import useCalendarHandler from "@/presentation/handlers/useCalendarHandler";
 import { createPatientFetcher } from "@/presentation/handlers/patientsUtil";
@@ -75,8 +75,8 @@ export function CalendarComponent({ initialDate }: { initialDate: string }) {
     setNewDate({
       fecha: "",
       fechacita: start.format("YYYY-MM-DDTHH:mm"),
-      duracionaprox: end.diff(start, "hours") || 1,
-      idpaciente: 1,
+      duracionaprox:  1,
+      idpaciente: null,
       idconsulta: 0,
       descripcion: "",
       idestadocita: 1,

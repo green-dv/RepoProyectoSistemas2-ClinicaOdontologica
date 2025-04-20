@@ -48,7 +48,6 @@ const debouncedFetchHabits = debounce(async (
   setIsLoading(true);
   try {
     const data = await fetchHabitsFunc(query, showDisabled);
-    console.log(data);
     setHabits(data);
   } catch (error) {
     console.log('Error al cargar los habitos', error);

@@ -42,6 +42,7 @@ interface DatesState{
 
   resetForm: () => void;
   showMessage: (message: string, severity: AlertColor) => void;
+
 }
 
 export default function useDatesHandlers(state: DatesState){
@@ -67,6 +68,7 @@ export default function useDatesHandlers(state: DatesState){
     setPacienteId,
   } = state;
 
+
   const handleSnackbarClose = () => {
     state.setSnackbar(null);
   };
@@ -76,7 +78,6 @@ export default function useDatesHandlers(state: DatesState){
         try {
             const data: DateObj[] = await fetchDates(query, showDisabled);
             setDates(data);
-            console.log(dates);
             const ev = data.map((data) => {
                 const start = moment(data.fechacita).toDate(); 
                 const end = new Date(start.getTime() + data.duracionaprox * 60 * 60 * 1000); 
@@ -167,6 +168,21 @@ export default function useDatesHandlers(state: DatesState){
         date => 
           Number(date.idconsulta) === Number(newDate.idconsulta) && Number(newDate.idconsulta!= null) && Number(newDate.idconsulta != 0)
       );
+      const isOverlapping = dates.some(date => {
+        if(newDate.fecha === date.fecha && selectedDate) return false;
+        const start = moment(date.fechacita);
+        const end = moment(date.fechacita).add(date.duracionaprox * 60, 'minutes');
+        const newStart = moment(newDate.fechacita);
+        const newEnd = moment(newDate.fechacita).add(newDate.duracionaprox * 60, 'minutes');
+      
+        return newStart.isBefore(end) && start.isBefore(newEnd);
+      });
+      
+      
+      if (isOverlapping) {
+        showMessage('Ya hay una cita registrada durante esta hora', 'error');
+        return;
+      }
       if(isRegisteredDateDuplicated){
 
         showMessage('Ya hay una cita registrada para esta fecha', 'error');
@@ -181,8 +197,7 @@ export default function useDatesHandlers(state: DatesState){
         return;
       }
       if(!selectedDate){
-        if(moment(newDate.fecha).toDate() < moment(Date.now()).toDate()||
-          moment(newDate.fechacita).toDate() < moment(Date.now()).toDate()){
+        if(moment(newDate.fechacita).toDate() < moment(Date.now()).toDate()){
           showMessage('No se puede ingresar una fecha anterior a la actual', 'error');
           return;
         }
