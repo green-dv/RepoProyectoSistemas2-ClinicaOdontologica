@@ -17,14 +17,14 @@ import ListItem from '@mui/material/ListItem';
 import ListItemButton from '@mui/material/ListItemButton';
 import ListItemIcon from '@mui/material/ListItemIcon';
 import ListItemText from '@mui/material/ListItemText';
-import InboxIcon from '@mui/icons-material/MoveToInbox';
-import MailIcon from '@mui/icons-material/Mail';
 import { useRouter } from 'next/navigation';
 import LocalHospitalIcon from '@mui/icons-material/LocalHospital';
 import PeopleAltIcon from '@mui/icons-material/PeopleAlt';
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import HomeIcon from '@mui/icons-material/Home';
+import LogoutIcon from '@mui/icons-material/Logout';
+import { signOut } from "next-auth/react";
 
 const drawerWidth = 240;
 
@@ -125,6 +125,9 @@ export default function MiniDrawer({ children }: MiniDrawerProps) {
     { text: 'Calendario', path: '/calendar' },
     { text: 'Tratamientos', path: '/treatments' },
   ];
+  const handleLogout = async () => {
+    await signOut({ callbackUrl: "/auth/signin" }); 
+  };
 
   const handleDrawerOpen = () => {
     setOpen(true);
@@ -202,7 +205,7 @@ export default function MiniDrawer({ children }: MiniDrawerProps) {
                     text === 'Inicio' ? <HomeIcon /> :
                     text === 'Pacientes' ? <PeopleAltIcon/> :
                     text === 'Citas' ? <AccessTimeIcon/> :
-                    text === 'Calendar'? <CalendarMonthIcon/> :
+                    text === 'Calendario'? <CalendarMonthIcon/> :
                     text === 'Tratamientos' ? <LocalHospitalIcon/> :
                     <HomeIcon />
                   }
@@ -221,8 +224,58 @@ export default function MiniDrawer({ children }: MiniDrawerProps) {
                 />
               </ListItemButton>
             </ListItem>
+            
           ))}
+          <Divider/>
+            <ListItem key={"logout"} onClick={handleLogout}>
+              <ListItemButton
+                sx={[
+                  {
+                    minHeight: 48,
+                    px: 2.5,
+                  },
+                  open
+                    ? {
+                        justifyContent: 'initial',
+                      }
+                    : {
+                        justifyContent: 'center',
+                      },
+                ]}
+              >
+                <ListItemIcon
+                  sx={[
+                    {
+                      minWidth: 0,
+                      justifyContent: 'center',
+                    },
+                    open
+                      ? {
+                          mr: 3,
+                        }
+                      : {
+                          mr: 'auto',
+                        },
+                  ]}
+                >
+                  <LogoutIcon/>
+                </ListItemIcon>
+                <ListItemText
+                  primary="Cerrar Sesión"
+                  sx={[
+                    open
+                      ? {
+                          opacity: 1,
+                        }
+                      : {
+                          opacity: 0,
+                        },
+                  ]}
+                />
+            </ListItemButton>
+          </ListItem>
         </List>
+        
         <Divider />
       </Drawer>
       <Box component="main" sx={{ flexGrow: 1, p: 3 }}>

@@ -3,7 +3,7 @@ import { useEffect } from 'react';
 import * as React from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { signIn, useSession } from "next-auth/react";
+import { getSession, signIn, useSession } from "next-auth/react";
 import GoogleButton from "react-google-button";
 
 import {
@@ -34,7 +34,7 @@ export function LoginForm() {
     const router = useRouter();
     const { data: session, status } = useSession();
     useEffect(() => {
-        if (status === "authenticated") {
+        if (status === "authenticated" && !session?.user?.cambiopassword) {
             router.push("/");
         }
     }, [status, router]);
@@ -60,8 +60,13 @@ export function LoginForm() {
                 setError("Correo o contraseña incorrectos");
                 return;
             }
+            const session = await getSession();
 
-            router.push('/');   
+            if(session?.user?.cambiopassword){
+                router.push(`/auth/recovery?passwordRecovery=true&email=${session.user.email}`);
+            } else {
+                router.push('/');
+            }
         } catch (err) {
             setError("Ocurrió un error durante el inicio de sesión");
             console.error(err);
@@ -140,7 +145,7 @@ export function LoginForm() {
                 </Box>
                 <Grid container justifyContent={'space-between'} sx={{ mt: 1 }}>
                     <Grid item>
-                        <MuiLink component={Link} href="/auth/forgot" variant="body2">
+                        <MuiLink component={Link} href={`/auth/recovery?email=${email}`} variant="body2">
                             ¿Olvidaste tu contraseña?
                         </MuiLink>
                     </Grid>

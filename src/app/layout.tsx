@@ -22,7 +22,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   const pathname = usePathname();
-  const showLayout = !['/login', '/register'].includes(pathname);
+  const showLayout = !['/auth/signin', '/auth/register', '/auth/recovery'].includes(pathname);
   return (
     <html lang="en">
       <SessionProvider>

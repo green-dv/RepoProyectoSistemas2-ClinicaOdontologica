@@ -7,7 +7,7 @@ import type { NextAuthOptions } from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
 import FacebookProvider from "next-auth/providers/facebook";
 import CredentialsProvider from "next-auth/providers/credentials";
-import { findUserByEmail } from "@/infrastructure/repositories/userRepository";
+import { findUserByEmail } from "@/infrastructure/repositories/UserUtils";
 import bcrypt from 'bcryptjs';
 
 export const options: NextAuthOptions = {
@@ -58,13 +58,14 @@ export const options: NextAuthOptions = {
                     if (!isPasswordValid) {
                         return null;
                     }
-
+                    
                     return {
                         id: user.idusuario.toString(),
                         idusuario: user.idusuario,
                         nombre: user.nombre,
                         apellido: user.apellido,
                         email: user.email,
+                        cambiopassword: user.cambiopassword,
                         habilitado: user.habilitado
                     };
                 } catch (error) {
@@ -103,6 +104,7 @@ export const options: NextAuthOptions = {
                 nombre: token.nombre,
                 apellido: token.apellido,
                 email: token.email,
+                cambiopassword: token.cambiopassword,
                 habilitado: token.habilitado
             };
             
@@ -116,11 +118,24 @@ export const options: NextAuthOptions = {
                 token.apellido = user.apellido;
                 token.email = user.email;
                 token.habilitado = user.habilitado;
+                token.cambiopassword = user.cambiopassword;
             }
             return token;
         },
-        async redirect({ url }) {
-            return url;
+        async redirect({ url, baseUrl }) {
+            try {
+                const parsedUrl = new URL(url, baseUrl); // ← esta línea soluciona el error
+        
+                // Ejemplo: redirigir a otra página si va a la raíz
+                if (parsedUrl.pathname === "/") {
+                    return "/"; // o donde quieras redirigir
+                }
+        
+                return url;
+            } catch (error) {
+                console.error("Error en redirect callback:", error);
+                return "/auth/error"; // redirección por defecto en caso de error
+            }
         }
     },
     pages: {
