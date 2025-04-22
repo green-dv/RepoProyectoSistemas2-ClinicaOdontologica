@@ -111,6 +111,7 @@ export default function DatesDialog({
 
         <Autocomplete
           options={patients}
+          onFocus={() => fetchPatients("")}
           value={selectedPatient}
           getOptionLabel={o => `${o.nombres} ${o.apellidos}`}
           onChange={(_, newVal) => {

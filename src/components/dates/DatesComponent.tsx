@@ -158,6 +158,7 @@ export function DatesComponent() {
           <Autocomplete
             sx={{ width: '200px' }}
             options={patients}
+            onFocus={() => fetchPatients("")}
             getOptionLabel={(option) => `${option.nombres} ${option.apellidos}`}
             onInputChange={(_, value) => {
               fetchPatients(value);
