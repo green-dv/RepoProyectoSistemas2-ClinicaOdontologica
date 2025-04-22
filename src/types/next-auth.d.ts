@@ -1,5 +1,5 @@
 import "next-auth";
-import  "@/entities/user"; 
+import  "@/domain/entities/user"; 
 
 declare module "next-auth" {
   interface User {
@@ -8,6 +8,7 @@ declare module "next-auth" {
     nombre: string;
     apellido: string;
     email: string;
+    cambiopassword: boolean;
     habilitado: boolean;
   }
 
@@ -18,6 +19,7 @@ declare module "next-auth" {
       nombre: string;
       apellido: string;
       email: string;
+      cambiopassword: boolean;
       habilitado: boolean;
     }
   }
@@ -30,6 +32,7 @@ declare module "next-auth/jwt" {
     nombre: string;
     apellido: string;
     email: string;
+    cambiopassword: boolean;
     habilitado: boolean;
   }
 }

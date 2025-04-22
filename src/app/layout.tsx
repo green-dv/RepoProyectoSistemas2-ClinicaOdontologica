@@ -2,6 +2,8 @@
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { SessionProvider } from "next-auth/react";
+import MiniDrawer from "@/components/Drawer";
+import { usePathname } from "next/navigation";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -19,11 +21,13 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const pathname = usePathname();
+  const showLayout = !['/auth/signin', '/auth/register', '/auth/recovery'].includes(pathname);
   return (
     <html lang="en">
       <SessionProvider>
         <body className={`${geistSans.variable} ${geistMono.variable}`}>
-          {children}
+          {showLayout ? <MiniDrawer>{children}</MiniDrawer>: children}
         </body>
       </SessionProvider>
     </html>

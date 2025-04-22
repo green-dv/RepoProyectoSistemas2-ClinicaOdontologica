@@ -4,22 +4,17 @@ import { getConnection } from "@/infrastructure/db/db";
 export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
   try {
     const connection = await getConnection();
-    const { id } = params;
+    const { id } = await params;
     const query = `
-      SELECT 
-          idtratamiento,
-          nombre,
-          descripcion,
-          precio
-      FROM tratamientos
-      WHERE idtratamiento = $1 AND habilitado = TRUE
+      SELECT *
+      FROM getTreatmentById($1)
     `;
-    
+
     const result = await connection.query(query, [id]);
 
     if (result.rows.length === 0) {
       return NextResponse.json(
-        { message: "Treatment not found" }, 
+        { message: "Treatment not found" },
         { status: 404 }
       );
     }
@@ -34,24 +29,23 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
   } catch (error) {
     console.error("Error fetching treatment by ID:", error);
     return NextResponse.json(
-      { message: "Error en el servidor" }, 
+      { message: "Error en el servidor" },
       { status: 500 }
     );
   }
 }
 
-export async function PUT(req: NextRequest, { params }: { params: { id: string } }) {
+export async function PUT(
+  req: NextRequest,
+  { params }: { params: { id: string } }
+) {
   try {
-    const connection = await getConnection(); 
+    const connection = await getConnection();
     const body = await req.json();
 
-    const {
-      nombre,
-      descripcion,
-      precio
-    } = body;
+    const { nombre, descripcion, precio } = body;
 
-    if (!nombre || !precio) {
+    if (!nombre || precio === undefined) {
       return NextResponse.json(
         { message: "Nombre y precio son campos requeridos" },
         { status: 400 }
@@ -60,31 +54,30 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
 
     if (precio < 0) {
       return NextResponse.json(
-        { message: "El precion no puede ser menor a 0" },
+        { message: "El precio no puede ser menor a 0" },
+        { status: 400 }
+      );
+    }
+
+    if (descripcion.length > 255) {
+      return NextResponse.json(
+        { message: "La descripcion no puede ser mayor a 255 caracteres" },
         { status: 400 }
       );
     }
 
     const query = `
-      UPDATE tratamientos SET 
-      nombre = $1, 
-      descripcion = $2, 
-      precio = $3
-      WHERE idtratamiento = $4 AND habilitado = TRUE
-      RETURNING *`;
-      
-    const values = [
-      nombre,
-      descripcion,
-      precio,
-      params.id 
-    ];
+      SELECT * FROM updTreatment($1, $2, $3, $4)  
+    `;
+
+    const values = [nombre, descripcion, precio, params.id];
+    console.log("params.id:", params.id);
 
     const result = await connection.query(query, values);
 
     if (result.rows.length === 0) {
       return NextResponse.json(
-        { message: "Treatment not found" }, 
+        { message: "Treatment not found" },
         { status: 404 }
       );
     }
@@ -93,21 +86,21 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
   } catch (error) {
     console.error("Error updating treatment:", error);
     return NextResponse.json(
-      { message: "Error en el servidor" }, 
+      { message: "Error en el servidor" },
       { status: 500 }
     );
   }
-}  
+}
 
 export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
   try {
     const connection = await getConnection();
-    const { id } = params;
+    const { id } = await params;
 
     const url = new URL(req.url);
     // ESTO ES PARA SABER SI SE DESEA UN BORRADO FISICO O LOGICO
     const deleteType = url.searchParams.get('type') || 'logical';
-    
+
     let body = {} as { type?: string };
     try {
       body = await req.json();
@@ -116,25 +109,25 @@ export async function DELETE(req: NextRequest, { params }: { params: { id: strin
     }
 
     if (body && body.type === 'restore') {
-      const restoreQuery = "UPDATE tratamientos SET habilitado = TRUE WHERE idtratamiento = $1 RETURNING *";
+      const restoreQuery = "SELECT * FROM enableTreatment($1)";
       const result = await connection.query(restoreQuery, [id]);
-      
+
       if (result.rowCount === 0) {
         return NextResponse.json({ message: "Treatment not found" }, { status: 404 });
       }
-      
+
       return NextResponse.json(result.rows[0]);
     }
 
     if (deleteType === 'logical') {
-      const query = "UPDATE tratamientos SET habilitado = FALSE WHERE idtratamiento = $1 RETURNING *";
+      const query = "SELECT * FROM diableTreatment($1)";
       const result = await connection.query(query, [id]);
       if (result.rowCount === 0) {
         return NextResponse.json({ message: "Treatment not found" }, { status: 404 });
       }
       return NextResponse.json(result.rows[0]);
     } else if (deleteType === 'physical') {
-      const query = "DELETE FROM tratamientos WHERE idtratamiento = $1 RETURNING *";
+      const query = "SELECT * FROM deleteTreatment($1)";
       const result = await connection.query(query, [id]);
 
       if (result.rowCount === 0) {
