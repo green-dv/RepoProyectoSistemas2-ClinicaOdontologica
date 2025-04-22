@@ -49,16 +49,15 @@ export default function PatientsTable({
   const handleChangePage = (event: unknown, newPage: number) => {
     onPaginationChange(newPage, pagination.pageSize);
   };
-
+  
   const handleChangeRowsPerPage = (event: React.ChangeEvent<HTMLInputElement>) => {
     const newPageSize = parseInt(event.target.value, 10);
-    onPaginationChange(0, newPageSize); 
+    onPaginationChange(0, newPageSize); // Reset to first page when changing page size
   };
 
+  
   // calculo apara mostrar los pacientes por pagina 
-  const startIndex = pagination.page * pagination.pageSize;
-  const endIndex = startIndex + pagination.pageSize;
-  const displayedPatients = patients.slice(startIndex, endIndex);
+  const displayedPatients = patients;
 
   if (isLoading) {
     return (
@@ -93,14 +92,15 @@ export default function PatientsTable({
                 <TableCell>{patient.telefonopersonal}</TableCell>
                 <TableCell>{patient.sexo ? 'Masculino' : 'Femenino'}</TableCell>
                 <TableCell>
-                  <IconButton onClick={() => onEdit(patient)} color="primary" aria-label="editar">
-                    <EditIcon />
-                  </IconButton>
-                  
                   {!showDisabled ? (
-                    <IconButton onClick={() => onDelete(patient.idpaciente)} color="error" aria-label="eliminar">
-                      <DeleteIcon />
-                    </IconButton>
+                    <>
+                      <IconButton onClick={() => onEdit(patient)} color="primary" aria-label="editar">
+                        <EditIcon />
+                      </IconButton>
+                      <IconButton onClick={() => onDelete(patient.idpaciente)} color="error" aria-label="eliminar">
+                        <DeleteIcon />
+                      </IconButton>
+                    </>
                   ) : (
                     <>
                       <IconButton onClick={() => onRestore(patient.idpaciente)} color="success" aria-label="restaurar">
@@ -120,7 +120,7 @@ export default function PatientsTable({
       <TablePagination
         rowsPerPageOptions={[5, 10, 25]}
         component="div"
-        count={patients.length}
+        count={pagination.total} 
         rowsPerPage={pagination.pageSize}
         page={pagination.page}
         onPageChange={handleChangePage}

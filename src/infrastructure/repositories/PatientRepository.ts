@@ -1,26 +1,39 @@
 import { Patient, PatientDTO } from '@/domain/entities/Patient';
+import { PatientsResponse } from '@/application/dtos/PatientResponse';
 
 class PatientRepository {
-    static async fetchAll(query: string = '', showDisabled: boolean = false): Promise<Patient[]> {
+    static async fetchAll(
+        query: string = '', 
+        showDisabled: boolean = false,
+        page: number = 1,
+        limit: number = 10
+        ): Promise<PatientsResponse> {
         try {
             const endpoint = showDisabled 
-                ? `api/patients/disable?q=${query}` 
-                : `api/patients?q=${query}`;
-            
+                ? `api/patients/disable?q=${query}&page=${page}&limit=${limit}` 
+                : `api/patients?q=${query}&page=${page}&limit=${limit}`;
+                
             const response = await fetch(endpoint);
-            
+                
             if (!response.ok) {
                 throw new Error('Error al obtener los pacientes');
             }
-          
+                
             const data = await response.json();
-            return data.data || data; 
+            return {
+                data: data.data || [],
+                pagination: data.pagination || { 
+                page: 1, 
+                limit, 
+                totalItems: 0, 
+                totalPages: 0 
+                }
+            }; 
         } catch (error) {
             console.error('Error en PatientRepository.fetchAll:', error);
             throw error;
         }
     }
-    
     static async getById(id: number): Promise<Patient> {
         const response = await fetch(`api/patients/${id}`);
         
@@ -116,8 +129,10 @@ class PatientRepository {
     }
 
     static async restore(id: number): Promise<void> {
-        const response = await fetch(`api/patients/${id}/restore`, {
-            method: 'PUT',
+        const response = await fetch(`api/patients/${id}`, {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ type: 'restore' }),
         });
         
         if (!response.ok) {

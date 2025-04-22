@@ -10,6 +10,7 @@ import {
     restorePatient,
     deletePatientPermanently
 } from '@/application/usecases/patients';
+import { PatientsResponse } from '@/application/dtos/PatientResponse';
 
 
 interface PatientsState {
@@ -21,6 +22,11 @@ interface PatientsState {
   isLoading: boolean;
   selectedPatient: Patient | null;
   snackbar: { message: string; severity: AlertColor } | null;
+  pagination: {
+    page: number;
+    pageSize: number;
+    total: number;
+  };
   
   // Setters
   setPatients: React.Dispatch<React.SetStateAction<Patient[]>>;
@@ -31,7 +37,11 @@ interface PatientsState {
   setIsLoading: React.Dispatch<React.SetStateAction<boolean>>;
   setSelectedPatient: React.Dispatch<React.SetStateAction<Patient | null>>;
   setSnackbar: React.Dispatch<React.SetStateAction<{ message: string; severity: AlertColor } | null>>;
-  
+  setPagination: React.Dispatch<React.SetStateAction<{
+    page: number;
+    pageSize: number;
+    total: number;
+  }>>;
   // auxxs
   resetForm: () => void;
   showMessage: (message: string, severity: AlertColor) => void;
@@ -39,54 +49,61 @@ interface PatientsState {
 
 // filtro debouce
 const debouncedFetchPatients = debounce(async (
-  query: string, 
-  showDisabled: boolean, 
-  setIsLoading: (value: boolean) => void,
-  setPatients: React.Dispatch<React.SetStateAction<Patient[]>>,
-  fetchPatientsFunc: (query: string, showDisabled: boolean) => Promise<Patient[]>
+    query: string, 
+    showDisabled: boolean,
+    page: number,
+    limit: number,
+    setIsLoading: (value: boolean) => void,
+    setPatients: React.Dispatch<React.SetStateAction<Patient[]>>,
+    setPagination: React.Dispatch<React.SetStateAction<{
+        page: number;
+        pageSize: number;
+        total: number;
+    }>>,
+    fetchPatientsFunc: (query: string, showDisabled: boolean, page: number, limit: number) => Promise<PatientsResponse>
 ) => {
-  setIsLoading(true);
-  try {
-    const data = await fetchPatientsFunc(query, showDisabled);
-    setPatients(data);
-  } catch (error) {
-    console.log('Error al cargar los Pacientes', error);
-  } finally {
-    setIsLoading(false);
-  }
+    setIsLoading(true);
+    try {
+        const response = await fetchPatientsFunc(query, showDisabled, page, limit);
+        setPatients(response.data);
+        setPagination({
+          page: response.pagination.page - 1, // Convert to 0-based for MUI
+          pageSize: response.pagination.limit,
+          total: response.pagination.totalItems
+        });
+    } catch (error) {
+        console.log('Error al cargar los Pacientes', error);
+    } finally {
+        setIsLoading(false);
+    }
 }, 300);
 
 export default function usePatientHandlers(state: PatientsState) {
-  const {
-    patients,
-    searchTerm,
-    selectedPatient,
-    newPatient,
-    showDisabled,
-    setPatients,
-    setIsLoading,
-    setOpen,
-    setSelectedPatient,
-    resetForm,
-    showMessage
-  } = state;
+    const {
+        patients,
+        searchTerm,
+        selectedPatient,
+        newPatient,
+        pagination,
+        setPatients,
+        setIsLoading,
+        setOpen,
+        setSelectedPatient,
+        resetForm,
+        showMessage,
+        fetchPatientsWithFilters
+    } = state;
 
-  const handleSnackbarClose = () => {
-    state.setSnackbar(null);
-  };
+    const handleSnackbarClose = () => {
+        state.setSnackbar(null);
+    };
 
-  const handleFetchPatients = useCallback(
-    (query: string) => {
-      debouncedFetchPatients(
-        query, 
-        showDisabled, 
-        setIsLoading, 
-        setPatients, 
-        fetchPatients
-      );
-    },
-    [showDisabled, setIsLoading, setPatients]
-  );
+    const handleFetchPatients = useCallback(
+      (query: string = searchTerm, page: number = 1, pageSize: number = 10) => {
+        fetchPatientsWithFilters(query, page, pageSize);
+      },
+      [fetchPatientsWithFilters, searchTerm]
+    );
 
   const handleOpen = () => {
     setSelectedPatient(null);
@@ -146,11 +163,11 @@ export default function usePatientHandlers(state: PatientsState) {
       await restorePatient(id);
       setPatients((prev) => prev.filter((patient) => patient.idpaciente !== id));
       showMessage('Paciente restaurado correctamente', 'success');
+      handleFetchPatients();
     } catch {
       showMessage('Error al restaurar el paciente', 'error');
     }
   };
-
   const handleDeletePermanently = async (id: number) => {
     if (!window.confirm('¿Está seguro de eliminar este paciente permanentemente? no hay vuelta atras.')) return;
     try {
@@ -203,8 +220,18 @@ export default function usePatientHandlers(state: PatientsState) {
     state.setSearchTerm(''); 
   };
 
+  const handlePaginationChange = (page: number, pageSize: number) => {
+    // MUI uses 0-based indexing, but our API uses 1-based
+    handleFetchPatients(searchTerm, page + 1, pageSize);
+  };
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    state.setSearchTerm(e.target.value);
+    // The debounced search will trigger automatically thanks to the useEffect
+  };
+
   return {
     handleFetchPatients,
+    handlePaginationChange,
     handleOpen,
     handleClose,
     handleChange,
@@ -216,6 +243,7 @@ export default function usePatientHandlers(state: PatientsState) {
     handleDeletePermanently,
     handleSubmit,
     toggleView,
-    handleSnackbarClose
+    handleSnackbarClose,
+    handleSearchChange
   };
 }

@@ -1,17 +1,12 @@
 "use client";
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import PatientsTable from '@/components/patients/PatientTable';
 import PatientDialog from '@/components/patients/PatientDialog';
-import SearchBar from '@/components/SnackbarAlert';
-import { Patient, PatientDTO } from '@/domain/entities/Patient';
-import { Alert, AlertColor, Button, Snackbar, Typography, Box, Container, Switch, FormControlLabel } from '@mui/material';
+import SearchBar from '@/components/SearchBar';
+import { Patient } from '@/domain/entities/Patient';
+import { Alert, Button, Snackbar, Typography, Box, Container, Switch, FormControlLabel } from '@mui/material';
+import usePatients from '@/presentation/hooks/usePatient';
 import usePatientHandlers from '@/presentation/handlers/usePatientHandlers';
-
-interface Pagination {
-  page: number;
-  pageSize: number;
-  total: number;
-}
 
 const formatDateForInput = (dateString: string | null): string => {
   if (!dateString) return '';
@@ -32,68 +27,14 @@ const formatDateForInput = (dateString: string | null): string => {
   return dateString; 
 };
 
+interface HTMLInputElementWithName extends HTMLInputElement {
+  name: string;
+  value: string;
+}
+
 export default function PatientsPage() {
-  const [patients, setPatients] = useState<Patient[]>([]);
-  const [open, setOpen] = useState(false);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [showDisabled, setShowDisabled] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
-  const [snackbar, setSnackbar] = useState<{ message: string; severity: AlertColor } | null>(null);
-  
-  const [pagination, setPagination] = useState<Pagination>({
-    page: 0,
-    pageSize: 10,
-    total: 0
-  });
-
-  const [newPatient, setNewPatient] = useState<PatientDTO>({
-    nombres: '',
-    apellidos: '',
-    direccion: '',
-    telefonodomicilio: null,
-    telefonopersonal: '',
-    lugarnacimiento: null,
-    fechanacimiento: null, // cambiar a null por el momento
-    sexo: true, 
-    estadocivil: 'Soltero', 
-    ocupacion: '',
-    aseguradora: null
-  });
-
-  const resetForm = () => {
-    setNewPatient({
-      nombres: '',
-      apellidos: '',
-      direccion: '',
-      telefonodomicilio: null,
-      telefonopersonal: '',
-      lugarnacimiento: null,
-      fechanacimiento: null, 
-      sexo: true,
-      estadocivil: 'Soltero', 
-      ocupacion: '',
-      aseguradora: null
-    });
-  };
-
-  const showMessage = (message: string, severity: AlertColor) => {
-    setSnackbar({ message, severity });
-  };
-
-  const customHandleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    console.log(`Cambiando fecha: ${name} = ${value}`);
-    
-    const dateValue = value.trim() === '' ? null : value;
-    
-    setNewPatient((prev) => ({ 
-      ...prev, 
-      [name]: dateValue
-    }));
-  };
-
-  const handlers = usePatientHandlers({
+  const patientState = usePatients();
+  const {
     patients,
     open,
     searchTerm,
@@ -102,17 +43,8 @@ export default function PatientsPage() {
     isLoading,
     selectedPatient,
     snackbar,
-    setPatients,
-    setOpen,
-    setSearchTerm,
-    setNewPatient,
-    setShowDisabled,
-    setIsLoading,
-    setSelectedPatient,
-    setSnackbar,
-    resetForm,
-    showMessage
-  });
+    pagination
+  } = patientState;
 
   const {
     handleFetchPatients,
@@ -120,18 +52,14 @@ export default function PatientsPage() {
     handleClose,
     handleChange,
     handleBooleanChange,
-    handleEdit,
     handleDelete,
     handleRestore,
     handleDeletePermanently,
     handleSubmit,
     toggleView,
-    handleSnackbarClose
-  } = handlers;
-
-  const handlePaginationChange = (page: number, pageSize: number) => {
-    setPagination(prev => ({ ...prev, page, pageSize }));
-  };
+    handleSnackbarClose,
+    handlePaginationChange
+  } = usePatientHandlers(patientState);
 
   const customHandleEdit = (patient: Patient) => {
     const formattedPatient = {
@@ -141,22 +69,22 @@ export default function PatientsPage() {
     
     console.log("Editando paciente con fecha:", formattedPatient.fechanacimiento);
     
-    setNewPatient({
+    patientState.setNewPatient({
       nombres: formattedPatient.nombres || '',
       apellidos: formattedPatient.apellidos || '',
       direccion: formattedPatient.direccion || '',
       telefonodomicilio: formattedPatient.telefonodomicilio || null,
       telefonopersonal: formattedPatient.telefonopersonal || '',
       lugarnacimiento: formattedPatient.lugarnacimiento || null,
-      fechanacimiento: formattedPatient.fechanacimiento, 
+      fechanacimiento: formattedPatient.fechanacimiento || '', 
       sexo: formattedPatient.sexo !== undefined ? formattedPatient.sexo : true,
       estadocivil: formattedPatient.estadocivil || 'Soltero',
       ocupacion: formattedPatient.ocupacion || '',
       aseguradora: formattedPatient.aseguradora || null,
     });
     
-    setSelectedPatient(patient);
-    setOpen(true);
+    patientState.setSelectedPatient(patient);
+    patientState.setOpen(true);
   };
 
   const customHandleSubmit = async () => {
@@ -164,26 +92,33 @@ export default function PatientsPage() {
       try {
         const date = new Date(newPatient.fechanacimiento);
         if (isNaN(date.getTime())) {
-          showMessage("La fecha de nacimiento no es válida", "error");
+          patientState.showMessage("La fecha de nacimiento no es válida", "error");
           return;
         }
         
         if (date > new Date()) {
-          showMessage("La fecha de nacimiento no puede ser en el futuro", "error");
+          patientState.showMessage("La fecha de nacimiento no puede ser en el futuro", "error");
           return;
         }
       } catch (error) {
-        showMessage("Error al procesar la fecha de nacimiento", error as AlertColor);
+        patientState.showMessage("Error al procesar la fecha de nacimiento", "error");
         return;
       }
     }
     handleSubmit();
   };
 
-  useEffect(() => {
-    handleFetchPatients(searchTerm);
-    setPagination(prev => ({ ...prev, total: patients.length }));
-  }, [searchTerm, showDisabled]);
+  const customHandleDateChange = (e: React.ChangeEvent<HTMLInputElementWithName>) => {
+    const { name, value } = e.target;
+    console.log(`Cambiando fecha: ${name} = ${value}`);
+    
+    const dateValue = value.trim() === '' ? null : value;
+    
+    patientState.setNewPatient((prev) => ({ 
+      ...prev, 
+      [name]: dateValue
+    }));
+  };
 
   return (
     <Container maxWidth="xl">
@@ -204,8 +139,8 @@ export default function PatientsPage() {
 
         <SearchBar
           searchTerm={searchTerm}
-          setSearchTerm={setSearchTerm}
-          placeholder="Buscar pacientes..."
+          setSearchTerm={patientState.setSearchTerm}
+          placeholder="Buscar pacientes por nombre o apellido..."
         />
 
         <PatientDialog
@@ -218,7 +153,6 @@ export default function PatientsPage() {
           handleDateChange={customHandleDateChange}
           isEditing={!!selectedPatient}
         />
-
         <PatientsTable
           patients={patients}
           showDisabled={showDisabled}
