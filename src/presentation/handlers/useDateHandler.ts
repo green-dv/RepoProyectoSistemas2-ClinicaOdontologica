@@ -87,7 +87,8 @@ export default function useDatesHandlers(state: DatesState){
                     end,
                 };
             });
-        } catch (error) {
+            return ev;
+        } catch {
             showMessage('Error al cargar las citas', 'error');
         } finally {
             setIsLoading(false);
@@ -110,7 +111,7 @@ export default function useDatesHandlers(state: DatesState){
     state.setNewDate({
       fecha: date.fecha ? moment(date.fecha).format('YYYY-MM-DDTHH:mm') : '',   
       idpaciente: date.idpaciente || 1,
-      idconsulta: date.idconsulta || 0,
+      idconsulta: date.idconsulta ?? 0,
       descripcion: date.descripcion || '',
       idestadocita: 1, // Adjust this if `idestadocita` is part of the `DateObj`
       fechacita: date.fechacita ? moment(date.fechacita).format('YYYY-MM-DDTHH:mm') : '',
@@ -177,8 +178,13 @@ export default function useDatesHandlers(state: DatesState){
       
         return newStart.isBefore(end) && start.isBefore(newEnd);
       });
+
+      const isRegisterDateValid = moment(newDate.fecha) > moment(Date.now()).add(-1, 'year');
       
-      
+      if(newDate.duracionaprox > 5){
+        showMessage('La duración aproximada no puede ser mayor a 5 horas', 'error');
+        return;
+      }
       if (isOverlapping) {
         showMessage('Ya hay una cita registrada durante esta hora', 'error');
         return;
@@ -186,6 +192,10 @@ export default function useDatesHandlers(state: DatesState){
       if(isRegisteredDateDuplicated){
 
         showMessage('Ya hay una cita registrada para esta fecha', 'error');
+        return;
+      }
+      if(!isRegisterDateValid){
+        showMessage('La fecha ingresada es muy antigua', 'error');
         return;
       }
       if(isRegisteredAppointmentDuplicated){

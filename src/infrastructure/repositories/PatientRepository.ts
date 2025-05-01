@@ -34,6 +34,25 @@ class PatientRepository {
             throw error;
         }
     }
+    static async fetchDateFilter(query: string = '', showDisabled: boolean = false): Promise<Patient[]> {
+        try {
+            const endpoint = showDisabled 
+                ? `api/patients/disable?q=${query}` 
+                : `api/patients?q=${query}`;
+            
+            const response = await fetch(endpoint);
+            
+            if (!response.ok) {
+                throw new Error('Error al obtener los pacientes');
+            }
+          
+            const data = await response.json();
+            return data.data || data; 
+        } catch (error) {
+            console.error('Error en PatientRepository.fetchAll:', error);
+            throw error;
+        }
+    }
     static async getById(id: number): Promise<Patient> {
         const response = await fetch(`api/patients/${id}`);
         
