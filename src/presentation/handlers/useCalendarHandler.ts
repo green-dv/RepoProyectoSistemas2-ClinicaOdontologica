@@ -7,8 +7,6 @@ import {
   createDate,
   updateDate,
   deleteDate,
-  restoreDate,
-  deleteDatePermanently,
 } from "@/application/usecases/dates";
 import { AlertColor } from "@mui/material";
 interface IEventoCalendario {
@@ -73,7 +71,7 @@ export default function useCalendarHandler(state: CalendarState) {
             };
           });
           setEvents(ev);
-      } catch (error) {
+      } catch {
           showMessage('Error al cargar las citas', 'error');
       } finally {
           setIsLoading(false);
@@ -102,7 +100,7 @@ export default function useCalendarHandler(state: CalendarState) {
     state.setNewDate({
       fecha: cita.fecha ? moment(cita.fecha).format('YYYY-MM-DDTHH:mm') : '',   
       idpaciente: cita.idpaciente || 1,
-      idconsulta: cita.idconsulta || 0,
+      idconsulta: cita.idconsulta ?? 0,
       descripcion: cita.descripcion || '',
       idestadocita: 1,
       fechacita: cita.fechacita ? moment(cita.fechacita).format('YYYY-MM-DDTHH:mm') : '',
@@ -146,6 +144,10 @@ export default function useCalendarHandler(state: CalendarState) {
         showMessage('Ya hay una cita registrada para esta fecha', 'error');
         return;
       }
+      if(newDate.duracionaprox > 5){
+        showMessage('La duración aproximada no puede ser mayor a 5 horas', 'error');
+        return;
+      }
       const isOverlapping = dates.some(date => {
         if(newDate.fecha === date.fecha && selectedDate) return false;
         const start = moment(date.fechacita);
@@ -155,6 +157,8 @@ export default function useCalendarHandler(state: CalendarState) {
       
         return newStart.isBefore(end) && start.isBefore(newEnd);
       });
+
+      const isRegisterDateValid = moment(newDate.fecha) > moment(Date.now()).add(-1, 'year');
       
       
       if (isOverlapping) {
@@ -167,6 +171,10 @@ export default function useCalendarHandler(state: CalendarState) {
       }
       if(newDate.duracionaprox <= 0){
         showMessage('Ingrese una duración aproximada correcta', 'error');
+        return;
+      }
+      if(!isRegisterDateValid){
+        showMessage('La fecha ingresada es muy antigua', 'error');
         return;
       }
       if(!selectedDate){

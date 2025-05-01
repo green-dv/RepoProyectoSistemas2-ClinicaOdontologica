@@ -1,17 +1,5 @@
 import { DateTime } from "next-auth/providers/kakao";
 
-/*
-export interface Dates {
-    id: number;
-    fecha: DateTime;
-    idpaciente: number;
-    idconsulta: number;
-    descripcion: string;
-    idestadocita: number;
-    fechacitacion: DateTime;
-}
-*/
-
 export interface Date {
     idcita: number;
     idconsulta: number | null;

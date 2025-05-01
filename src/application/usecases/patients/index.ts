@@ -11,6 +11,9 @@ export async function fetchPatients(
 ): Promise<PatientsResponse> {
   return patientRepository.fetchAll(query, showDisabled, page, limit);
 }
+export const fetchDateFilter = async (query: string, showDisabled: boolean): Promise<Patient[]> => {
+  return await patientRepository.fetchDateFilter(query, showDisabled);
+};
 
 export const createPatient = async (patient: PatientDTO): Promise<Patient> => {
     return await patientRepository.create(patient);
