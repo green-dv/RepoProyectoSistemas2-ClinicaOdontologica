@@ -7,8 +7,8 @@ export async function GET(request: NextRequest) {
     try {
         const connection = await getConnection();
         const url = new URL(request.url);
-        const page = parseInt(url.searchParams.get('page') || '1');
-        const limit = parseInt(url.searchParams.get('limit') || '10');
+        const page = parseInt(url.searchParams.get('page') ?? '1');
+        const limit = parseInt(url.searchParams.get('limit') ?? '10');
         const offset = (page - 1) * limit;
 
         let query = 'SELECT * FROM getDetailPayment() AS d';
@@ -42,14 +42,3 @@ export async function GET(request: NextRequest) {
     }
     
 }
-
-
-
-
-// iddetallepago: number;
-// monto: number;
-// monedaboliviana: boolean;
-// fecha: string;
-// enlacedetalle: string;
-// habilitado: boolean;
-// idconsulta: number;

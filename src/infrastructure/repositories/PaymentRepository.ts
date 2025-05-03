@@ -3,7 +3,7 @@ import { IPaymentRepository} from '@/domain/repositories/PaymentRepository';
 import { getConnection } from '../db/db';
 
 export class PaymentRepository implements IPaymentRepository {
-    private db;
+    private readonly db;
     constructor() {
         this.db = getConnection();
     }

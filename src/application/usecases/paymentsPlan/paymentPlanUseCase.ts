@@ -6,16 +6,12 @@ import { Payment } from '@/domain/entities/Payments';
 
 export class PaymentPlanService {
     constructor(
-        private paymentPlanRepository: IPaymentPlanRepository,
-        private paymentRepository: IPaymentRepository
+        private readonly paymentPlanRepository: IPaymentPlanRepository,
+        private readonly paymentRepository: IPaymentRepository
     ) {}
 
     async createPaymentPlanWithInstallments(dto: CreatePaymentPlanDTO): Promise<PaymentPlanWithPayments> {
-        // Validar la suma cuotas que sea igual con el total
-        const totalInstallments = dto.installments.reduce((sum, inst) => sum + inst.montoesperado, 0);
-        if (Math.abs(totalInstallments - dto.montotal) > 0.01) {
-            throw new Error('La suma de las cuotas no son iguales con el total del plan');
-        }
+        this.validatePaymentPlanInput(dto);
 
         const paymentPlanData: Omit<PaymentPlan, 'idplanpago'> = {
             fechacreacion: new Date(dto.fechacreacion),
@@ -56,8 +52,10 @@ export class PaymentPlanService {
     async updatePaymentPlan(dto: UpdatePaymentPlanDTO): Promise<PaymentPlan> {
         const existingPlan = await this.paymentPlanRepository.getById(dto.idplanpago);
         if (!existingPlan) {
-        throw new Error('El plan de pago no existe >;');
+            throw new Error('El plan de pago no existe >;');
         }
+
+        this.validatePaymentPlanInput(dto, existingPlan);
 
         const planUpdate: PaymentPlan = {
             idplanpago: dto.idplanpago,
@@ -68,6 +66,14 @@ export class PaymentPlanService {
             estado: dto.estado ?? existingPlan.estado,
             idconsulta: existingPlan.idconsulta
         };
+
+        if (planUpdate.fechacreacion > planUpdate.fechalimite) {
+            throw new Error('La fecha de creación no puede ser posterior a la fecha límite');
+        }
+        
+        if (existingPlan.pagos && planUpdate.montotal < existingPlan.pagos.reduce((a, b) => a + b.montopagado, 0)) {
+            throw new Error('No puede reducir el monto total por debajo de los pagos ya realizados');
+        }
 
         return this.paymentPlanRepository.update(planUpdate);
     }
@@ -149,5 +155,40 @@ export class PaymentPlanService {
             throw new Error('Error al recuperar el plan actualizado');
         }
         return updatedPlan;
+    }
+    async validatePaymentPlanInput(dto: CreatePaymentPlanDTO | UpdatePaymentPlanDTO, existingPlan?: PaymentPlan) {
+        const today = new Date();
+    
+        if (dto.fechalimite && new Date(dto.fechalimite) < today) {
+            throw new Error('La fecha límite debe ser posterior a la fecha actual');
+        }
+    
+        if (dto.fechacreacion && new Date(dto.fechacreacion).getMonth() < today.getMonth() - 1) {
+            throw new Error('Intruduzca una fecha de creación válida');
+        }
+    
+        if (dto.fechalimite && new Date(dto.fechalimite).getFullYear() > today.getFullYear() + 5) {
+            throw new Error('La fecha límite no puede ser posterior a 5 años desde hoy');
+        }
+    
+        if (dto.fechacreacion && dto.fechalimite && new Date(dto.fechacreacion) > new Date(dto.fechalimite)) {
+            throw new Error('La fecha de creación no puede ser posterior a la fecha límite');
+        }
+    
+        if (dto.montotal && (dto.montotal <= 0 || dto.montotal > 100000)) {
+            throw new Error('Ingrese un monto total válido de entre 0 y 100000');
+        }
+    
+        if (
+            dto.montotal && 
+            existingPlan?.pagos?.length &&
+            dto.montotal < existingPlan.pagos.reduce((sum, p) => sum + p.montopagado, 0)
+        ) {
+            throw new Error('No puede reducir el monto total por debajo de los pagos ya realizados');
+        }
+    
+        if ('installments' in dto && Math.abs(dto.installments.reduce((s, i) => s + i.montoesperado, 0) - dto.montotal) > 0.01) {
+            throw new Error('La suma de las cuotas no coincide con el monto total del plan');
+        }
     }
 }

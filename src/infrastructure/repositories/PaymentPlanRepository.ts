@@ -5,8 +5,8 @@ import { PaymentRepository } from './PaymentRepository';
 import { Payment } from '@/domain/entities/Payments';
 
 export class PaymentPlanRepository implements IPaymentPlanRepository {
-    private db;
-    private paymentRepo: PaymentRepository;
+    private readonly db;
+    private readonly paymentRepo: PaymentRepository;
 
     constructor() {
         this.db = getConnection();

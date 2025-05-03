@@ -11,8 +11,8 @@ const paymentPlanService = new PaymentPlanService(paymentPlanRepository, payment
 export async function GET(request: NextRequest) {
     try {
         const { searchParams } = new URL(request.url);
-        const page = parseInt(searchParams.get('page') || '1', 10);
-        const limit = parseInt(searchParams.get('limit') || '10', 10);
+        const page = parseInt(searchParams.get('page') ?? '1', 10);
+        const limit = parseInt(searchParams.get('limit') ?? '10', 10);
         const consultaId = searchParams.get('consultaId');
         
         if (isNaN(page) || isNaN(limit) || page < 1 || limit < 1) {
@@ -43,13 +43,13 @@ export async function POST(request: NextRequest) {
         const body = await request.json();
         
         const planData: CreatePaymentPlanDTO = {
-            fechacreacion: body.fechacreacion || new Date().toISOString(),
+            fechacreacion: body.fechacreacion ?? new Date().toISOString(),
             fechalimite: body.fechalimite,
             montotal: body.montotal,
             descripcion: body.descripcion,
-            estado: body.estado || 'pendiente',
+            estado: body.estado ?? 'pendiente',
             idconsulta: body.idconsulta,
-            installments: body.installments || []
+            installments: body.installments ?? []
         };
         
         if (!planData.fechalimite || !planData.montotal || !planData.idconsulta) {
