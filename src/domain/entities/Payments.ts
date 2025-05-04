@@ -2,7 +2,7 @@ export interface Payment {
     idpago?: number;
     montoesperado: number;
     montopagado: number;
-    fechapago: Date;
+    fechapago: Date | null;
     estado: string;
     enlacecomprobante: string | null;
     idplanpago: number;

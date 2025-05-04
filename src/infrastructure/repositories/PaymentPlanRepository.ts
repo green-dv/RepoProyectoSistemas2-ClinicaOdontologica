@@ -93,7 +93,7 @@ export class PaymentPlanRepository implements IPaymentPlanRepository {
         
         const dataQuery = `
             SELECT * FROM planpagos
-            ORDER BY idplanpago DESC
+            ORDER BY idplanpago ASC
             LIMIT $1 OFFSET $2
         `;
         
