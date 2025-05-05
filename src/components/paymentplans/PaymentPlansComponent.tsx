@@ -40,6 +40,8 @@ export default function PaymentPlansComponent(){
     handleEditPaymentInput,
     setIsEditingPayment
   } = usePaymentPlanHandlers();
+
+  
   return(
     <Paper>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>

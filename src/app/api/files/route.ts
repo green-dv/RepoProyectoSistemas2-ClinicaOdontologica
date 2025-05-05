@@ -1,22 +1,33 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { pinata } from "@/lib/config";
-import { Readable } from "stream";
+import { NextResponse } from 'next/server';
+
+export const dynamic = 'force-dynamic';
 
 export async function GET() {
-    try{
-        const url = await pinata.upload.public.createSignedURL({
-             expires: 3600,   
-        })
-        return NextResponse.json(
-            { url: url},
-            { status: 200},
-        );
-    }
-    catch(error){
-        console.log(error);
-        return NextResponse.json(
-            { message: "Error creating API key"},
-            { status: 500},
-        );
-    }
+  try {
+    const uploadOptions = {
+      pinataMetadata: {
+        name: "comprobante-pago",
+        keyvalues: {
+          tipo: "comprobante"
+        }
+      },
+      pinataOptions: {
+        cidVersion: 0
+      }
+    };
+
+    return NextResponse.json({
+      success: true,
+      data: {
+        uploadOptions,
+      }
+    }, { status: 200 });
+
+  } catch (error) {
+    console.error('Error:', error);
+    return NextResponse.json({
+      success: false,
+      error: 'Error al configurar subida'
+    }, { status: 500 });
+  }
 }

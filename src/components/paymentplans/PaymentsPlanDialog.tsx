@@ -11,7 +11,7 @@ import {
   TextField,
   FormControl,
   InputLabel,
-  NativeSelect,
+  Tooltip,
   Table,
   TableBody,
   TableCell,
@@ -24,12 +24,13 @@ import {
   Select,
   MenuItem,
 } from '@mui/material';
-import { Check, Edit } from '@mui/icons-material';
+import { Check, Edit,UploadFile, Receipt } from '@mui/icons-material';
 import { DatePicker } from '@mui/x-date-pickers/';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { PaymentPlan } from '@/domain/entities/PaymentsPlan';
 import { Payment } from '@/domain/entities/Payments';
+import ComprobanteDialog from '../comprobante/comprobanteDialog';
 
 interface PaymentPlanDialogProps {
   open: boolean;
@@ -62,13 +63,49 @@ export default function PaymentsPlanDialog({
 
 }: PaymentPlanDialogProps) {
   const [status, setStatus] = React.useState(paymentPlan.estado ?? 'pendiente');
+  const [comprobanteDialogOpen, setComprobanteDialogOpen] = useState(false);
+  const [selectedPayment, setSelectedPayment] = useState<Payment | null>(null);
+  
   
   const handleStatusChange = (event: { target: { value: string } }) => {
     setStatus(event.target.value);
   };
   
+  const handleOpenComprobanteDialog = (payment: Payment) => {
+    setSelectedPayment(payment);
+  };
+
+  const handleUploadComprobante = async (idpago: number, enlaceComprobante: string | null) => {
+    try {
+      const paymentIndex = payments.findIndex(p => p.idpago === idpago);
+      if (paymentIndex === -1) return;
+      
+      const updatedPayments = [...payments];
+      updatedPayments[paymentIndex] = {
+        ...updatedPayments[paymentIndex],
+        enlacecomprobante: enlaceComprobante,
+        estado: enlaceComprobante ? 'completado' : 'pendiente'
+      };
+      
+      // Actualizar el estado del plan si es necesario
+      const allCompleted = updatedPayments.every(p => p.estado === 'completado');
+      const newPlanStatus = allCompleted ? 'completado' : 'pendiente';
+      
+      
+      setComprobanteDialogOpen(false);
+    } catch (error) {
+      console.error('Error al actualizar comprobante:', error);
+      
+    }
+  };
+
+  const handleCloseComprobanteDialog = () => {
+    setSelectedPayment(null);
+  };
 
   return (
+    <>
+    
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="lg">
       <DialogTitle>{isEditing ? 'Editar Plan de Pagos' : 'Añadir Plan de Pagos'}</DialogTitle>
       <DialogContent>
@@ -207,6 +244,19 @@ export default function PaymentsPlanDialog({
                       <TableCell>{pago.montopagado} bs.</TableCell>
                       <TableCell>{pago.estado}</TableCell>
 
+                      {/* dialog paraa el comprobante */}
+                      <TableCell>
+                          <Tooltip title={pago.enlacecomprobante ? "Ver comprobante" : "Subir comprobante"}>
+                            <IconButton 
+                              size="small"
+                              onClick={() => handleOpenComprobanteDialog(pago)}
+                              color={pago.enlacecomprobante ? "primary" : "default"}
+                            >
+                              {pago.enlacecomprobante ? <Receipt /> : <UploadFile />}
+                            </IconButton>
+                          </Tooltip>
+                        </TableCell>
+
                       <TableCell>
                         {pago.estado !== 'completado' && (
                           <IconButton
@@ -245,5 +295,16 @@ export default function PaymentsPlanDialog({
         </Button>
       </DialogActions>
     </Dialog>
+      {/* Dialog para subir o visualizar el comprobante se alejan cositas*/}
+      {selectedPayment && (
+          <ComprobanteDialog
+            open={Boolean(selectedPayment)}
+            onClose={handleCloseComprobanteDialog}
+            onUpload={handleUploadComprobante}
+            enlaceComprobante={selectedPayment?.enlacecomprobante || null}  
+            idpago={selectedPayment?.idpago || 0}
+          />
+        )}
+    </>
   );
 }
