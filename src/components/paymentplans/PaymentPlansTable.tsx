@@ -76,8 +76,17 @@ export default function PaymentPlansTable({
                 return(
                   <TableRow key={paymentPlan.idplanpago}>
                     <TableCell>{paymentPlan.idplanpago}</TableCell>
-                    <TableCell>{new Date(paymentPlan.fechacreacion).getDay()}/{new Date(paymentPlan.fechacreacion).getMonth()}/{new Date(paymentPlan.fechacreacion).getFullYear()}</TableCell>
-                    <TableCell>{new Date(paymentPlan.fechalimite).getDay()}/{new Date(paymentPlan.fechalimite).getMonth()}/{new Date(paymentPlan.fechalimite).getFullYear()}</TableCell>
+                    <TableCell>
+                      {new Date(paymentPlan.fechacreacion).getDate()}/
+                      {new Date(paymentPlan.fechacreacion).getMonth() + 1}/
+                      {new Date(paymentPlan.fechacreacion).getFullYear()}
+                    </TableCell>
+
+                    <TableCell>
+                      {new Date(paymentPlan.fechalimite).getDate()}/
+                      {new Date(paymentPlan.fechalimite).getMonth() + 1}/
+                      {new Date(paymentPlan.fechalimite).getFullYear()}
+                    </TableCell>
                     <TableCell>{paymentPlan.montotal} bs.</TableCell>
                     <TableCell>{paymentPlan.descripcion}</TableCell>
                     <TableCell>{paymentPlan.estado}</TableCell>

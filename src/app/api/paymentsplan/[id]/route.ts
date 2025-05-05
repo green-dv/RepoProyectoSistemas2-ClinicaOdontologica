@@ -47,7 +47,9 @@ export async function PUT(request: NextRequest,{ params }: { params: { id: strin
             fechalimite: body.fechalimite,
             montotal: body.montotal,
             descripcion: body.descripcion,
-            estado: body.estado
+            estado: body.estado,
+            idconsulta: body.idconsulta ?? null,
+            pagos: body.pagos
         };
         
         const updatedPlan = await paymentPlanService.updatePaymentPlan(planData);
@@ -61,7 +63,7 @@ export async function PUT(request: NextRequest,{ params }: { params: { id: strin
     }
 }
 
-export async function POST(request: NextRequest,{ params }: { params: { id: string }}) 
+/*export async function POST(request: NextRequest,{ params }: { params: { id: string }}) 
 {
     try {
         const id = parseInt(params.id, 10);
@@ -85,4 +87,4 @@ export async function POST(request: NextRequest,{ params }: { params: { id: stri
             { status: 500 }
         );
     }
-}
+}*/

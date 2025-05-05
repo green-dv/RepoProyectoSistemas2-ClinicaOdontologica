@@ -49,17 +49,20 @@ export async function POST(request: NextRequest) {
             descripcion: body.descripcion,
             estado: body.estado ?? 'pendiente',
             idconsulta: body.idconsulta,
-            installments: body.installments ?? []
+            pagos: body.pagos ?? []
         };
         
-        if (!planData.fechalimite || !planData.montotal || !planData.idconsulta) {
+        if (!planData.fechalimite || !planData.montotal) {
+            console.log("------API------");
+            console.log(planData.fechalimite);
+            console.log(planData.montotal)
             return NextResponse.json(
                 { error: 'Faltan campos requeridos => fechalimite, montotal, idconsulta' },
                 { status: 400 }
             );
         }
 
-        if (planData.installments.length === 0 && planData.montotal <= 0) {
+        if (planData.pagos.length === 0 && planData.montotal <= 0) {
             return NextResponse.json(
                 { error: 'Debe proporcionar cuotas o un monto total el cual sea válido' },
                 { status: 400 }

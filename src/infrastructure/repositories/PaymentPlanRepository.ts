@@ -41,7 +41,7 @@ export class PaymentPlanRepository implements IPaymentPlanRepository {
         const { idplanpago, pagos, ...updateData } = paymentPlan;
         
         const setFields: string[] = [];
-        const values: (string | number | Date)[] = [];
+        const values: (string | number | Date | null)[] = [];
         let paramCounter = 1;
         
         Object.entries(updateData).forEach(([key, value]) => {

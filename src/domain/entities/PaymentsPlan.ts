@@ -4,9 +4,9 @@ export interface PaymentPlan {
     fechacreacion: Date;
     fechalimite: Date;
     montotal: number;
-    descripcion: string;
+    descripcion: string | null;
     estado: string;
-    idconsulta: number;
+    idconsulta: number | null;
     pagos?: Payment[];
 }
 
