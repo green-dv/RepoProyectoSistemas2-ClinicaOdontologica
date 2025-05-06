@@ -73,7 +73,9 @@ export default function PaymentsPlanDialog({
   
   const handleOpenComprobanteDialog = (payment: Payment) => {
     setSelectedPayment(payment);
+    setComprobanteDialogOpen(true);
   };
+  
 
   const handleUploadComprobante = async (idpago: number, enlaceComprobante: string | null) => {
     try {
@@ -87,19 +89,20 @@ export default function PaymentsPlanDialog({
         estado: enlaceComprobante ? 'completado' : 'pendiente'
       };
       
-      // Actualizar el estado del plan si es necesario
-      const allCompleted = updatedPayments.every(p => p.estado === 'completado');
-      const newPlanStatus = allCompleted ? 'completado' : 'pendiente';
-      
-      
+      handleEditPayment(paymentIndex, { 
+        enlacecomprobante: enlaceComprobante,
+        estado: enlaceComprobante ? 'completado' : 'pendiente'
+      });
+
       setComprobanteDialogOpen(false);
+      setSelectedPayment(null);
     } catch (error) {
       console.error('Error al actualizar comprobante:', error);
-      
     }
   };
 
   const handleCloseComprobanteDialog = () => {
+    setComprobanteDialogOpen(false);
     setSelectedPayment(null);
   };
 
@@ -120,7 +123,7 @@ export default function PaymentsPlanDialog({
                 onChange={(newValue) =>
                   handleChange({
                     target: { name: 'fechacreacion', value: newValue?.toISOString() || '' }
-                  } as any)
+                  }as any)
                 }
                 slots={{ textField: TextField }}
                 slotProps={{
@@ -159,6 +162,7 @@ export default function PaymentsPlanDialog({
             <TextField
               label="Monto Total"
               name="montotal"
+              inputMode="numeric"
               type="text"
               fullWidth
               margin="dense"
@@ -194,7 +198,8 @@ export default function PaymentsPlanDialog({
             <TextField
               label="Número de Cuotas"
               name="cuotas"
-              type="number"
+              type="text"
+              inputMode="numeric"
               fullWidth
               margin="dense"
               value={cuotas}
@@ -255,7 +260,7 @@ export default function PaymentsPlanDialog({
                               {pago.enlacecomprobante ? <Receipt /> : <UploadFile />}
                             </IconButton>
                           </Tooltip>
-                        </TableCell>
+                      </TableCell>
 
                       <TableCell>
                         {pago.estado !== 'completado' && (
@@ -297,14 +302,14 @@ export default function PaymentsPlanDialog({
     </Dialog>
       {/* Dialog para subir o visualizar el comprobante se alejan cositas*/}
       {selectedPayment && (
-          <ComprobanteDialog
-            open={Boolean(selectedPayment)}
-            onClose={handleCloseComprobanteDialog}
-            onUpload={handleUploadComprobante}
-            enlaceComprobante={selectedPayment?.enlacecomprobante || null}  
-            idpago={selectedPayment?.idpago || 0}
-          />
-        )}
+        <ComprobanteDialog
+          open={comprobanteDialogOpen}
+          onClose={handleCloseComprobanteDialog}
+          onUpload={handleUploadComprobante}
+          enlaceComprobante={selectedPayment?.enlacecomprobante || null}  
+          idpago={selectedPayment?.idpago || 0}
+        />
+      )}
     </>
   );
 }

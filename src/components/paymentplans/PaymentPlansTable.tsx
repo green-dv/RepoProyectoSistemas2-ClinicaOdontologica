@@ -33,6 +33,7 @@ interface PaymentPlansTableProps {
   onPaginationChange: (page: number, pageSize: number) => void;
   handleChangePage: (event: unknown, newPage:number) => void;
   handleChangeRowsPerPage: (event: React.ChangeEvent<HTMLInputElement>) => void;
+  
 }
 
 export default function PaymentPlansTable({

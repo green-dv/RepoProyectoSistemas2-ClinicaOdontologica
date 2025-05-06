@@ -38,7 +38,7 @@ export default function usePaymentPlanHandlers(){
     resetForm,
     showMessage
   } = usePaymentPlans();
-  const [montotal, setMontotal] = useState(0);
+  const [montotal, setMontotal] = useState('');
   // USE EFFECTS
 
   useEffect(() => {
@@ -77,39 +77,61 @@ export default function usePaymentPlanHandlers(){
     }
   };
 
+  const submitValidations = () =>{
+    if(!selectedPaymentPlan && new Date(newPaymentPlan.fechalimite) < new Date()){
+      showMessage('No puede registrar una fecha límite anterior a la fecha actual', 'error');
+      return;
+    }
+  }
+
+  const validations = () => {
+    //Validacion de inputs
+    if(!newPaymentPlan.fechacreacion || !newPaymentPlan.fechalimite || !newPaymentPlan.montotal || !newPaymentPlan.descripcion || cuotas < 1){
+      showMessage('Todos los datos son obligatorios', 'error');
+      return false;
+    }
+    if(newPaymentPlan.montotal < 20 || newPaymentPlan.montotal === null){
+      showMessage('Debe ingresar un monto mayor a 20', 'error');
+      return false;
+    }
+    if(new Date(newPaymentPlan.fechacreacion) < new Date(new Date().setFullYear(new Date().getFullYear() - 1)) || newPaymentPlan.fechacreacion === null){
+      showMessage('No puede registrar pagos de hace mas de un año', 'error');
+      return false;
+    }
+    if(new Date(newPaymentPlan.fechalimite) > new Date(new Date().setMonth(new Date().getMonth() + 18)) || newPaymentPlan.fechalimite === null){
+      showMessage('No puede registrar una fecha límite superior a un año y medio a partir de ahora', 'error');
+      return false;
+    }
+    if(new Date(newPaymentPlan.fechalimite) < new Date(newPaymentPlan.fechacreacion)){
+      showMessage('La fecha limite no puede ser anterior a la fecha de creación', 'error');
+      return false;
+    }
+    if(newPaymentPlan.montotal < 20 || newPaymentPlan.montotal === null){
+      showMessage('Debe ingresar un monto mayor a 20', 'error');
+      return false;
+    }
+    if(cuotas < 1 || cuotas === null){
+      showMessage('Debe ingresar las cuotas', 'error');
+      return false;
+    }
+    if(payments.length < 1){
+      showMessage('Error, no se generaron correctamente los pagos', 'error');
+      return false;
+    }
+    return true;
+  }
+
   const handleSubmit = async () => {
 
     newPaymentPlan.pagos = payments;
     setNewPaymentPlan(newPaymentPlan)
 
-    //Validacion de inputs
-    if(newPaymentPlan.montotal < 20 || newPaymentPlan.montotal === null){
-      showMessage('Debe ingresar un monto mayor a 20', 'error');
+    if(!validations()){
       return;
     }
-    if(new Date(newPaymentPlan.fechacreacion) < new Date(new Date().setFullYear(new Date().getFullYear() - 1)) || newPaymentPlan.fechacreacion === null){
-      showMessage('No puede registrar pagos de hace mas de un año', 'error');
+    if(submitValidations()){
       return;
     }
-    if(new Date(newPaymentPlan.fechalimite) > new Date(new Date().setMonth(new Date().getMonth() + 18)) || newPaymentPlan.fechalimite === null){
-      showMessage('No puede registrar una fecha límite superior a un año y medio a partir de ahora', 'error');
-      return;
-    }
-    if(newPaymentPlan.montotal < 20 || newPaymentPlan.montotal === null){
-      showMessage('Debe ingresar un monto mayor a 20', 'error');
-      return;
-    }
-    if(cuotas < 1 || cuotas === null){
-      showMessage('Debe ingresar las cuotas', 'error');
-      return;
-    }
-    if(payments.length < 1){
-      showMessage('Error, no se generaron correctamente los pagos', 'error');
-      return;
-    }
-    console.log('le diste click a submit');
-    console.log(selectedPaymentPlan);
-    console.log(newPaymentPlan);
 
     //Si es que existe un plan de pagos seleccionado
     if(selectedPaymentPlan){
@@ -173,32 +195,33 @@ export default function usePaymentPlanHandlers(){
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    const numericValue = parseFloat(value) || 0;
-    if(parseFloat(value) < 1){
-      showMessage('No se pueden introducrir valores negativos', 'error');
-      return;
+    if (!/^\d*$/.test(value) && value !== '') return;
+  
+    if (name === 'cuotas') {
+      if (value.length > 2 || parseInt(value) > 12) return;
+      setCuotas(value);
     }
-
+  
+    if (name === 'montotal') {
+      if (value.length > 6 || parseInt(value) > 100000) return;
+      setMontotal(value);
+    }
+  
     setNewPaymentPlan((prev) => ({
       ...prev,
-      [name]: value,
+      [name]: value === '' ? '' : name === 'montotal' ? parseFloat(value) || 0 : value,
     }));
-
-    let nextCuotas = cuotas;
-    let nextMontotal = montotal;
-
-    if (name === 'cuotas') {
-      nextCuotas = parseInt(value) || 0;
-      setCuotas(nextCuotas);
-    }
-
-    if (name === 'montotal') {
-      nextMontotal = numericValue;
-      setMontotal(nextMontotal);
-    }
-
-    if ((name === 'montotal' || name === 'cuotas') && nextCuotas > 0 && nextMontotal > 0 && nextCuotas < 13 && nextMontotal < 100000) {
-      setPayments(recalculatePayments(nextMontotal, nextCuotas, payments));
+  
+    const cuotasNum = parseInt(name === 'cuotas' ? value : cuotas || '0');
+    const montoNum = parseFloat(name === 'montotal' ? value : montotal || '0');
+  
+    if (
+      cuotasNum > 0 &&
+      cuotasNum <= 12 &&
+      montoNum > 20 &&
+      montoNum <= 100000
+    ) {
+      setPayments(recalculatePayments(montoNum, cuotasNum, payments));
     }
   };
 
@@ -313,7 +336,7 @@ export default function usePaymentPlanHandlers(){
         setNewPaymentPlan(paymentPlan);
         setSelectedPaymentPlan(paymentPlan);
         setCuotas(rawPlan.pagos?.length ?? 0);
-        setMontotal(rawPlan.montotal ?? 0);
+        setMontotal(rawPlan.montotal ?? '');
         setPayments(rawPlan.pagos ?? []);
         setOpen(true);
       } else {
@@ -352,8 +375,8 @@ export default function usePaymentPlanHandlers(){
   const handleOpen = () => {
     setOpen(true);
     setIsEditingPayment(1000);
-    setMontotal(0);
-    setCuotas(0);
+    setMontotal('');
+    setCuotas('');
   }
 
   const handleClose = () => {
@@ -362,8 +385,8 @@ export default function usePaymentPlanHandlers(){
     setOpen(false);
     setPayments([]);
     resetForm();
-    setMontotal(0);
-    setCuotas(0);
+    setMontotal('');
+    setCuotas('');
   }
 
   const handleSnackbarClose = () => {

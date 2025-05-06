@@ -13,7 +13,7 @@ export interface PaymentPlansState {
   open: boolean;
   newPaymentPlan: PaymentPlan;
   payments: Payment[];
-  cuotas: number
+  cuotas: string
   showDisabled: boolean;
   isLoading: boolean;
   isEditingPayment: number;
@@ -28,7 +28,7 @@ export interface PaymentPlansState {
   setPaymentPlans: React.Dispatch<React.SetStateAction<PaymentPlan[]>>;
   setOpen: React.Dispatch<React.SetStateAction<boolean>>;
   setNewPaymentPlan: React.Dispatch<React.SetStateAction<PaymentPlan>>;
-  setCuotas: React.Dispatch<React.SetStateAction<number | 0>>;
+  setCuotas: React.Dispatch<React.SetStateAction<string | ''>>;
   setPayments: React.Dispatch<React.SetStateAction<Payment[] | []>>;
   setPaymentsLoading: React.Dispatch<React.SetStateAction<boolean>>
   setShowDisabled: React.Dispatch<React.SetStateAction<boolean>>;
@@ -58,7 +58,7 @@ export default function usePaymentPlans(): PaymentPlansState {
     idconsulta: 0,
     pagos: [],
   });
-  const [cuotas, setCuotas] = useState(0);
+  const [cuotas, setCuotas] = useState('');
   const [isEditingPayment, setIsEditingPayment] = useState(10000);
   const [showDisabled, setShowDisabled] = useState(false);
   const [payments, setPayments] = useState<Payment[]>([]);
