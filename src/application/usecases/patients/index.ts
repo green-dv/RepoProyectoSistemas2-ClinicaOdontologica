@@ -1,16 +1,16 @@
-import { Patient, PatientDTO } from '@/domain/entities/Patient';
-import { patientRepository } from '@/infrastructure/repositories/PatientRepository';
+import { Patient } from '@/domain/entities/Patient';
+import { PatientRepository } from '@/domain/repositories/PatientRepository';
 import { PatientsResponse } from '@/application/dtos/PatientResponse';
 
-// In application/usecases/patients.ts
-export async function fetchPatients(
+export async function getPatients(
   query: string = '', 
   showDisabled: boolean = false,
   page: number = 1,
   limit: number = 10
 ): Promise<PatientsResponse> {
-  return patientRepository.fetchAll(query, showDisabled, page, limit);
+  return PatientRepository.getPatients(query, showDisabled, page, limit);
 }
+
 export const fetchDateFilter = async (query: string, showDisabled: boolean): Promise<Patient[]> => {
   return await patientRepository.fetchDateFilter(query, showDisabled);
 };

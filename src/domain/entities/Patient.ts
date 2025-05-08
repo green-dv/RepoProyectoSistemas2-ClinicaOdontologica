@@ -1,17 +1,15 @@
 export interface Patient {
-    idpaciente: number;
+    idpaciente?: number;
     nombres: string;
     apellidos: string;
     direccion: string;
-    telefonodomicilio: string | null;
+    telefonodomicilio: string;
     telefonopersonal: string;
-    lugarnacimiento: string | null;
+    lugarnacimiento: string;
     fechanacimiento: string;
     sexo: boolean;
     estadocivil: string;
     ocupacion: string;
-    aseguradora: string | null;
+    aseguradora: string;
     habilitado: boolean;
 }
-
-export type PatientDTO = Omit<Patient, 'idpaciente' | 'habilitado'>;

@@ -1,14 +1,14 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Container, Paper, Alert, Snackbar } from '@mui/material';
+import { Box, Container, Paper, Alert, Snackbar, Button } from '@mui/material';
+import { Add as AddIcon } from '@mui/icons-material';
 import { PatientList } from '@/components/patients/PatientTable';
 import { PatientViewDialog } from '@/components/patients/PatientViewDialog';
 import { PatientForm } from '@/components/patients/PatientsForm';
 import { PatientDeleteDialog } from '@/components/patients/PatientDeleteDialog';
 import { Patient } from '@/domain/entities/Patient';
 import { PatientResponse } from '@/domain/dto/patient';
-import { useDebounce } from '@/presentation/hooks/useDebounce';
 
 export default function PatientsPage() {
   // Data state
@@ -25,8 +25,6 @@ export default function PatientsPage() {
   const [viewDialogOpen, setViewDialogOpen] = useState<boolean>(false);
   const [formDialogOpen, setFormDialogOpen] = useState<boolean>(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState<boolean>(false);
-
-  const debouncedSearchQuery = useDebounce(searchQuery, 500);
   
   // Notification state
   const [notification, setNotification] = useState<{
@@ -50,11 +48,11 @@ export default function PatientsPage() {
         limit: String(rowsPerPage),
       });
 
-      if (debouncedSearchQuery) {
-        queryParams.append('search', debouncedSearchQuery);
+      if (searchQuery) {
+        queryParams.append('search', searchQuery);
       }
 
-      const response = await fetch(`/api/patients?${debouncedSearchQuery}`);
+      const response = await fetch(`/api/patients?${queryParams}`);
       
       if (!response.ok) {
         throw new Error('Error al cargar los pacientes');
@@ -75,7 +73,7 @@ export default function PatientsPage() {
   // Load patients on initial render and when dependencies change
   useEffect(() => {
     fetchPatients();
-  }, [page, rowsPerPage, debouncedSearchQuery]);
+  }, [page, rowsPerPage, searchQuery]);
 
   // Dialog handlers
   const handleViewPatient = (patient: Patient) => {
@@ -88,9 +86,7 @@ export default function PatientsPage() {
     setFormDialogOpen(true);
   };
 
-  // This is the key function that wasn't working properly
   const handleNewPatient = () => {
-    console.log("Opening new patient form dialog");
     setSelectedPatient(null);
     setFormDialogOpen(true);
   };
@@ -191,6 +187,17 @@ export default function PatientsPage() {
 
   return (
     <Container maxWidth="xl" sx={{ py: 4 }}>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+        <h1>Gestión de Pacientes</h1>
+        <Button 
+          variant="contained" 
+          color="primary" 
+          startIcon={<AddIcon />}
+          onClick={handleNewPatient}
+        >
+          Nuevo Paciente
+        </Button>
+      </Box>
       
       <Paper elevation={3} sx={{ p: 3, borderRadius: 2 }}>
         <PatientList
@@ -208,7 +215,7 @@ export default function PatientsPage() {
           onPageChange={handlePageChange}
           onRowsPerPageChange={handleRowsPerPageChange}
           onRefresh={fetchPatients}
-          onCreatePatient={handleNewPatient} // Make sure this prop is being passed
+          onCreatePatient={handleNewPatient}
         />
       </Paper>
 
@@ -222,7 +229,7 @@ export default function PatientsPage() {
 
       {/* Patient Form Dialog for both Create and Edit */}
       <PatientForm
-        open={formDialogOpen} // This should be true when button is clicked
+        open={formDialogOpen}
         onClose={handleCloseFormDialog}
         patient={selectedPatient}
         onSubmitSuccess={handleFormSuccess}
