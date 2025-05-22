@@ -1,3 +1,4 @@
+// @/presentation/components/patients/sections/PersonalInfoSection.tsx
 import React from 'react';
 import {
     TextField,
@@ -9,7 +10,8 @@ import {
     FormLabel,
     MenuItem,
     Typography,
-    Divider
+    Divider,
+    FormHelperText
 } from '@mui/material';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
@@ -23,6 +25,7 @@ interface PersonalInfoSectionProps {
     birthDate: Date | null;
     errors: { [key in keyof Patient]?: string };
     loading: boolean;
+    isFieldRequired: (fieldName: keyof Patient) => boolean;
     handleInputChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
     handleRadioChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
     handleDateChange: (date: Date | null) => void;
@@ -33,6 +36,7 @@ export const PersonalInfoSection: React.FC<PersonalInfoSectionProps> = ({
     birthDate,
     errors,
     loading,
+    isFieldRequired,
     handleInputChange,
     handleRadioChange,
     handleDateChange
@@ -46,37 +50,52 @@ export const PersonalInfoSection: React.FC<PersonalInfoSectionProps> = ({
             <Grid container spacing={2}>
                 <Grid item xs={12} sm={6}>
                     <TextField
-                        required
+                        required={isFieldRequired('nombres')}
                         fullWidth
                         label="Nombres"
                         name="nombres"
                         value={formData.nombres}
                         onChange={handleInputChange}
                         error={!!errors.nombres}
-                        helperText={errors.nombres}
+                        helperText={errors.nombres || (isFieldRequired('nombres') ? 'Campo requerido' : '')}
                         disabled={loading}
                         margin="normal"
+                        inputProps={{
+                            maxLength: 100,
+                            pattern: '[a-zA-ZáéíóúÁÉÍÓÚñÑ\\s]+',
+                            title: 'Solo se permiten letras y espacios'
+                        }}
                     />
                 </Grid>
                 
                 <Grid item xs={12} sm={6}>
                     <TextField
-                        required
+                        required={isFieldRequired('apellidos')}
                         fullWidth
                         label="Apellidos"
                         name="apellidos"
                         value={formData.apellidos}
                         onChange={handleInputChange}
                         error={!!errors.apellidos}
-                        helperText={errors.apellidos}
+                        helperText={errors.apellidos || (isFieldRequired('apellidos') ? 'Campo requerido' : '')}
                         disabled={loading}
                         margin="normal"
+                        inputProps={{
+                            maxLength: 100,
+                            pattern: '[a-zA-ZáéíóúÁÉÍÓÚñÑ\\s]+',
+                            title: 'Solo se permiten letras y espacios'
+                        }}
                     />
                 </Grid>
 
                 <Grid item xs={12}>
-                    <FormControl component="fieldset" margin="normal">
-                        <FormLabel component="legend">Sexo</FormLabel>
+                    <FormControl 
+                        component="fieldset" 
+                        margin="normal"
+                        error={!!errors.sexo}
+                        required={isFieldRequired('sexo')}
+                    >
+                        <FormLabel component="legend">Sexo *</FormLabel>
                         <RadioGroup 
                             row 
                             name="sexo" 
@@ -94,20 +113,28 @@ export const PersonalInfoSection: React.FC<PersonalInfoSectionProps> = ({
                                 label="Femenino" 
                             />
                         </RadioGroup>
+                        {errors.sexo && (
+                            <FormHelperText>{errors.sexo}</FormHelperText>
+                        )}
                     </FormControl>
                 </Grid>
                 
                 <Grid item xs={12} sm={6}>
                     <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={es}>
                         <DatePicker
-                            label="Fecha de Nacimiento"
+                            label={`Fecha de Nacimiento ${isFieldRequired('fechanacimiento') ? '*' : ''}`}
                             value={birthDate}
                             onChange={handleDateChange}
                             disabled={loading}
+                            maxDate={new Date()}
+                            minDate={new Date(1900, 0, 1)}
                             slotProps={{
                                 textField: {
                                     fullWidth: true,
-                                    margin: 'normal'
+                                    margin: 'normal',
+                                    error: !!errors.fechanacimiento,
+                                    helperText: errors.fechanacimiento || (isFieldRequired('fechanacimiento') ? 'Campo requerido' : ''),
+                                    required: isFieldRequired('fechanacimiento')
                                 }
                             }}
                         />
@@ -116,12 +143,15 @@ export const PersonalInfoSection: React.FC<PersonalInfoSectionProps> = ({
                 
                 <Grid item xs={12} sm={6}>
                     <TextField
+                        required={isFieldRequired('estadocivil')}
                         fullWidth
                         select
                         label="Estado Civil"
                         name="estadocivil"
                         value={formData.estadocivil}
                         onChange={handleInputChange}
+                        error={!!errors.estadocivil}
+                        helperText={errors.estadocivil || (isFieldRequired('estadocivil') ? 'Campo requerido' : '')}
                         disabled={loading}
                         margin="normal"
                     >
@@ -138,13 +168,21 @@ export const PersonalInfoSection: React.FC<PersonalInfoSectionProps> = ({
                 
                 <Grid item xs={12}>
                     <TextField
+                        required={isFieldRequired('lugarnacimiento')}
                         fullWidth
                         label="Lugar de Nacimiento"
                         name="lugarnacimiento"
                         value={formData.lugarnacimiento}
                         onChange={handleInputChange}
+                        error={!!errors.lugarnacimiento}
+                        helperText={errors.lugarnacimiento}
                         disabled={loading}
                         margin="normal"
+                        inputProps={{
+                            maxLength: 100,
+                            pattern: '[a-zA-ZáéíóúÁÉÍÓÚñÑ\\s,.-]+',
+                            title: 'Solo se permiten letras, espacios, comas, puntos y guiones'
+                        }}
                     />
                 </Grid>
             </Grid>

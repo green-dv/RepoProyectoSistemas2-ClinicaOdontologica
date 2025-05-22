@@ -9,7 +9,7 @@ export function createPatientFetcher(
 ) {
   return debounce(async (query: string = '') => {
     try {
-      const data = await fetchDateFilter(query, false); // showDisabled siempre false
+      const data = await fetchDateFilter(query, false); 
       setPatients(data);
     } catch (error) {
       console.error('Error al cargar los Pacientes', error);
