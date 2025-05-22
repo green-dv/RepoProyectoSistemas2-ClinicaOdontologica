@@ -14,36 +14,77 @@ export class IPatientRepository implements PatientRepository {
         const offset = (page - 1) * limit;
         const baseParams: (string | number)[] = [];
         let whereClause = 'WHERE habilitado = true';
-      
+
         if (searchQuery) {
-          baseParams.push(`%${searchQuery.toLowerCase()}%`);
-          whereClause += ` AND (LOWER(nombres) ILIKE $${baseParams.length} OR LOWER(apellidos) ILIKE $${baseParams.length})`;
+            baseParams.push(`%${searchQuery.toLowerCase()}%`);
+            whereClause += ` AND (LOWER(nombres) ILIKE $${baseParams.length} OR LOWER(apellidos) ILIKE $${baseParams.length})`;
         }
-      
+
         const countResult = await this.db.query(
-          `SELECT COUNT(*) FROM pacientes ${whereClause}`,
-          baseParams
+            `SELECT COUNT(*) FROM pacientes ${whereClause}`,
+            baseParams
         );
-      
-        baseParams.push(limit, offset);
+        
+        const queryParams = [...baseParams];
+        
+        queryParams.push(limit, offset);
+        
+        // Execute the main query with ORDER BY idpaciente DESC for latest first
         const result = await this.db.query(
-          `SELECT * FROM pacientes ${whereClause} ORDER BY idpaciente LIMIT $${baseParams.length - 1} OFFSET $${baseParams.length}`,
-          baseParams
+            `SELECT * FROM pacientes ${whereClause} ORDER BY idpaciente DESC LIMIT $${queryParams.length - 1} OFFSET $${queryParams.length}`,
+            queryParams
         );
-      
+
         const totalCount = parseInt(countResult.rows[0].count);
-      
+
         return {
-          data: result.rows as Patient[],
-          pagination: {
-            page,
-            limit,
-            totalItems: totalCount,
-            totalPages: Math.ceil(totalCount / limit)
-          }
+            data: result.rows as Patient[],
+            pagination: {
+              page,
+              limit,
+              totalItems: totalCount,
+              totalPages: Math.ceil(totalCount / limit)
+            }
         };
-      }
+    }
       
+    async getPatientsDisabled(page: number, limit: number, searchQuery?: string): Promise<PatientResponse> {
+        const offset = (page - 1) * limit;
+        const baseParams: (string | number)[] = [];
+        let whereClause = 'WHERE habilitado = false';
+
+        if (searchQuery) {
+            baseParams.push(`%${searchQuery.toLowerCase()}%`);
+            whereClause += ` AND (LOWER(nombres) ILIKE $${baseParams.length} OR LOWER(apellidos) ILIKE $${baseParams.length})`;
+        }
+
+        const countResult = await this.db.query(
+            `SELECT COUNT(*) FROM pacientes ${whereClause}`,
+            baseParams
+        );
+        
+        const queryParams = [...baseParams];
+        
+        queryParams.push(limit, offset);
+        
+        // Execute the main query with ORDER BY idpaciente DESC for latest first
+        const result = await this.db.query(
+            `SELECT * FROM pacientes ${whereClause} ORDER BY idpaciente DESC LIMIT $${queryParams.length - 1} OFFSET $${queryParams.length}`,
+            queryParams
+        );
+
+        const totalCount = parseInt(countResult.rows[0].count);
+
+        return {
+            data: result.rows as Patient[],
+            pagination: {
+              page,
+              limit,
+              totalItems: totalCount,
+              totalPages: Math.ceil(totalCount / limit)
+            }
+        };
+    }
       
 
     async getPatientById(id: number): Promise<Patient | null> {

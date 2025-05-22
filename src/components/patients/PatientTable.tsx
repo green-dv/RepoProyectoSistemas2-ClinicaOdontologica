@@ -1,33 +1,37 @@
 import React, { useState } from 'react';
-import { 
-  Box, 
-  Typography, 
-  Paper, 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableContainer, 
-  TableHead, 
-  TableRow,
-  TablePagination,
+import {
+  Box,
+  Typography,
+  Paper,
   Button,
-  IconButton,
-  Chip,
   TextField,
   InputAdornment,
   FormControlLabel,
   Switch,
   Alert,
+  List,
+  ListItem,
+  ListItemText,
+  ListItemAvatar,
+  Avatar,
+  Divider,
+  IconButton,
+  Chip,
+  Pagination,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
   Skeleton,
   Tooltip
 } from '@mui/material';
-import { 
-  Edit as EditIcon, 
-  Visibility as VisibilityIcon, 
+import {
+  Edit as EditIcon,
+  Visibility as VisibilityIcon,
   Delete as DeleteIcon,
   Search as SearchIcon,
   Add as AddIcon,
-  Refresh as RefreshIcon
+  Refresh as RefreshIcon,
 } from '@mui/icons-material';
 import { Patient } from '@/domain/entities/Patient';
 import { format } from 'date-fns';
@@ -51,7 +55,47 @@ interface PatientListProps {
   onCreatePatient: () => void;
 }
 
-export const PatientList: React.FC<PatientListProps> = ({ 
+// Función para generar los colores de los avatares
+function stringToColor(string: string) {
+  let hash = 0;
+  let i;
+    for (i = 0; i < string.length; i += 1) {
+      hash = string.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    let color = '#';
+    for (i = 0; i < 3; i += 1) {
+      const value = (hash >> (i * 8)) & 0xff;
+      color += `00${value.toString(16)}`.slice(-2);
+    }
+    return color;
+}
+
+// Función para generar avatar como de temas
+function getAvatarProps(name: string) {
+  // primero se divide los nombres en partes
+  // y se eliminan los espacios en blanco
+  const nameParts = name.trim().split(' ');
+  let initials = '';
+  
+  // aca se obtiene la primera letra del nombre
+  if (nameParts.length > 0 && nameParts[0]) {
+    initials += nameParts[0][0] || '';
+  }
+  
+  // aca se obtiene la primera letra del apellido
+  if (nameParts.length > 1 && nameParts[1]) {
+    initials += nameParts[1][0] || '';
+  }
+  
+  return {
+    sx: {
+      bgcolor: stringToColor(name),
+    },
+    children: initials.toUpperCase(),
+  };
+}
+
+export const PatientList: React.FC<PatientListProps> = ({
   patients,
   loading,
   error,
@@ -69,13 +113,13 @@ export const PatientList: React.FC<PatientListProps> = ({
   onCreatePatient
 }) => {
   const [showDisabled, setShowDisabled] = useState<boolean>(false);
-  
+
   const handleChangePage = (_event: unknown, newPage: number) => {
-    onPageChange(newPage);
+    onPageChange(newPage - 1); 
   };
 
-  const handleChangeRowsPerPage = (event: React.ChangeEvent<HTMLInputElement>) => {
-    onRowsPerPageChange(parseInt(event.target.value, 10));
+  const handleChangeRowsPerPage = (event: React.ChangeEvent<{ value: unknown }>) => {
+    onRowsPerPageChange(Number(event.target.value));
   };
 
   const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -86,12 +130,11 @@ export const PatientList: React.FC<PatientListProps> = ({
     setShowDisabled(!showDisabled);
   };
 
-  // Filter patients based on their enabled status
   const filteredPatients = showDisabled
     ? patients.filter(p => !p.habilitado)
     : patients.filter(p => p.habilitado);
 
-  // Format date function
+  // formatear la fecha y cambiar a español
   const formatDate = (dateString: string) => {
     if (!dateString) return 'No registrada';
     try {
@@ -102,14 +145,17 @@ export const PatientList: React.FC<PatientListProps> = ({
     }
   };
 
+  // Para calcular el número total de páginas
+  const totalPages = Math.ceil(totalPatients / rowsPerPage);
+
   return (
     <Box sx={{ width: '100%' }}>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-        <Typography variant="h5" component="h2" gutterBottom>
+        <Typography variant="h5" component="h2" gutterBottom sx={{ mb: 0 }}>
           Lista de Pacientes
         </Typography>
         <Box sx={{ display: 'flex', gap: 2 }}>
-          <Button 
+          <Button
             variant="outlined"
             startIcon={<RefreshIcon />}
             onClick={onRefresh}
@@ -117,9 +163,9 @@ export const PatientList: React.FC<PatientListProps> = ({
           >
             Actualizar
           </Button>
-          <Button 
-            variant="contained" 
-            color="primary" 
+          <Button
+            variant="contained"
+            color="primary"
             startIcon={<AddIcon />}
             onClick={onCreatePatient}
           >
@@ -134,7 +180,7 @@ export const PatientList: React.FC<PatientListProps> = ({
         </Alert>
       )}
 
-      {/* Search and filters row */}
+      {/* Filtros de búsqueda */}
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
         <TextField
           label="Buscar pacientes"
@@ -151,112 +197,102 @@ export const PatientList: React.FC<PatientListProps> = ({
             ),
           }}
         />
-        <FormControlLabel
-          control={
-            <Switch 
-              checked={showDisabled} 
-              onChange={handleToggleDisabled} 
-              color="primary" 
-            />
-          }
-          label="Mostrar inactivos"
-        />
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+          <FormControl size="small" sx={{ width: '120px' }}>
+            <InputLabel id="rows-per-page-label">Mostrar</InputLabel>
+            <Select
+              labelId="rows-per-page-label"
+              value={rowsPerPage}
+              label="Mostrar"
+              onChange={handleChangeRowsPerPage}
+            >
+              <MenuItem value={5}>5</MenuItem>
+              <MenuItem value={10}>10</MenuItem>
+              <MenuItem value={25}>25</MenuItem>
+            </Select>
+          </FormControl>
+          <FormControlLabel
+            control={
+              <Switch
+                checked={showDisabled}
+                onChange={handleToggleDisabled}
+                color="primary"
+              />
+            }
+            label="Mostrar inactivos"
+          />
+        </Box>
       </Box>
 
-      {/* Table */}
-      <TableContainer component={Paper} sx={{ mb: 2 }}>
-        <Table sx={{ minWidth: 650 }} aria-label="tabla de pacientes">
-          <TableHead>
-            <TableRow>
-              <TableCell>Nombre completo</TableCell>
-              <TableCell>Teléfono</TableCell>
-              <TableCell>Fecha de nacimiento</TableCell>
-              <TableCell>Estado</TableCell>
-              <TableCell align="right">Acciones</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {loading ? (
-              // Loading skeletons
-              Array.from(new Array(rowsPerPage)).map((_, index) => (
-                <TableRow key={`skeleton-${index}`}>
-                  <TableCell>
-                    <Skeleton variant="text" width="80%" height={24} />
-                  </TableCell>
-                  <TableCell>
-                    <Skeleton variant="text" width="60%" height={24} />
-                  </TableCell>
-                  <TableCell>
-                    <Skeleton variant="text" width="50%" height={24} />
-                  </TableCell>
-                  <TableCell>
-                    <Skeleton variant="text" width="40%" height={24} />
-                  </TableCell>
-                  <TableCell align="right">
-                    <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
-                      <Skeleton variant="circular" width={32} height={32} sx={{ mr: 1 }} />
-                      <Skeleton variant="circular" width={32} height={32} sx={{ mr: 1 }} />
-                      <Skeleton variant="circular" width={32} height={32} />
-                    </Box>
-                  </TableCell>
-                </TableRow>
-              ))
-            ) : filteredPatients.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={5} align="center">
-                  <Typography variant="body1" sx={{ py: 3, color: 'text.secondary' }}>
-                    {searchQuery.trim() !== '' 
-                      ? 'No se encontraron pacientes que coincidan con la búsqueda'
-                      : showDisabled 
-                        ? 'No hay pacientes inactivos'
-                        : 'No hay pacientes registrados'}
-                  </Typography>
-                </TableCell>
-              </TableRow>
-            ) : (
-              // Actual data
-              filteredPatients.map((patient) => (
-                <TableRow key={patient.idpaciente}>
-                  <TableCell component="th" scope="row">
-                    {patient.nombres} {patient.apellidos}
-                  </TableCell>
-                  <TableCell>
-                    {patient.telefonopersonal || 'No registrado'}
-                  </TableCell>
-                  <TableCell>
-                    {formatDate(patient.fechanacimiento)}
-                  </TableCell>
-                  <TableCell>
-                    <Chip 
-                      label={patient.habilitado ? 'Activo' : 'Inactivo'} 
-                      color={patient.habilitado ? 'success' : 'error'}
-                      size="small"
-                    />
-                  </TableCell>
-                  <TableCell align="right">
-                    <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+      {/* Patient List y el skeleton para la vista */}
+      <Paper sx={{ width: '100%', mb: 2, p: 0 }}>
+        <List sx={{ width: '100%', bgcolor: 'background.paper', p: 0 }}>
+          {loading ? (
+            Array.from(new Array(rowsPerPage)).map((_, index) => (
+              <React.Fragment key={`skeleton-${index}`}>
+                <ListItem alignItems="flex-start">
+                  <ListItemAvatar>
+                    <Skeleton variant="circular" width={40} height={40} />
+                  </ListItemAvatar>
+                  <ListItemText
+                    primary={<Skeleton variant="text" width="70%" height={28} />}
+                    secondary={
+                      <>
+                        <Skeleton variant="text" width="40%" height={20} />
+                        <Skeleton variant="text" width="60%" height={20} />
+                      </>
+                    }
+                  />
+                  <Box sx={{ display: 'flex', gap: 1 }}>
+                    <Skeleton variant="circular" width={30} height={30} />
+                    <Skeleton variant="circular" width={30} height={30} />
+                    <Skeleton variant="circular" width={30} height={30} />
+                  </Box>
+                </ListItem>
+                {index < rowsPerPage - 1 && <Divider variant="inset" component="li" />}
+              </React.Fragment>
+            ))
+          ) : filteredPatients.length === 0 ? (
+            <ListItem sx={{ justifyContent: 'center', py: 4 }}>
+              <Typography variant="body1" sx={{ color: 'text.secondary' }}>
+                {searchQuery.trim() !== ''
+                  ? 'No se encontraron pacientes que coincidan con la búsqueda'
+                  : showDisabled
+                    ? 'No hay pacientes inactivos'
+                    : 'No hay pacientes registrados'}
+              </Typography>
+            </ListItem>
+          ) : (
+            // Actual patient data
+            filteredPatients.map((patient, index) => (
+              <React.Fragment key={patient.idpaciente}>
+                <ListItem
+                  alignItems="flex-start"
+                  secondaryAction={
+                    <Box sx={{ display: 'flex', gap: 1 }}>
                       <Tooltip title="Ver detalles">
                         <IconButton
+                          edge="end"
                           size="small"
                           color="info"
                           onClick={() => onViewPatient(patient)}
-                          sx={{ mr: 1 }}
                         >
                           <VisibilityIcon fontSize="small" />
                         </IconButton>
                       </Tooltip>
                       <Tooltip title="Editar paciente">
                         <IconButton
+                          edge="end"
                           size="small"
                           color="primary"
                           onClick={() => onEditPatient(patient)}
-                          sx={{ mr: 1 }}
                         >
                           <EditIcon fontSize="small" />
                         </IconButton>
                       </Tooltip>
                       <Tooltip title="Eliminar paciente">
                         <IconButton
+                          edge="end"
                           size="small"
                           color="error"
                           onClick={() => onDeletePatient(patient)}
@@ -265,26 +301,59 @@ export const PatientList: React.FC<PatientListProps> = ({
                         </IconButton>
                       </Tooltip>
                     </Box>
-                  </TableCell>
-                </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
-      </TableContainer>
+                  }
+                >
+                  <ListItemAvatar>
+                    <Avatar 
+                      alt={`${patient.nombres} ${patient.apellidos}`}
+                      {...getAvatarProps(`${patient.nombres} ${patient.apellidos}`)}
+                    />
+                  </ListItemAvatar>
+                  <ListItemText
+                    primary={
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <Typography variant="subtitle1" component="span">
+                          {`${patient.nombres} ${patient.apellidos}`}
+                        </Typography>
+                        <Chip
+                          label={patient.habilitado ? 'Activo' : 'Inactivo'}
+                          color={patient.habilitado ? 'success' : 'error'}
+                          size="small"
+                          sx={{ height: 24 }}
+                        />
+                      </Box>
+                    }
+                    secondary={
+                      <React.Fragment>
+                        <Typography component="span" variant="body2" sx={{ display: 'block' }}>
+                          <strong>Teléfono:</strong> {patient.telefonopersonal || 'No registrado'}
+                        </Typography>
+                        <Typography component="span" variant="body2" sx={{ display: 'block' }}>
+                          <strong>Fecha de nacimiento:</strong> {formatDate(patient.fechanacimiento)}
+                        </Typography>
+                      </React.Fragment>
+                    }
+                  />
+                </ListItem>
+                {index < filteredPatients.length - 1 && <Divider variant="inset" component="li" />}
+              </React.Fragment>
+            ))
+          )}
+        </List>
+      </Paper>
 
-      {/* Pagination */}
-      <TablePagination
-        rowsPerPageOptions={[5, 10, 25]}
-        component="div"
-        count={totalPatients}
-        rowsPerPage={rowsPerPage}
-        page={page}
-        onPageChange={handleChangePage}
-        onRowsPerPageChange={handleChangeRowsPerPage}
-        labelRowsPerPage="Filas por página:"
-        labelDisplayedRows={({ from, to, count }) => `${from}-${to} de ${count}`}
-      />
+      {/* Paginacion */}
+      <Box sx={{ display: 'flex', justifyContent: 'center', my: 2 }}>
+        <Pagination
+          count={totalPages}
+          page={page + 1} // MUI Pagination esta en -1 por lo cual +1 good
+          onChange={handleChangePage}
+          color="primary"
+          showFirstButton
+          showLastButton
+          disabled={loading || totalPatients === 0}
+        />
+      </Box>
     </Box>
   );
 };

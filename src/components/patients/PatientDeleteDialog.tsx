@@ -46,7 +46,6 @@ export const PatientDeleteDialog: React.FC<PatientDeleteDialogProps> = ({
       
       if (result) {
         setSuccess(true);
-        // Close dialog after showing success message briefly
         setTimeout(() => {
           onClose();
           setSuccess(false);

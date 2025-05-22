@@ -32,7 +32,6 @@ export const PatientConfirmationDialog: React.FC<PatientConfirmationDialogProps>
     return null;
   }
 
-  // Format date if available
   const formattedBirthDate = patient.fechanacimiento 
     ? format(new Date(patient.fechanacimiento), 'dd MMMM yyyy', { locale: es })
     : 'No registrada';

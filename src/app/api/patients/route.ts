@@ -134,8 +134,9 @@ export async function GET(request: NextRequest) {
         const searchParams = request.nextUrl.searchParams;
         const page = parseInt(searchParams.get('page') || '1');
         const limit = parseInt(searchParams.get('limit') || '10');
-        
-        const patients = await getPatientsUseCase.execute(page, limit);
+        const searchQuery = searchParams.get('search') || undefined;
+
+        const patients = await getPatientsUseCase.execute(page, limit, searchQuery);
         return NextResponse.json(patients, { status: 200 });
     } catch (error) {
         console.error('Error getting patients:', error);
