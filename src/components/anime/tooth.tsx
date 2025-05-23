@@ -139,15 +139,16 @@ export default function AnimatedTooth() {
           {/* Corona del diente */}
             <path
                 d="
-                M100 30
-                C115 25, 130 30, 140 42
-                C145 50, 148 60, 146 72
-                C144 85, 135 98, 122 105
-                C112 110, 108 110, 100 110
-                C92 110, 88 110, 78 105
-                C65 98, 56 85, 54 72
-                C52 60, 55 50, 60 42
-                C70 30, 85 25, 100 30
+                M117 40
+                C120 25, 160 20, 160 50 
+                C160 55, 155 60, 150 75
+                C145 95, 140 120, 122 105
+                C140 110, 108 110, 100 110
+                C92 110,78 120, 75 100
+                C75 98, 70 85, 64 72
+                C55 60, 55 50, 60 40
+                C70 30, 85 25, 90 50
+                C80 50, 100 05, 130 50
                 Z
                 "
                 fill="url(#toothGradient)"
@@ -160,21 +161,20 @@ export default function AnimatedTooth() {
             <g className="tooth-roots">
                 <path
                 d="
-                    M85 110
-                    C80 130, 80 160, 90 190
-                    C94 200, 98 210, 100 215
-                    C102 210, 106 200, 110 190
-                    C120 160, 120 130, 115 110
-                    Z
+                  M92 110
+                  C90 130, 100 200, 110 240
+                  C120 240, 120 240, 125 230
+                  C135 200, 125 100, 130 105
+                  Z`
                 "
                 fill="url(#rootGradient)"
                 stroke="rgba(0,0,0,0.05)"
                 strokeWidth="1"
                 />
-                <path
+                {/* <path
                 d="
                     M70 105
-                    C65 120, 66 140, 70 165
+                    C65 120, 70 140, 70 165
                     C72 170, 75 178, 78 185
                     C80 180, 83 172, 85 165
                     C88 140, 87 120, 82 105
@@ -183,8 +183,8 @@ export default function AnimatedTooth() {
                 fill="url(#rootGradient)"
                 stroke="rgba(0,0,0,0.05)"
                 strokeWidth="1"
-                />
-                <path
+                /> */}
+                {/* <path
                 d="
                     M130 105
                     C135 120, 134 140, 130 165
@@ -196,7 +196,7 @@ export default function AnimatedTooth() {
                 fill="url(#rootGradient)"
                 stroke="rgba(0,0,0,0.05)"
                 strokeWidth="1"
-                />
+                /> */}
             </g>
 
             {/* Líneas de esmalte - más naturales */}
@@ -216,7 +216,7 @@ export default function AnimatedTooth() {
             />
           
           {/* Brillo principal con animación */}
-          <ellipse
+          {/* <ellipse
             className="tooth-highlight"
             cx="85"
             cy="50"
@@ -224,10 +224,10 @@ export default function AnimatedTooth() {
             ry="25"
             fill="rgba(255,255,255,0.7)"
             transform="rotate(-15 85 50)"
-          />
+          /> */}
           
           {/* Brillo secundario con animación */}
-          <ellipse
+          {/* <ellipse
             className="tooth-highlight"
             cx="90"
             cy="65"
@@ -235,7 +235,7 @@ export default function AnimatedTooth() {
             ry="12"
             fill="rgba(255,255,255,0.4)"
             transform="rotate(-10 90 65)"
-          />
+          /> */}
         </svg>
       </div>
       
@@ -260,8 +260,8 @@ export default function AnimatedTooth() {
         <div className="text-blue-600 font-bold text-lg tracking-wide">
           OREP PLUS
         </div>
-        <div className="text-gray-500 text-sm">
-          PABLA KISS POR FAVOR
+        <div className="text-gray-500 text-sm" >
+          +--PARA TI DE MI PABLA:3--+
         </div>
       </div>
     </div>
