@@ -353,7 +353,7 @@ export const PatientViewDialog: React.FC<PatientViewDialogProps> = ({
                         {antecedentes.map((antecedente, index) => (
                           <ListItem 
                             key={antecedente.idantecedente || index}
-                            button
+                            component="button"
                             divider
                             selected={currentAntecedente?.idantecedente === antecedente.idantecedente}
                             onClick={() => handlers.handleSelectAntecedente(antecedente)}

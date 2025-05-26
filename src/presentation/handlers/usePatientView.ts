@@ -75,9 +75,15 @@ export const usePatientViewHandlers = ({
                 setAntecedentes(antecedentesCompletos);
                 
                 if (antecedentesCompletos.length > 0) {
-                    setCurrentAntecedente(antecedentesCompletos[0]);
-                    // Obtener datos relacionados para el primer antecedente
-                    fetchRelatedData(antecedentesCompletos[0].idantecedente!);
+                    const primerAntecedente = antecedentesCompletos[0];
+                    
+                    // Primero establecemos el antecedente actual
+                    setCurrentAntecedente(primerAntecedente);
+                    
+                    // Luego obtenemos los datos relacionados usando el ID directamente
+                    if (primerAntecedente.idantecedente) {
+                        await fetchRelatedDataAndUpdateAntecedente(primerAntecedente.idantecedente, primerAntecedente);
+                    }
                 } else {
                     setCurrentAntecedente(null);
                     setEnfermedades([]);
@@ -102,17 +108,20 @@ export const usePatientViewHandlers = ({
     };
 
     /**
-     * Obtiene los datos relacionados a un antecedente específico
+     * Obtiene los datos relacionados y actualiza el antecedente específico
      */
-    const fetchRelatedData = async (antecedenteId: number): Promise<void> => {
+    const fetchRelatedDataAndUpdateAntecedente = async (
+        antecedenteId: number, 
+        antecedenteBase: AntecedenteCompleto
+    ): Promise<void> => {
         if (!antecedenteId) {
             console.warn('Intentando cargar datos relacionados sin un ID de antecedente');
             return;
         }
+        
         setLoadingRelatedData(true);
         
         try {
-            const currentId = antecedenteId;
             // Realizar todas las peticiones en paralelo para mejorar rendimiento
             const [enfermedadesResponse, habitosResponse, medicacionesResponse, atencionesResponse] = await Promise.all([
                 fetch(`/api/antecedents/${antecedenteId}/disease`),
@@ -120,14 +129,8 @@ export const usePatientViewHandlers = ({
                 fetch(`/api/antecedents/${antecedenteId}/medication`),
                 fetch(`/api/antecedents/${antecedenteId}/medicattention`)
             ]);
-            
-            const currentAntecedente = hookData.currentAntecedente;
-            if (!currentAntecedente || currentAntecedente.idantecedente !== currentId) {
-                console.warn('El antecedente cambió durante la carga de datos relacionados');
-                return;
-            }
 
-            // Procesar las respuestas y actualizar tanto el estado como el antecedente actual
+            // Procesar las respuestas
             let enfermedadesData: Illness[] = [];
             let habitosData: Habit[] = [];
             let medicacionesData: Medication[] = [];
@@ -136,51 +139,52 @@ export const usePatientViewHandlers = ({
             if (enfermedadesResponse.ok) {
                 const data = await enfermedadesResponse.json();
                 enfermedadesData = data.data || [];
-                setEnfermedades(enfermedadesData);
             } else {
                 console.error('Error al obtener enfermedades:', enfermedadesResponse.statusText);
-                setEnfermedades([]);
             }
             
             if (habitosResponse.ok) {
                 const data = await habitosResponse.json();
                 habitosData = data.data || [];
-                setHabitos(habitosData);
             } else {
                 console.error('Error al obtener hábitos:', habitosResponse.statusText);
-                setHabitos([]);
             }
             
             if (medicacionesResponse.ok) {
                 const data = await medicacionesResponse.json();
                 medicacionesData = data.data || [];
-                setMedicaciones(medicacionesData);
             } else {
                 console.error('Error al obtener medicaciones:', medicacionesResponse.statusText);
-                setMedicaciones([]);
             }
             
             if (atencionesResponse.ok) {
                 const data = await atencionesResponse.json();
                 atencionesData = data.data || [];
-                setAtencionesMedicas(atencionesData);
             } else {
                 console.error('Error al obtener atenciones médicas:', atencionesResponse.statusText);
-                setAtencionesMedicas([]);
             }
 
+            // Actualizar los estados de los datos relacionados
+            setEnfermedades(enfermedadesData);
+            setHabitos(habitosData);
+            setMedicaciones(medicacionesData);
+            setAtencionesMedicas(atencionesData);
+
+            // Crear el antecedente completo con los datos relacionados
             const antecedenteCompleto: AntecedenteCompleto = {
-                ...currentAntecedente,
+                ...antecedenteBase,
                 enfermedades: enfermedadesData.map(e => e.idenfermedad),
                 habitos: habitosData.map(h => h.idhabito),
                 medicaciones: medicacionesData.map(m => m.idmedicacion),
                 atencionesMedicas: atencionesData.map(a => a.idatencionmedica)
             };
             
+            // Actualizar el antecedente actual
             setCurrentAntecedente(antecedenteCompleto);
             
+            // Actualizar la lista de antecedentes
             setAntecedentes(prev => prev.map(ant => 
-                ant.idantecedente === currentId ? antecedenteCompleto : ant
+                ant.idantecedente === antecedenteId ? antecedenteCompleto : ant
             ));
         
         } catch (error) {
@@ -195,6 +199,19 @@ export const usePatientViewHandlers = ({
     };
 
     /**
+     * Obtiene los datos relacionados a un antecedente específico (versión legacy para compatibilidad)
+     */
+    const fetchRelatedData = async (antecedenteId: number): Promise<void> => {
+        const currentAntecedente = hookData.currentAntecedente;
+        if (!currentAntecedente) {
+            console.warn('No hay antecedente actual para cargar datos relacionados');
+            return;
+        }
+        
+        await fetchRelatedDataAndUpdateAntecedente(antecedenteId, currentAntecedente);
+    };
+
+    /**
      * Maneja el cambio de pestañas
      */
     const handleChangeTab = (_event: SyntheticEvent, newValue: number): void => {
@@ -204,18 +221,22 @@ export const usePatientViewHandlers = ({
     /**
      * Maneja la selección de un antecedente
      */
-    const handleSelectAntecedente = (antecedente: AntecedenteCompleto): void => {
+    const handleSelectAntecedente = async (antecedente: AntecedenteCompleto): Promise<void> => {
+        // Limpiar datos anteriores
         setEnfermedades([]);
         setHabitos([]);
         setMedicaciones([]);
         setAtencionesMedicas([]);
         
+        // Establecer el nuevo antecedente
         setCurrentAntecedente(antecedente);
         
+        // Cargar los datos relacionados
         if (antecedente.idantecedente) {
-            fetchRelatedData(antecedente.idantecedente);
+            await fetchRelatedDataAndUpdateAntecedente(antecedente.idantecedente, antecedente);
         }
         
+        // Resetear a la primera pestaña
         setTabValue(0); 
     };
 
@@ -236,7 +257,6 @@ export const usePatientViewHandlers = ({
         setSelectedAntecedente(null); 
     };
 
- 
     const handleAntecedenteAdded = (): void => {
         handleCloseAddAntecedenteDialog();
         fetchAntecedentes();
@@ -279,13 +299,11 @@ export const usePatientViewHandlers = ({
         setOpenEditAntecedenteDialog(true);
     };
 
-
     const handleCloseEditAntecedenteDialog = (): void => {
         setSelectedAntecedente(null);
         setOpenEditAntecedenteDialog(false);
     };
 
-   
     const handleAntecedenteUpdated = (): void => {
         handleCloseEditAntecedenteDialog();
         fetchAntecedentes();

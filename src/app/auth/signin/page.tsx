@@ -12,7 +12,7 @@ export default function LoginPage() {
     <Box
       sx={{
         minHeight: '100vh',
-        background: 'linear-gradient(135deg,rgb(126, 148, 233) 0%,rgb(201, 190, 212) 100%)',
+        background: 'linear-gradient(135deg,rgb(51, 74, 168) 0%,rgb(255, 255, 255) 100%)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
