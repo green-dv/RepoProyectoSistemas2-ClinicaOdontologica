@@ -177,9 +177,11 @@ export default function usePaymentPlanHandlers(){
     newPaymentPlan.pagos = payments;
     if(selectedPatient){
       newPaymentPlan.idpaciente =  Number(selectedPatient?.idpaciente) ?? null;
+      console.log('a'+ Number(selectedPatient?.idpaciente ?? 2));
     }
-    else if(newPaymentPlan?.idpaciente){
+    else if(newPaymentPlan.idpaciente){
       newPaymentPlan.idpaciente = Number(newPaymentPlan?.idpaciente) ?? null;
+      console.log('b'+ Number(newPaymentPlan?.idpaciente ?? 2));
     }
     setNewPaymentPlan(newPaymentPlan)
     
