@@ -25,6 +25,7 @@ import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import HomeIcon from '@mui/icons-material/Home';
 import LogoutIcon from '@mui/icons-material/Logout';
 import { signOut } from "next-auth/react";
+import PaymentsIcon from '@mui/icons-material/Payments';
 
 const drawerWidth = 240;
 
@@ -124,6 +125,7 @@ export default function MiniDrawer({ children }: MiniDrawerProps) {
     { text: 'Citas', path: '/dates' },
     { text: 'Calendario', path: '/calendar' },
     { text: 'Tratamientos', path: '/treatments' },
+    { text: 'Pagos', path: '/paymentsPlan' },
   ];
   const handleLogout = async () => {
     await signOut({ callbackUrl: "/auth/signin" }); 
@@ -207,6 +209,7 @@ export default function MiniDrawer({ children }: MiniDrawerProps) {
                     text === 'Citas' ? <AccessTimeIcon/> :
                     text === 'Calendario'? <CalendarMonthIcon/> :
                     text === 'Tratamientos' ? <LocalHospitalIcon/> :
+                    text === 'Pagos' ? <PaymentsIcon/> :
                     <HomeIcon />
                   }
                 </ListItemIcon>

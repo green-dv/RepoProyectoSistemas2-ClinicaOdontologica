@@ -121,7 +121,14 @@ export class PaymentPlanRepository implements IPaymentPlanRepository {
         const countQuery = `SELECT COUNT(*) FROM planpagos pp ${whereClause}`;
         const countResult = await this.db.query(countQuery, values);
         const totalCount = parseInt(countResult.rows[0].count, 10);
-        
+
+        // IMPORTANTE: copia los valores anteriores para no mezclarlos con LIMIT/OFFSET
+        const dataValues = [...values];
+        dataValues.push(limit);
+        const limitParam = paramIndex++;
+        dataValues.push(offset);
+        const offsetParam = paramIndex++;
+
         const dataQuery = `
             SELECT 
                 pp.idplanpago, 
@@ -131,11 +138,11 @@ export class PaymentPlanRepository implements IPaymentPlanRepository {
                 pp.descripcion, 
                 pp.estado, 
                 pp.idpaciente,
-                 (pt.nombres || ' ' || pt.apellidos) as paciente,
+                (pt.nombres || ' ' || pt.apellidos) as paciente,
                 SUM(p.montopagado) AS montopagado
             FROM planpagos pp
             JOIN pagos p ON pp.idplanpago = p.idplanpago
-            JOIN pacientes pt ON pt.idpaciente = pp.idpaciente
+            LEFT OUTER JOIN pacientes pt ON pt.idpaciente = pp.idpaciente
             ${whereClause}
             GROUP BY 
                 pp.idplanpago, 
@@ -147,14 +154,10 @@ export class PaymentPlanRepository implements IPaymentPlanRepository {
                 pt.nombres,
                 pt.apellidos
             ORDER BY pp.fechacreacion DESC
-            LIMIT $${paramIndex++} OFFSET $${paramIndex++};
-            `;
-
-        values.push(limit, offset);
-
-        const dataResult = await this.db.query(dataQuery, values);
+            LIMIT $${limitParam} OFFSET $${offsetParam};
+        `;
+        const dataResult = await this.db.query(dataQuery, dataValues);
         const plans = dataResult.rows as PaymentPlan[];
-        
         return {
             data: plans,
             totalCount
