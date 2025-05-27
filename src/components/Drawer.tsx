@@ -24,7 +24,10 @@ import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import HomeIcon from '@mui/icons-material/Home';
 import LogoutIcon from '@mui/icons-material/Logout';
+import BarChartOutlined from '@mui/icons-material/BarChartOutlined';
 import { signOut } from "next-auth/react";
+import { animate, stagger } from 'animejs';
+import { text } from 'stream/consumers';
 import PaymentsIcon from '@mui/icons-material/Payments';
 
 const drawerWidth = 240;
@@ -71,6 +74,8 @@ const AppBar = styled(MuiAppBar, {
     easing: theme.transitions.easing.sharp,
     duration: theme.transitions.duration.leavingScreen,
   }),
+  // Mantener position fixed y agregar overflow hidden solo al toolbar
+  position: 'fixed',
   variants: [
     {
       props: ({ open }) => open,
@@ -85,6 +90,37 @@ const AppBar = styled(MuiAppBar, {
     },
   ],
 }));
+
+const AnimationContainer = styled('div')({
+  position: 'absolute',
+  top: 0,
+  left: 0,
+  right: 0,
+  bottom: 0,
+  display: 'grid',
+  gridTemplateColumns: 'repeat(80, 1fr)',
+  gridTemplateRows: 'repeat(4, 1fr)',
+  gap: '1px',
+  alignItems: 'center',
+  justifyItems: 'center',
+  pointerEvents: 'none',
+  zIndex: 1,
+  padding: '4px',
+});
+
+const AnimationDot = styled('div')({
+  width: '4px',
+  height: '4px',
+  backgroundColor: 'rgba(255, 255, 255, 0.8)',
+  borderRadius: '50%',
+  transform: 'scale(0)',
+});
+
+// Styled Toolbar para controlar el overflow de la animación
+const StyledToolbar = styled(Toolbar)({
+  position: 'relative',
+  overflow: 'hidden',
+});
 
 const Drawer = styled(MuiDrawer, { shouldForwardProp: (prop) => prop !== 'open' })(
   ({ theme }) => ({
@@ -110,6 +146,7 @@ const Drawer = styled(MuiDrawer, { shouldForwardProp: (prop) => prop !== 'open' 
     ],
   }),
 );
+
 interface MiniDrawerProps {
   children: React.ReactNode;
 }
@@ -118,6 +155,7 @@ export default function MiniDrawer({ children }: MiniDrawerProps) {
   const router = useRouter();
   const theme = useTheme();
   const [open, setOpen] = React.useState(false);
+  const dotsRef = React.useRef<HTMLDivElement>(null);
 
   const menuItems = [
     { text: 'Inicio', path: '/' },
@@ -125,8 +163,44 @@ export default function MiniDrawer({ children }: MiniDrawerProps) {
     { text: 'Citas', path: '/dates' },
     { text: 'Calendario', path: '/calendar' },
     { text: 'Tratamientos', path: '/treatments' },
+    { text: 'Reportes', path: '/reports' },
     { text: 'Pagos', path: '/paymentsPlan' },
   ];
+
+  const getRandomStartPosition = (): number => {
+    return Math.floor(Math.random() * 320);
+  };
+
+  const animateGrid = React.useCallback(() => {
+    if (!dotsRef.current) return;
+    
+    const dots = dotsRef.current.querySelectorAll('.animation-dot');
+    
+    animate(dots, {
+      scale: [
+        { to: [0, 1.75] },
+        { to: 0 }
+      ],
+      boxShadow: [
+        { to: '0 0 1rem 0 currentColor' },
+        { to: '0 0 0rem 0 currentColor' }
+      ],
+      delay: stagger(80, { 
+        grid: [80, 4], 
+        from: getRandomStartPosition()
+      }),
+      onComplete: animateGrid
+    });
+  }, []);
+
+  React.useEffect(() => {
+    const timer = setTimeout(() => {
+      animateGrid();
+    }, 1000);
+
+    return () => clearTimeout(timer);
+  }, [animateGrid]);
+
   const handleLogout = async () => {
     await signOut({ callbackUrl: "/auth/signin" }); 
   };
@@ -143,7 +217,12 @@ export default function MiniDrawer({ children }: MiniDrawerProps) {
     <Box sx={{ display: 'flex' }}>
       <CssBaseline />
       <AppBar position="fixed" open={open}>
-        <Toolbar>
+        <StyledToolbar>
+          <AnimationContainer ref={dotsRef}>
+            {Array.from({ length: 320 }, (_, index) => (
+              <AnimationDot key={index} className="animation-dot" />
+            ))}
+          </AnimationContainer>
           <IconButton
             color="inherit"
             aria-label="open drawer"
@@ -161,7 +240,7 @@ export default function MiniDrawer({ children }: MiniDrawerProps) {
           <Typography variant="h6" noWrap component="div">
             Clinica Dental Orep Plus
           </Typography>
-        </Toolbar>
+        </StyledToolbar>
       </AppBar>
       <Drawer variant="permanent" open={open}>
         <DrawerHeader>
@@ -209,6 +288,7 @@ export default function MiniDrawer({ children }: MiniDrawerProps) {
                     text === 'Citas' ? <AccessTimeIcon/> :
                     text === 'Calendario'? <CalendarMonthIcon/> :
                     text === 'Tratamientos' ? <LocalHospitalIcon/> :
+                    text === 'Reportes' ? <BarChartOutlined/> :
                     text === 'Pagos' ? <PaymentsIcon/> :
                     <HomeIcon />
                   }

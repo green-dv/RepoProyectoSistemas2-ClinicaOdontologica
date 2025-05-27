@@ -1,4 +1,4 @@
-import { Illness } from "@/domain/entities/illnesses";
+import { Illness } from "@/domain/entities/Illnesses";
 export interface IIllnessRepository {
     fetchAll(query: string, showDisabled: boolean): Promise<Illness[]>;
     getById(id: number): Promise<Illness>;

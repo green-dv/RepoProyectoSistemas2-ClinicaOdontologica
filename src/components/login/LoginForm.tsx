@@ -11,7 +11,6 @@ import {
     TextField, 
     Typography, 
     Button,
-    Container, 
     Paper,
     Avatar, 
     FormControlLabel, 
@@ -22,10 +21,6 @@ import {
 } from '@mui/material';
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 
-//============================================================================
-// ESTOS SON COMPONENTES DEL MATERIAL UI SI SE PUEDE AGRGAR ESTILOS ESTARIA BIEN
-//============================================================================
-
 export function LoginForm() {
     const [email, setEmail] = React.useState('');
     const [password, setPassword] = React.useState('');
@@ -33,6 +28,7 @@ export function LoginForm() {
     const [isLoading, setIsLoading] = React.useState(false);
     const router = useRouter();
     const { data: session, status } = useSession();
+    
     useEffect(() => {
         if (status === "authenticated" && !session?.user?.cambiopassword) {
             router.push("/");
@@ -76,8 +72,8 @@ export function LoginForm() {
     };
 
     return (
-        <Container maxWidth="xs">
-            <Paper elevation={10} sx={{ marginTop: 8, padding: 2 }}>
+        <Box sx={{ width: '100%', maxWidth: 400, mx: 'auto', p: 2 }}>
+            <Paper elevation={10} sx={{ padding: 4 }}>
                 <Avatar
                     sx={{
                         mx: "auto",
@@ -139,9 +135,6 @@ export function LoginForm() {
                     >
                         <GoogleButton style={{ width: '100%' }} />
                     </Button>
-                    {/*<Button onClick={() => signIn('facebook')}>
-                        INICIAR SESION CON FACEBOOK
-                    </Button>*/}
                 </Box>
                 <Grid container justifyContent={'space-between'} sx={{ mt: 1 }}>
                     <Grid item>
@@ -150,15 +143,15 @@ export function LoginForm() {
                         </MuiLink>
                     </Grid>
                     <Grid>
-                    <Link href="/auth/register">
-                        <Typography variant="body2">
-                            Registrar
-                        </Typography>
-                    </Link>
+                        <Link href="/auth/register">
+                            <Typography variant="body2">
+                                Registrar
+                            </Typography>
+                        </Link>
                     </Grid>
                 </Grid>
             </Paper>
-        </Container>
+        </Box>
     );
 }
 

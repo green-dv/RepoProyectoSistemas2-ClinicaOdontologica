@@ -1,175 +1,177 @@
-import { Patient, PatientDTO } from '@/domain/entities/Patient';
-import { PatientsResponse } from '@/application/dtos/PatientResponse';
+import { Patient } from '@/domain/entities/Patient';
+import {PatientResponse} from '@/domain/dto/patient';
+import { PatientRepository } from '@/domain/repositories/PatientRepository';
+import { getConnection } from '../db/db';
 
-class PatientRepository {
-    static async fetchAll(
-        query: string = '', 
-        showDisabled: boolean = false,
-        page: number = 1,
-        limit: number = 10
-        ): Promise<PatientsResponse> {
-        try {
-            const endpoint = showDisabled 
-                ? `api/patients/disable?q=${query}&page=${page}&limit=${limit}` 
-                : `api/patients?q=${query}&page=${page}&limit=${limit}`;
-                
-            const response = await fetch(endpoint);
-                
-            if (!response.ok) {
-                throw new Error('Error al obtener los pacientes');
+export class IPatientRepository implements PatientRepository {
+    private db;
+
+    constructor() {
+        this.db = getConnection();
+    }
+
+    async getPatients(page: number, limit: number, searchQuery?: string): Promise<PatientResponse> {
+        const offset = (page - 1) * limit;
+        const baseParams: (string | number)[] = [];
+        let whereClause = 'WHERE habilitado = true';
+
+        if (searchQuery) {
+            baseParams.push(`%${searchQuery.toLowerCase()}%`);
+            whereClause += ` AND (LOWER(nombres) ILIKE $${baseParams.length} OR LOWER(apellidos) ILIKE $${baseParams.length})`;
+        }
+
+        const countResult = await this.db.query(
+            `SELECT COUNT(*) FROM pacientes ${whereClause}`,
+            baseParams
+        );
+        
+        const queryParams = [...baseParams];
+        
+        queryParams.push(limit, offset);
+        
+        const result = await this.db.query(
+            `SELECT * FROM pacientes ${whereClause} ORDER BY idpaciente DESC LIMIT $${queryParams.length - 1} OFFSET $${queryParams.length}`,
+            queryParams
+        );
+
+        const totalCount = parseInt(countResult.rows[0].count);
+
+        return {
+            data: result.rows as Patient[],
+            pagination: {
+              page,
+              limit,
+              totalItems: totalCount,
+              totalPages: Math.ceil(totalCount / limit)
             }
-                
-            const data = await response.json();
-            return {
-                data: data.data || [],
-                pagination: data.pagination || { 
-                page: 1, 
-                limit, 
-                totalItems: 0, 
-                totalPages: 0 
-                }
-            }; 
-        } catch (error) {
-            console.error('Error en PatientRepository.fetchAll:', error);
-            throw error;
-        }
+        };
     }
-    static async fetchDateFilter(query: string = '', showDisabled: boolean = false): Promise<Patient[]> {
-        try {
-            const endpoint = showDisabled 
-                ? `api/patients/disable?q=${query}` 
-                : `api/patients?q=${query}`;
-            
-            const response = await fetch(endpoint);
-            
-            if (!response.ok) {
-                throw new Error('Error al obtener los pacientes');
+      
+    async getPatientsDisabled(page: number, limit: number, searchQuery?: string): Promise<PatientResponse> {
+        const offset = (page - 1) * limit;
+        const baseParams: (string | number)[] = [];
+        let whereClause = 'WHERE habilitado = false';
+
+        if (searchQuery) {
+            baseParams.push(`%${searchQuery.toLowerCase()}%`);
+            whereClause += ` AND (LOWER(nombres) ILIKE $${baseParams.length} OR LOWER(apellidos) ILIKE $${baseParams.length})`;
+        }
+
+        const countResult = await this.db.query(
+            `SELECT COUNT(*) FROM pacientes ${whereClause}`,
+            baseParams
+        );
+        
+        const queryParams = [...baseParams];
+        
+        queryParams.push(limit, offset);
+        
+        const result = await this.db.query(
+            `SELECT * FROM pacientes ${whereClause} ORDER BY idpaciente DESC LIMIT $${queryParams.length - 1} OFFSET $${queryParams.length}`,
+            queryParams
+        );
+
+        const totalCount = parseInt(countResult.rows[0].count);
+
+        return {
+            data: result.rows as Patient[],
+            pagination: {
+              page,
+              limit,
+              totalItems: totalCount,
+              totalPages: Math.ceil(totalCount / limit)
             }
-          
-            const data = await response.json();
-            return data.data || data; 
-        } catch (error) {
-            console.error('Error en PatientRepository.fetchAll:', error);
-            throw error;
-        }
+        };
     }
-    static async getById(id: number): Promise<Patient> {
-        const response = await fetch(`api/patients/${id}`);
+      
+
+    async getPatientById(id: number): Promise<Patient | null> {
+        const result = await this.db.query(
+        'SELECT * FROM pacientes WHERE idpaciente = $1 AND habilitado = true',
+        [id]
+        );
         
-        if (!response.ok) {
-          throw new Error('Error al obtener el paciente');
+        if (result.rows.length === 0) {
+            return null;
         }
         
-        const data = await response.json();
-        return data;
-    }
-    
-    static async create(patient: PatientDTO): Promise<Patient> {
-        try {
-            const preparedPatient = {
-                ...patient,
-                sexo: patient.sexo !== undefined ? patient.sexo : true,
-                telefonodomicilio: patient.telefonodomicilio || null,
-                lugarnacimiento: patient.lugarnacimiento || null,
-                aseguradora: patient.aseguradora || null
-            };
-        
-            console.log('Enviando datos al servidor (create):', JSON.stringify(preparedPatient, null, 2));
-        
-            const response = await fetch(`api/patients`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(preparedPatient),
-            });
-        
-            if (!response.ok) {
-                const errorData = await response.json();
-                console.error('Error de creación:', errorData);
-                throw new Error(errorData.message || 'Error al crear paciente');
-            }
-        
-            const data = await response.json();
-            return data.patient || data;
-        } catch (error) {
-            console.error('Error en PatientRepository.create:', error);
-            throw error;
-        }
+        return result.rows[0] as Patient;
     }
 
-    static async update(id: number, patient: PatientDTO): Promise<Patient> {
-        try {
-            const preparedPatient = {
-                ...patient,
-                sexo: patient.sexo !== undefined ? patient.sexo : true,
-                telefonodomicilio: patient.telefonodomicilio || null,
-                lugarnacimiento: patient.lugarnacimiento || null,
-                aseguradora: patient.aseguradora || null
-            };
+    async createPatient(patient: Patient): Promise<Patient> {
+        const result = await this.db.query(
+        `INSERT INTO pacientes 
+        (nombres, apellidos, direccion, telefonodomicilio, telefonopersonal, 
+        lugarnacimiento, fechanacimiento, sexo, estadocivil, ocupacion, 
+        aseguradora, habilitado) 
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) 
+        RETURNING *`,
+        [
+            patient.nombres, 
+            patient.apellidos, 
+            patient.direccion, 
+            patient.telefonodomicilio, 
+            patient.telefonopersonal,
+            patient.lugarnacimiento, 
+            patient.fechanacimiento, 
+            patient.sexo, 
+            patient.estadocivil, 
+            patient.ocupacion,
+            patient.aseguradora, 
+            patient.habilitado ?? true
+        ]
+        );
         
-            console.log('Enviando datos al servidor (update):', JSON.stringify(preparedPatient, null, 2));
-        
-            const response = await fetch(`api/patients/${id}`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(preparedPatient),
-            });
-        
-            if (!response.ok) {
-                const errorData = await response.json();
-                console.error('Error del servidor:', errorData);
-                if (errorData.errors && Array.isArray(errorData.errors)) {
-                    throw new Error(`Error de validación: ${errorData.errors.join(', ')}`);
-                }
-                
-                throw new Error(errorData.message || 'Error al actualizar paciente');
-            }
-        
-            const data = await response.json();
-            return data.patient || data;
-        } catch (error) {
-            console.error('Error en PatientRepository.update:', error);
-            throw error;
-        }
+        return result.rows[0] as Patient;
     }
 
-    static async delete(id: number): Promise<void> {
-        const response = await fetch(`api/patients/${id}`, {
-            method: 'DELETE',
-        });
+    async updatePatient(id: number, patient: Patient): Promise<Patient | null> {
+        const result = await this.db.query(
+        `UPDATE pacientes SET 
+            nombres = $1, 
+            apellidos = $2, 
+            direccion = $3, 
+            telefonodomicilio = $4, 
+            telefonopersonal = $5, 
+            lugarnacimiento = $6, 
+            fechanacimiento = $7, 
+            sexo = $8, 
+            estadocivil = $9, 
+            ocupacion = $10, 
+            aseguradora = $11, 
+            habilitado = $12
+        WHERE idpaciente = $13 AND habilitado = true 
+        RETURNING *`,
+        [
+            patient.nombres, 
+            patient.apellidos, 
+            patient.direccion, 
+            patient.telefonodomicilio, 
+            patient.telefonopersonal,
+            patient.lugarnacimiento, 
+            patient.fechanacimiento, 
+            patient.sexo, 
+            patient.estadocivil, 
+            patient.ocupacion,
+            patient.aseguradora, 
+            patient.habilitado ?? true,
+            id
+        ]
+        );
         
-        if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.message || 'Error al eliminar paciente');
+        if (result.rows.length === 0) {
+            return null;
         }
+        
+        return result.rows[0] as Patient;
     }
 
-    static async restore(id: number): Promise<void> {
-        const response = await fetch(`api/patients/${id}`, {
-            method: 'DELETE',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ type: 'restore' }),
-        });
+    async deletePatient(id: number): Promise<boolean> {
+        const result = await this.db.query(
+        'UPDATE pacientes SET habilitado = false WHERE idpaciente = $1 AND habilitado = true',
+        [id]
+        );
         
-        if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.message || 'Error al restaurar paciente');
-        }
-    }
-
-    static async deletePermanently(id: number): Promise<void> {
-        const response = await fetch(`api/patients/${id}?type=physical`, {
-            method: 'DELETE',
-        });
-        
-        if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.message || 'Error al eliminar permanentemente el paciente');
-        }
+        return result.rowCount !== null && result.rowCount > 0;
     }
 }
-
-export const patientRepository = PatientRepository;

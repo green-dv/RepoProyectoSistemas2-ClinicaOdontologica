@@ -42,7 +42,6 @@ interface PatientsState {
     pageSize: number;
     total: number;
   }>>;
-  // auxxs
   resetForm: () => void;
   showMessage: (message: string, severity: AlertColor) => void;
 }
@@ -67,7 +66,7 @@ const debouncedFetchPatients = debounce(async (
         const response = await fetchPatientsFunc(query, showDisabled, page, limit);
         setPatients(response.data);
         setPagination({
-          page: response.pagination.page - 1, // Convert to 0-based for MUI
+          page: response.pagination.page - 1, 
           pageSize: response.pagination.limit,
           total: response.pagination.totalItems
         });
@@ -221,12 +220,10 @@ export default function usePatientHandlers(state: PatientsState) {
   };
 
   const handlePaginationChange = (page: number, pageSize: number) => {
-    // MUI uses 0-based indexing, but our API uses 1-based
     handleFetchPatients(searchTerm, page + 1, pageSize);
   };
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     state.setSearchTerm(e.target.value);
-    // The debounced search will trigger automatically thanks to the useEffect
   };
 
   return {

@@ -1,11 +1,11 @@
-import { Patient, PatientDTO } from '@/domain/entities/Patient';
+import { Patient } from '@/domain/entities/Patient';
+import { PatientResponse } from '@/domain/dto/patient';
 
-export interface IPatientRepository {
-    fetchAll(query: string, showDisabled: boolean): Promise<Patient[]>;
-    getById(id: number): Promise<Patient>;
-    create(patient: PatientDTO): Promise<Patient>;
-    update(id: number, patient: PatientDTO): Promise<Patient>;
-    delete(id: number): Promise<void>;
-    restore(id: number): Promise<void>;
-    deletePermanently(id: number): Promise<void>;
+export interface PatientRepository {
+    getPatients(page: number, limit: number, searchQuery?: string): Promise<PatientResponse>;
+    getPatientsDisabled(page: number, limit: number, searchQuery?: string): Promise<PatientResponse>;
+    getPatientById(id: number): Promise<Patient | null>;
+    createPatient(patient: Patient): Promise<Patient>;
+    updatePatient(id: number, patient: Patient): Promise<Patient | null>;
+    deletePatient(id: number): Promise<boolean>;
 }

@@ -1,162 +1,218 @@
 import { useState, useEffect, useCallback } from 'react';
-import debounce from 'lodash/debounce';
-import { Patient, PatientDTO } from '@/domain/entities/Patient';
-import { AlertColor } from '@mui/material';
-import { fetchPatients } from '@/application/usecases/patients';
+import { Patient } from '@/domain/entities/Patient';
+import { PatientResponse } from '@/domain/dto/patient';
 
-export interface SnackbarMessage {
-  message: string;
-  severity: AlertColor;
-}
-
-export interface PatientState {
-  patients: Patient[];
+export interface NotificationType {
   open: boolean;
-  searchTerm: string;
-  newPatient: PatientDTO;
-  showDisabled: boolean;
-  isLoading: boolean;
-  selectedPatient: Patient | null;
-  snackbar: SnackbarMessage | null;
-  pagination: {
-    page: number;
-    pageSize: number;
-    total: number;
-  };
-  
-  // Setters
-  setPatients: React.Dispatch<React.SetStateAction<Patient[]>>;
-  setOpen: React.Dispatch<React.SetStateAction<boolean>>;
-  setSearchTerm: React.Dispatch<React.SetStateAction<string>>;
-  setNewPatient: React.Dispatch<React.SetStateAction<PatientDTO>>;
-  setShowDisabled: React.Dispatch<React.SetStateAction<boolean>>;
-  setIsLoading: React.Dispatch<React.SetStateAction<boolean>>;
-  setSelectedPatient: React.Dispatch<React.SetStateAction<Patient | null>>;
-  setSnackbar: React.Dispatch<React.SetStateAction<SnackbarMessage | null>>;
-  setPagination: React.Dispatch<React.SetStateAction<{
-    page: number;
-    pageSize: number;
-    total: number;
-  }>>;
-  
-  resetForm: () => void;
-  showMessage: (message: string, severity: AlertColor) => void;
-  fetchPatientsWithFilters: (query?: string, page?: number, pageSize?: number) => void;
+  message: string;
+  type: 'success' | 'error';
 }
 
-export default function usePatients(): PatientState {
+export const usePatientsPage = () => {
   const [patients, setPatients] = useState<Patient[]>([]);
-  const [open, setOpen] = useState(false);
-  const [searchTerm, setSearchTerm] = useState<string>('');
-  const [newPatient, setNewPatient] = useState<PatientDTO>({
-    nombres: '',
-    apellidos: '',
-    direccion: '',
-    telefonodomicilio: null,
-    telefonopersonal: '',
-    lugarnacimiento: null,
-    fechanacimiento: '',
-    sexo: true,
-    estadocivil: 'Soltero',
-    ocupacion: '',
-    aseguradora: null,
-  });
-  const [showDisabled, setShowDisabled] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
+  const [totalPatients, setTotalPatients] = useState<number>(0);
+  const [page, setPage] = useState<number>(0);
+  const [rowsPerPage, setRowsPerPage] = useState<number>(10);
+  const [searchQuery, setSearchQuery] = useState<string>('');
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState<string>(searchQuery);
+    
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
-  const [snackbar, setSnackbar] = useState<SnackbarMessage | null>(null);
-  const [pagination, setPagination] = useState({
-    page: 0,
-    pageSize: 10,
-    total: 0
+  const [viewDialogOpen, setViewDialogOpen] = useState<boolean>(false);
+  const [formDialogOpen, setFormDialogOpen] = useState<boolean>(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState<boolean>(false);
+  
+  const [notification, setNotification] = useState<NotificationType>({
+    open: false,
+    message: '',
+    type: 'success'
   });
 
-  const resetForm = () => {
-    setNewPatient({
-      nombres: '',
-      apellidos: '',
-      direccion: '',
-      telefonodomicilio: null,
-      telefonopersonal: '',
-      lugarnacimiento: null,
-      fechanacimiento: '',
-      sexo: true,
-      estadocivil: 'Soltero',
-      ocupacion: '',
-      aseguradora: null,
-    });
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchQuery(searchQuery);
+    }, 500);
+    
+    return () => {
+      clearTimeout(timer);
+    };
+  }, [searchQuery]);
+
+  const fetchPatients = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      const queryParams = new URLSearchParams({
+        page: String(page + 1), 
+        limit: String(rowsPerPage),
+      });
+
+      if (debouncedSearchQuery) {
+        queryParams.append('search', debouncedSearchQuery);
+      }
+
+      const response = await fetch(`/api/patients?${queryParams}`);
+      
+      if (!response.ok) {
+        throw new Error('Error al cargar los pacientes');
+      }
+      
+      const data: PatientResponse = await response.json();
+      
+      setPatients(data.data);
+      setTotalPatients(data.pagination.totalItems);
+    } catch (err) {
+      console.error('Error fetching patients:', err);
+      setError(err instanceof Error ? err.message : 'Error desconocido');
+    } finally {
+      setLoading(false);
+    }
+  }, [page, rowsPerPage, debouncedSearchQuery]);
+
+  useEffect(() => {
+    fetchPatients();
+  }, [fetchPatients]);
+
+  // Dialog handlers
+  const handleViewPatient = (patient: Patient) => {
+    setSelectedPatient(patient);
+    setViewDialogOpen(true);
+  };
+
+  const handleEditPatient = (patient: Patient) => {
+    setSelectedPatient(patient);
+    setFormDialogOpen(true);
+  };
+
+  const handleNewPatient = () => {
+    setSelectedPatient(null);
+    setFormDialogOpen(true);
+  };
+
+  const handleDeletePatient = (patient: Patient) => {
+    setSelectedPatient(patient);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleConfirmDelete = async (id: number): Promise<boolean> => {
+    try {
+      const response = await fetch(`/api/patients/${id}`, {
+        method: 'DELETE',
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to delete patient');
+      }
+      
+      await fetchPatients();
+      
+      setNotification({
+        open: true,
+        message: 'Paciente eliminado con éxito',
+        type: 'success'
+      });
+      
+      return true;
+    } catch (error) {
+      console.error('Error deleting patient:', error);
+      
+      // Show error notification
+      setNotification({
+        open: true,
+        message: 'Error al eliminar el paciente',
+        type: 'error'
+      });
+      
+      return false;
+    }
+  };
+
+  const handleCloseViewDialog = () => {
+    setViewDialogOpen(false);
+  };
+
+  const handleCloseFormDialog = () => {
+    setFormDialogOpen(false);
     setSelectedPatient(null);
   };
 
-  const showMessage = (message: string, severity: AlertColor) => {
-    setSnackbar({ message, severity });
+  const handleCloseDeleteDialog = () => {
+    setDeleteDialogOpen(false);
+    setSelectedPatient(null);
   };
 
-  // Create a debounced function for fetching patients
-  const debouncedFetchPatients = useCallback(
-    debounce(async (
-      query: string = '', 
-      page: number = 1, 
-      pageSize: number = 10
-    ) => {
-      setIsLoading(true);
-      try {
-        const response = await fetchPatients(query, showDisabled, page, pageSize);
-        setPatients(response.data);
-        setPagination({
-          page: response.pagination.page - 1, // Convert to 0-based for MUI
-          pageSize: response.pagination.limit,
-          total: response.pagination.totalItems
-        });
-      } catch (error) {
-        console.error('Error al cargar los pacientes:', error);
-        showMessage('Error al cargar los pacientes', 'error');
-      } finally {
-        setIsLoading(false);
-      }
-    }, 300), // 300ms debounce delay
-    [showDisabled] // Re-create debounced function when showDisabled changes
-  );
+  const handleFormSuccess = () => {
+    fetchPatients();
+    
+    setNotification({
+      open: true,
+      message: selectedPatient?.idpaciente 
+        ? 'Paciente actualizado con éxito' 
+        : 'Nuevo paciente creado con éxito',
+      type: 'success'
+    });
+  };
 
-  // Exposed method to trigger the fetch with filters
-  const fetchPatientsWithFilters = useCallback((
-    query: string = searchTerm,
-    page: number = 1,
-    pageSize: number = 10
-  ) => {
-    debouncedFetchPatients(query, page, pageSize);
-  }, [debouncedFetchPatients, searchTerm]);
+  const handleCloseNotification = () => {
+    setNotification({ ...notification, open: false });
+  };
 
-  // Effect to fetch patients when searchTerm or showDisabled changes
-  useEffect(() => {
-    fetchPatientsWithFilters();
-  }, [searchTerm, showDisabled, fetchPatientsWithFilters]);
+  const handleSearchChange = (query: string) => {
+    setSearchQuery(query);
+    setPage(0); 
+  };
+
+  const handlePageChange = (newPage: number) => {
+    setPage(newPage);
+  };
+
+  const handleRowsPerPageChange = (newRowsPerPage: number) => {
+    setRowsPerPage(newRowsPerPage);
+    setPage(0);
+  };
+
+  const handleEditFromView = () => {
+    setViewDialogOpen(false);
+    setFormDialogOpen(true);
+  };
+
+  const handleRefresh = () => {
+    fetchPatients();
+  };
 
   return {
-    // Estados
+    // States
     patients,
-    open,
-    searchTerm,
-    newPatient,
-    showDisabled,
-    isLoading,
+    loading,
+    error,
+    totalPatients,
+    page,
+    rowsPerPage,
+    searchQuery,
     selectedPatient,
-    snackbar,
-    pagination,
+    viewDialogOpen,
+    formDialogOpen,
+    deleteDialogOpen,
+    notification,
     
-    // Setters
-    setPatients,
-    setOpen,
-    setSearchTerm,
-    setNewPatient,
-    setShowDisabled,
-    setIsLoading,
-    setSelectedPatient,
-    setSnackbar,
-    setPagination,
-    
-    resetForm,
-    showMessage,
-    fetchPatientsWithFilters
+    // Handlers
+    handleViewPatient,
+    handleEditPatient,
+    handleNewPatient,
+    handleDeletePatient,
+    handleConfirmDelete,
+    handleCloseViewDialog,
+    handleCloseFormDialog,
+    handleCloseDeleteDialog,
+    handleFormSuccess,
+    handleCloseNotification,
+    handleSearchChange,
+    handlePageChange,
+    handleRowsPerPageChange,
+    handleEditFromView,
+    handleRefresh,
+    fetchPatients
   };
-}
+};
