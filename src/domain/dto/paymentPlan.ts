@@ -3,22 +3,38 @@ export interface CreatePaymentPlanDTO {
     fechacreacion: string;
     fechalimite: string;
     montotal: number;
-    descripcion: string;
+    descripcion: string | null;
     estado: string;
-    idconsulta: number;
-    installments: {
-      montoesperado: number;
-      fechapago: string;
-    }[];
+    idconsulta: number | null;
+    idpaciente: number | null;
+    pagos: {
+      montoesperado: number | null;
+      montopagado: number | null;
+      fechapago: string | null;
+      estado: string;
+      enlacecomprobante: string | null;
+      idplanpago: number;
+    }[] | [];
 }
   
 export interface UpdatePaymentPlanDTO {
     idplanpago: number;
-    fechacreacion?: string;
-    fechalimite?: string;
-    montotal?: number;
-    descripcion?: string;
-    estado?: string;
+    fechacreacion: string;
+    fechalimite: string;
+    montotal: number;
+    descripcion: string | null;
+    estado: string;
+    idconsulta: number | null;
+    idpaciente: number | null;
+    pagos: {
+      idpago: number;
+      montoesperado: number | null;
+      montopagado: number | null;
+      fechapago: string | null;
+      estado: string;
+      enlacecomprobante: string | null;
+      idplanpago: number;
+    }[] | [];
 }
   
 export interface PaymentPlanResponse {

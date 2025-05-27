@@ -36,28 +36,45 @@ export class PaymentService {
         return createdPayment;
     }
 
+    // async updatePayment(paymentData: UpdatePaymentDTO): Promise<Payment> {
+    //     const existingPayment = await this.paymentRepository.getById(paymentData.idpago);
+    //     if (!existingPayment) {
+    //         throw new Error('El pago no existe >:');
+    //     }
+    //     const paymentUpdate: Payment = {
+    //         idpago: paymentData.idpago,
+    //         montoesperado: paymentData.montoesperado ?? existingPayment.montoesperado,
+    //         montopagado: paymentData.montopagado ?? existingPayment.montopagado,
+    //         fechapago: paymentData.fechapago ? new Date(paymentData.fechapago) : existingPayment.fechapago,
+    //         estado: paymentData.estado ?? existingPayment.estado,
+    //         enlacecomprobante: paymentData.enlacecomprobante ?? existingPayment.enlacecomprobante,
+    //         idplanpago: existingPayment.idplanpago
+    //     };
+
+    //     const updatedPayment = await this.paymentRepository.update(paymentUpdate);
+
+    //     if (paymentData.montopagado && paymentData.montopagado > 0) {
+    //         await this.handlePaymentImpact(updatedPayment.idplanpago);
+    //     }
+    //     return updatedPayment;
+    // }
     async updatePayment(paymentData: UpdatePaymentDTO): Promise<Payment> {
         const existingPayment = await this.paymentRepository.getById(paymentData.idpago);
         if (!existingPayment) {
-            throw new Error('El pago no existe >:');
+            throw new Error('El pago no existe');
         }
+        
         const paymentUpdate: Payment = {
             idpago: paymentData.idpago,
-            montoesperado: paymentData.montoesperado ?? existingPayment.montoesperado,
-            montopagado: paymentData.montopagado ?? existingPayment.montopagado,
-            fechapago: paymentData.fechapago ? new Date(paymentData.fechapago) : existingPayment.fechapago,
+            montoesperado: existingPayment.montoesperado,
+            montopagado: existingPayment.montopagado,    
+            fechapago: existingPayment.fechapago,        
             estado: paymentData.estado ?? existingPayment.estado,
             enlacecomprobante: paymentData.enlacecomprobante ?? existingPayment.enlacecomprobante,
-            idplanpago: existingPayment.idplanpago
+            idplanpago: existingPayment.idplanpago       
         };
-
-        const updatedPayment = await this.paymentRepository.update(paymentUpdate);
-
-        // verificar el plan si hubo ya un pago
-        if (paymentData.montopagado && paymentData.montopagado > 0) {
-            await this.handlePaymentImpact(updatedPayment.idplanpago);
-        }
-        return updatedPayment;
+    
+        return this.paymentRepository.update(paymentUpdate);
     }
 
     async getPaymentById(id: number): Promise<Payment | null> {

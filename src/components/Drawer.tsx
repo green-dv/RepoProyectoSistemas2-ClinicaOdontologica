@@ -28,6 +28,7 @@ import BarChartOutlined from '@mui/icons-material/BarChartOutlined';
 import { signOut } from "next-auth/react";
 import { animate, stagger } from 'animejs';
 import { text } from 'stream/consumers';
+import PaymentsIcon from '@mui/icons-material/Payments';
 
 const drawerWidth = 240;
 
@@ -163,6 +164,7 @@ export default function MiniDrawer({ children }: MiniDrawerProps) {
     { text: 'Calendario', path: '/calendar' },
     { text: 'Tratamientos', path: '/treatments' },
     { text: 'Reportes', path: '/reports' },
+    { text: 'Pagos', path: '/paymentsPlan' },
   ];
 
   const getRandomStartPosition = (): number => {
@@ -287,6 +289,7 @@ export default function MiniDrawer({ children }: MiniDrawerProps) {
                     text === 'Calendario'? <CalendarMonthIcon/> :
                     text === 'Tratamientos' ? <LocalHospitalIcon/> :
                     text === 'Reportes' ? <BarChartOutlined/> :
+                    text === 'Pagos' ? <PaymentsIcon/> :
                     <HomeIcon />
                   }
                 </ListItemIcon>

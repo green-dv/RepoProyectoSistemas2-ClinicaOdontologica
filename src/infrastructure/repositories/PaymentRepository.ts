@@ -3,7 +3,7 @@ import { IPaymentRepository} from '@/domain/repositories/PaymentRepository';
 import { getConnection } from '../db/db';
 
 export class PaymentRepository implements IPaymentRepository {
-    private db;
+    private readonly db;
     constructor() {
         this.db = getConnection();
     }
@@ -65,6 +65,12 @@ export class PaymentRepository implements IPaymentRepository {
         values.push(idpago);
         
         const result = await this.db.query(query, values);
+        return result.rows[0] as Payment;
+    }
+
+    async delete(id: number): Promise<Payment>{
+        const query = `DELETE FROM pagos WHERE idplanpago = $1 RETURNING *`;
+        const result = await this.db.query(query, [id]);
         return result.rows[0] as Payment;
     }
 

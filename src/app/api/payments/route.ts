@@ -12,8 +12,8 @@ const paymentService = new PaymentService(paymentRepository, paymentPlanReposito
 export async function GET(request: NextRequest) {
     try {
         const { searchParams } = new URL(request.url);
-        const page = parseInt(searchParams.get('page') || '1', 10);
-        const limit = parseInt(searchParams.get('limit') || '10', 10);
+        const page = parseInt(searchParams.get('page') ?? '1', 10);
+        const limit = parseInt(searchParams.get('limit') ?? '10', 10);
         const planId = searchParams.get('planId');
         
         // para la paginacion
@@ -46,10 +46,10 @@ export async function POST(request: NextRequest) {
         
         const paymentData: CreatePaymentDTO = {
         montoesperado: body.montoesperado,
-        montopagado: body.montopagado || 0,
+        montopagado: body.montopagado ?? 0,
         fechapago: body.fechapago,
-        estado: body.estado || 'pendiente',
-        enlacecomprobante: body.enlacecomprobante || null,
+        estado: body.estado ?? 'pendiente',
+        enlacecomprobante: body.enlacecomprobante ?? null,
         idplanpago: body.idplanpago
         };
         
