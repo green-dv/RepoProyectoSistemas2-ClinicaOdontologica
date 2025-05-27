@@ -3,6 +3,7 @@ import { PaymentPlanService } from '@/application/usecases/paymentsPlan/paymentP
 import { PaymentPlanRepository } from '@/infrastructure/repositories/PaymentPlanRepository';
 import { PaymentRepository } from '@/infrastructure/repositories/PaymentRepository';
 import { UpdatePaymentPlanDTO } from '@/domain/dto/paymentPlan';
+import { Payment } from '@/domain/entities/Payments';
 
 const paymentPlanRepository = new PaymentPlanRepository();
 const paymentRepository = new PaymentRepository();
@@ -38,8 +39,16 @@ export async function PUT(request: NextRequest,{ params }: { params: { id: strin
         if (isNaN(id)) {
             return NextResponse.json({ error: 'ID inválido' }, { status: 400 });
         }
-        
+
         const body = await request.json();
+
+        if (Array.isArray(body.pagos) && body.pagos.reduce((total: number, p: Payment) => total + Number(p.montopagado ?? 0), 0) >= body.montotal) {
+            body.estado = 'Completado';
+            console.log('Pago completado');
+        }
+        else{
+            console.log('No se pago completamente ' + body.pagos);
+        }
         
         const planData: UpdatePaymentPlanDTO = {
             idplanpago: id,
@@ -47,7 +56,10 @@ export async function PUT(request: NextRequest,{ params }: { params: { id: strin
             fechalimite: body.fechalimite,
             montotal: body.montotal,
             descripcion: body.descripcion,
-            estado: body.estado
+            estado: body.estado,
+            idpaciente: body.idpaciente ?? null,
+            idconsulta: body.idconsulta ?? null,
+            pagos: body.pagos
         };
         
         const updatedPlan = await paymentPlanService.updatePaymentPlan(planData);
@@ -61,7 +73,7 @@ export async function PUT(request: NextRequest,{ params }: { params: { id: strin
     }
 }
 
-export async function POST(request: NextRequest,{ params }: { params: { id: string }}) 
+/*export async function POST(request: NextRequest,{ params }: { params: { id: string }}) 
 {
     try {
         const id = parseInt(params.id, 10);
@@ -85,4 +97,4 @@ export async function POST(request: NextRequest,{ params }: { params: { id: stri
             { status: 500 }
         );
     }
-}
+}*/

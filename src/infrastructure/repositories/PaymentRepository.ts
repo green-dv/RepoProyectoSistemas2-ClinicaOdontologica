@@ -68,6 +68,12 @@ export class PaymentRepository implements IPaymentRepository {
         return result.rows[0] as Payment;
     }
 
+    async delete(id: number): Promise<Payment>{
+        const query = `DELETE FROM pagos WHERE idplanpago = $1 RETURNING *`;
+        const result = await this.db.query(query, [id]);
+        return result.rows[0] as Payment;
+    }
+
 
     async getById(id: number): Promise<Payment | null> {
         const query = 'SELECT * FROM pagos WHERE idpago = $1';

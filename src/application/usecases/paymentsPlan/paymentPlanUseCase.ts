@@ -12,14 +12,19 @@ export class PaymentPlanService {
 
     async createPaymentPlanWithInstallments(dto: CreatePaymentPlanDTO): Promise<PaymentPlanWithPayments> {
         this.validatePaymentPlanInput(dto);
-
+        let pagado = false;
+        if(dto.pagos.reduce((total, p) => total + (p.montopagado ?? 0), 0) >= dto.montotal){
+            pagado = true;
+        }
         const paymentPlanData: Omit<PaymentPlan, 'idplanpago'> = {
             fechacreacion: new Date(dto.fechacreacion),
             fechalimite: new Date(dto.fechalimite),
             montotal: dto.montotal,
             descripcion: dto.descripcion,
-            estado: 'pendiente',
-            idconsulta: dto.idconsulta
+            idpaciente: dto.idpaciente ?? null,
+            estado: pagado ? 'completado' : 'pendiente',
+            paciente: null,
+            idconsulta: dto.idconsulta != 0 ? dto.idconsulta : null
         };
 
         const createdPlan = await this.paymentPlanRepository.create(paymentPlanData);
@@ -29,13 +34,13 @@ export class PaymentPlanService {
         }
 
         const payments: Payment[] = [];
-        for (const installment of dto.installments) {
+        for (const installment of dto.pagos) {
             const payment: Omit<Payment, 'idpago'> = {
-                montoesperado: installment.montoesperado,
-                montopagado: 0,
-                fechapago: new Date(installment.fechapago),
-                estado: 'pendiente',
-                enlacecomprobante: null,
+                montoesperado: installment.montoesperado!,
+                montopagado: installment.montopagado ?? 0,
+                fechapago: installment.fechapago ? new Date(installment.fechapago) : null,
+                estado: (installment.montopagado ?? 0) > 0 ? 'completado' : 'pendiente',
+                enlacecomprobante: installment.enlacecomprobante,
                 idplanpago: createdPlan.idplanpago
             };
 
@@ -49,7 +54,7 @@ export class PaymentPlanService {
         };
     }
 
-    async updatePaymentPlan(dto: UpdatePaymentPlanDTO): Promise<PaymentPlan> {
+    async updatePaymentPlan(dto: UpdatePaymentPlanDTO): Promise<PaymentPlanWithPayments> {
         const existingPlan = await this.paymentPlanRepository.getById(dto.idplanpago);
         if (!existingPlan) {
             throw new Error('El plan de pago no existe >;');
@@ -64,6 +69,8 @@ export class PaymentPlanService {
             montotal: dto.montotal ?? existingPlan.montotal,
             descripcion: dto.descripcion ?? existingPlan.descripcion,
             estado: dto.estado ?? existingPlan.estado,
+            idpaciente: dto.idpaciente ?? null,
+            paciente: null,
             idconsulta: existingPlan.idconsulta
         };
 
@@ -71,11 +78,31 @@ export class PaymentPlanService {
             throw new Error('La fecha de creación no puede ser posterior a la fecha límite');
         }
         
-        if (existingPlan.pagos && planUpdate.montotal < existingPlan.pagos.reduce((a, b) => a + b.montopagado, 0)) {
+        if (existingPlan.pagos && planUpdate.montotal < existingPlan.pagos.reduce((a, b) => a + (b.montopagado ?? 0), 0)) {
             throw new Error('No puede reducir el monto total por debajo de los pagos ya realizados');
         }
 
-        return this.paymentPlanRepository.update(planUpdate);
+        const updatedPlan = await this.paymentPlanRepository.update(planUpdate);
+        await this.paymentRepository.delete(planUpdate.idplanpago);
+
+        const payments: Payment[] = [];
+        for (const installment of dto.pagos) {
+            const payment: Payment = {
+                idpago: installment.idpago ?? 0,
+                montoesperado: installment.montoesperado!,
+                montopagado: installment.montopagado ?? 0,
+                fechapago: installment.fechapago ? new Date(installment.fechapago) : null,
+                estado: (installment.montopagado ?? 0) > 0 ? 'completado' : 'pendiente',
+                enlacecomprobante: installment.enlacecomprobante,
+                idplanpago: dto.idplanpago
+            };
+            payments.push(await this.paymentRepository.create(payment));
+        }
+
+        return {
+            ...updatedPlan,
+            pagos: payments
+        };
     }
 
     async getPaymentPlanById(id: number): Promise<PaymentPlanWithPayments | null> {
@@ -97,7 +124,7 @@ export class PaymentPlanService {
         );
     }
 
-    async getPaginatedPaymentPlans(page: number, limit: number): Promise<{
+    async getPaginatedPaymentPlans(page: number, limit: number, estado: string | null, fechainicio: string | null, fechafin: string | null): Promise<{
         data: PaymentPlan[];
         pagination: {
             page: number;
@@ -106,7 +133,7 @@ export class PaymentPlanService {
             totalPages: number;
         }
     }> {
-        const { data, totalCount } = await this.paymentPlanRepository.getPaginated(page, limit);
+        const { data, totalCount } = await this.paymentPlanRepository.getPaginated(page, limit, estado ?? null, fechainicio ?? null, fechafin ?? null);
         
         return {
         data,
@@ -119,7 +146,7 @@ export class PaymentPlanService {
         };
     }
 
-    async payFullAmount(planId: number, paymentData: {
+    /*async payFullAmount(planId: number, paymentData: {
         montopagado: number;
         fechapago: string;
         enlacecomprobante?: string | null;
@@ -155,7 +182,7 @@ export class PaymentPlanService {
             throw new Error('Error al recuperar el plan actualizado');
         }
         return updatedPlan;
-    }
+    }*/
     async validatePaymentPlanInput(dto: CreatePaymentPlanDTO | UpdatePaymentPlanDTO, existingPlan?: PaymentPlan) {
         const today = new Date();
     
@@ -182,12 +209,12 @@ export class PaymentPlanService {
         if (
             dto.montotal && 
             existingPlan?.pagos?.length &&
-            dto.montotal < existingPlan.pagos.reduce((sum, p) => sum + p.montopagado, 0)
+            dto.montotal < existingPlan.pagos.reduce((sum, p) => sum + (p.montopagado ?? 0), 0)
         ) {
             throw new Error('No puede reducir el monto total por debajo de los pagos ya realizados');
         }
     
-        if ('installments' in dto && Math.abs(dto.installments.reduce((s, i) => s + i.montoesperado, 0) - dto.montotal) > 0.01) {
+        if ('installments' in dto && Math.abs(dto.pagos.reduce((s, i) => s + (i.montoesperado ?? 0), 0) - dto.montotal) > 0.01) {
             throw new Error('La suma de las cuotas no coincide con el monto total del plan');
         }
     }

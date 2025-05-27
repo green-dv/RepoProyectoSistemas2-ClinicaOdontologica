@@ -15,8 +15,8 @@ export class PaymentPlanRepository implements IPaymentPlanRepository {
 
     async create(paymentPlan: Omit<PaymentPlan, 'idplanpago'>): Promise<PaymentPlan> {
         const query = `
-            INSERT INTO planpagos (fechacreacion, fechalimite, montotal, descripcion, estado, idconsulta)
-            VALUES ($1, $2, $3, $4, $5, $6)
+            INSERT INTO planpagos (fechacreacion, fechalimite, montotal, descripcion, estado, idconsulta, idpaciente)
+            VALUES ($1, $2, $3, $4, $5, $6, $7)
             RETURNING *
         `;
         
@@ -26,7 +26,8 @@ export class PaymentPlanRepository implements IPaymentPlanRepository {
             paymentPlan.montotal,
             paymentPlan.descripcion,
             paymentPlan.estado,
-            paymentPlan.idconsulta
+            paymentPlan.idconsulta,
+            paymentPlan.idpaciente
         ];
 
         const result = await this.db.query(query, values);
@@ -38,10 +39,10 @@ export class PaymentPlanRepository implements IPaymentPlanRepository {
             throw new Error('ID de plan de pago es requerido para su actualizacion >;');
         }
         
-        const { idplanpago, pagos, ...updateData } = paymentPlan;
+        const { idplanpago, pagos, montopagado, paciente, ...updateData } = paymentPlan;
         
         const setFields: string[] = [];
-        const values: (string | number | Date)[] = [];
+        const values: (string | number | Date | null)[] = [];
         let paramCounter = 1;
         
         Object.entries(updateData).forEach(([key, value]) => {
@@ -70,7 +71,19 @@ export class PaymentPlanRepository implements IPaymentPlanRepository {
     }
 
     async getById(id: number): Promise<PaymentPlan | null> {
-        const query = 'SELECT * FROM planpagos WHERE idplanpago = $1';
+        const query = `SELECT 
+                pp.idplanpago, 
+                pp.fechacreacion, 
+                pp.fechalimite, 
+                pp.montotal, 
+                pp.descripcion, 
+                pp.estado, 
+                pp.idpaciente,
+                (pt.nombres || ' ' || pt.apellidos) as paciente
+            FROM planpagos pp
+            JOIN pacientes pt ON pt.idpaciente = pp.idpaciente
+            WHERE pp.idplanpago = $1`;
+
         const result = await this.db.query(query, [id]);
         
         if (result.rows.length === 0) {
@@ -81,23 +94,65 @@ export class PaymentPlanRepository implements IPaymentPlanRepository {
         return paymentPlan;
     }
 
-    async getPaginated(page: number, limit: number): Promise<{
+    async getPaginated(page: number, limit: number, estado: string | null, fechainicio: string | null, fechafin:string | null): Promise<{
         data: PaymentPlan[];
         totalCount: number;
     }> {
         const offset = (page - 1) * limit;
-        
-        const countQuery = 'SELECT COUNT(*) FROM planpagos';
-        const countResult = await this.db.query(countQuery);
+
+        const conditions:string[] = [];
+        const values: any[] = [];
+        let paramIndex = 1;
+
+        if(estado){
+            conditions.push(`pp.estado = $${paramIndex++}`);
+            values.push(estado);
+        }
+        if(fechainicio){
+            conditions.push(`pp.fechacreacion >= $${paramIndex++}`);
+            values.push(fechainicio);
+        }
+        if(fechafin){
+            conditions.push(`pp.fechacreacion <= $${paramIndex++}`);
+            values.push(fechafin);
+        }
+        const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
+
+        const countQuery = `SELECT COUNT(*) FROM planpagos pp ${whereClause}`;
+        const countResult = await this.db.query(countQuery, values);
         const totalCount = parseInt(countResult.rows[0].count, 10);
         
         const dataQuery = `
-            SELECT * FROM planpagos
-            ORDER BY idplanpago DESC
-            LIMIT $1 OFFSET $2
-        `;
-        
-        const dataResult = await this.db.query(dataQuery, [limit, offset]);
+            SELECT 
+                pp.idplanpago, 
+                pp.fechacreacion, 
+                pp.fechalimite, 
+                pp.montotal, 
+                pp.descripcion, 
+                pp.estado, 
+                pp.idpaciente,
+                 (pt.nombres || ' ' || pt.apellidos) as paciente,
+                SUM(p.montopagado) AS montopagado
+            FROM planpagos pp
+            JOIN pagos p ON pp.idplanpago = p.idplanpago
+            JOIN pacientes pt ON pt.idpaciente = pp.idpaciente
+            ${whereClause}
+            GROUP BY 
+                pp.idplanpago, 
+                pp.fechacreacion, 
+                pp.fechalimite, 
+                pp.montotal, 
+                pp.descripcion, 
+                pp.estado,
+                pt.nombres,
+                pt.apellidos
+            ORDER BY pp.fechacreacion DESC
+            LIMIT $${paramIndex++} OFFSET $${paramIndex++};
+            `;
+
+        values.push(limit, offset);
+
+        const dataResult = await this.db.query(dataQuery, values);
         const plans = dataResult.rows as PaymentPlan[];
         
         return {

@@ -4,10 +4,13 @@ export interface PaymentPlan {
     fechacreacion: Date;
     fechalimite: Date;
     montotal: number;
-    descripcion: string;
+    descripcion: string | null;
     estado: string;
-    idconsulta: number;
+    idconsulta: number | null;
+    idpaciente: number | null;
+    paciente: string | null;
     pagos?: Payment[];
+    montopagado?: number;
 }
 
 export interface PaymentPlanWithPayments extends PaymentPlan {
