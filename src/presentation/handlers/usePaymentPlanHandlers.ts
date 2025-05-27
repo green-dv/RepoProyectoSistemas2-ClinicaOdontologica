@@ -175,9 +175,18 @@ export default function usePaymentPlanHandlers(){
 
   const handleSubmit = async () => {
 
+    console.log('se entro a handle submit');
     newPaymentPlan.pagos = payments;
-    newPaymentPlan.idpaciente = selectedPatient?.idpaciente ?? null;
-    setNewPaymentPlan(newPaymentPlan)
+    if(newPaymentPlan?.idpaciente){
+      console.log('DEBUGidpaciente: ' +  newPaymentPlan?.idpaciente);
+      newPaymentPlan.idpaciente = Number(newPaymentPlan?.idpaciente) ?? null;
+    }
+    else{
+      console.log('DEBUGidpaciente: ' +  Number(selectedPatient?.idpaciente));
+      setNewPaymentPlan(newPaymentPlan)
+    }
+    
+    
     if(!validations()){
       return;
     }
@@ -430,8 +439,9 @@ const recalculatePayments2 = (
         setCuotas(rawPlan.pagos?.length ?? 0);
         setMontotal(rawPlan.montotal ?? '');
         setPayments(rawPlan.pagos ?? []);
-        if(rawPlan.paciente) {
-          setSelectedPatient(rawPlan.paciente);
+        console.log("paciente:" + rawPlan.idpaciente)
+        if(rawPlan.paciente && rawPlan.idpaciente) {
+          setSelectedPatient(rawPlan.idpaciente);
           setSearchQuery(rawPlan.paciente);
         }
         console.log('paciente '+ rawPlan.paciente);

@@ -172,6 +172,7 @@ export class PaymentPlanRepository implements IPaymentPlanRepository {
 
     async getPlanWithPayments(id: number): Promise<(PaymentPlan & { pagos: Payment[] }) | null> {
         const paymentPlan = await this.getById(id);
+        console.log(paymentPlan)
         if (!paymentPlan) return null;
 
         const payments = await this.paymentRepo.getByPlanId(id);
