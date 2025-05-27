@@ -134,7 +134,7 @@ export class PaymentPlanService {
         }
     }> {
         const { data, totalCount } = await this.paymentPlanRepository.getPaginated(page, limit, estado ?? null, fechainicio ?? null, fechafin ?? null);
-        
+
         return {
         data,
         pagination: {
