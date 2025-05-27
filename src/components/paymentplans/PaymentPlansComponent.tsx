@@ -1,6 +1,7 @@
 'use client';
 import PaymentPlansTable from "./PaymentPlansTable";
 import usePaymentPlanHandlers from "@/presentation/handlers/usePaymentPlanHandlers";
+import usePaymentHandlers from "@/presentation/handlers/usePaymentHandler";
 import { Add } from "@mui/icons-material";
 import 
 {
@@ -26,7 +27,6 @@ export default function PaymentPlansComponent(){
     payments,
     isEditingPayment,
 
-    handleFetchPaymentPlans,
     handleChangePage,
     handleChangeRowsPerPage,
     handleOpen,
@@ -38,8 +38,46 @@ export default function PaymentPlansComponent(){
     handleEdit,
     handleEditPayment,
     handleEditPaymentInput,
-    setIsEditingPayment
+    setIsEditingPayment,
+    setPayments,
+
+    //filtros
+    filterStatus, 
+    setFilterStatus,
+    filterStartDate, 
+    setFilterStartDate,
+    filterEndDate, 
+    setFilterEndDate,
+    handleStatusFilterChange,
+    handleFetchPaymentPlans,
+
+    //PACIENTES
+    searchLoading,
+    searchQuery,
+    patients,
+    handleClearSearch,
+    handlePatientSelect,
+    setSearchQuery,
+    setShouldSearch,
+    shouldSearch,
   } = usePaymentPlanHandlers();
+
+  const{
+    handleUploadComprobante,
+    handleCloseComprobanteDialog,
+    handleOpenComprobanteDialog,
+    handleStatusChange,
+    status,
+    fechapago,
+    montopago,
+
+    paymentIndex,
+    comprobanteDialogOpen,
+    selectedPayment,
+    selectedIndex,
+    setFechaPago,
+    setMontoPago,
+  } = usePaymentHandlers();
 
   
   return(
@@ -56,23 +94,53 @@ export default function PaymentPlansComponent(){
         pagination={{ page, pageSize: rowsPerPage, total }}
         handleChangePage={handleChangePage}
         handleChangeRowsPerPage={handleChangeRowsPerPage}
+        handleFetchPaymentPlans={handleFetchPaymentPlans}
         onEdit={handleEdit}
         onPaymentEdit={() => {}}
         onPaginationChange={() => {}}
+        filterStatus={filterStatus}
+        setFilterStatus={setFilterStatus}
+        filterStartDate={filterStartDate}
+        setFilterStartDate={setFilterStartDate}
+        filterEndDate={filterEndDate}
+        setFilterEndDate={setFilterEndDate}
+        handleStatusChange={handleStatusFilterChange}
       />
       <PaymentsPlanDialog
         open={open}
         onClose={handleClose}
-        cuotas={cuotas}
+        cuotas={parseInt(cuotas) | 0}
         onSubmit={handleSubmit}
         paymentPlan={newPaymentPlan}
         payments={payments}
+        status={status}
+        comprobanteDialogOpen={comprobanteDialogOpen}
         handleChange={handleChange}
         isEditing={!!selectedPaymentPlan}
+        paymentIndex={paymentIndex ?? 0}
         handleEditPayment={handleEditPayment}
         isEditingPayment={isEditingPayment}
         setIsEditingPayment={setIsEditingPayment}
         handleEditPaymentInput={handleEditPaymentInput}
+        selectedPayment={selectedPayment}
+        selectedIndex={selectedIndex}
+        handleStatusChange={handleStatusChange}
+        handleCloseComprobanteDialog={handleCloseComprobanteDialog}
+        handleOpenComprobanteDialog={handleOpenComprobanteDialog}
+        handleUploadComprobante={handleUploadComprobante}
+        montoPago={montopago}
+        fechaPago={fechapago}
+        setFechaPago={setFechaPago}
+        setMontoPago={setMontoPago}
+        setPayments={setPayments}
+        searchLoading={searchLoading}
+        searchQuery={searchQuery}
+        patients={patients}
+        handleClearSearch={handleClearSearch}
+        handlePatientSelect={handlePatientSelect}
+        setSearchQuery={setSearchQuery}
+        setShouldSearch={setShouldSearch}
+        shouldSearch={shouldSearch}
       />
 
       <SnackbarAlert

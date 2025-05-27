@@ -21,7 +21,9 @@ export class PaymentPlanService {
             fechalimite: new Date(dto.fechalimite),
             montotal: dto.montotal,
             descripcion: dto.descripcion,
+            idpaciente: dto.idpaciente ?? null,
             estado: pagado ? 'completado' : 'pendiente',
+            paciente: null,
             idconsulta: dto.idconsulta != 0 ? dto.idconsulta : null
         };
 
@@ -67,6 +69,8 @@ export class PaymentPlanService {
             montotal: dto.montotal ?? existingPlan.montotal,
             descripcion: dto.descripcion ?? existingPlan.descripcion,
             estado: dto.estado ?? existingPlan.estado,
+            idpaciente: dto.idpaciente ?? null,
+            paciente: null,
             idconsulta: existingPlan.idconsulta
         };
 
@@ -120,7 +124,7 @@ export class PaymentPlanService {
         );
     }
 
-    async getPaginatedPaymentPlans(page: number, limit: number): Promise<{
+    async getPaginatedPaymentPlans(page: number, limit: number, estado: string | null, fechainicio: string | null, fechafin: string | null): Promise<{
         data: PaymentPlan[];
         pagination: {
             page: number;
@@ -129,7 +133,7 @@ export class PaymentPlanService {
             totalPages: number;
         }
     }> {
-        const { data, totalCount } = await this.paymentPlanRepository.getPaginated(page, limit);
+        const { data, totalCount } = await this.paymentPlanRepository.getPaginated(page, limit, estado ?? null, fechainicio ?? null, fechafin ?? null);
         
         return {
         data,

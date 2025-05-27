@@ -5,33 +5,55 @@ import {
   Dialog, DialogTitle, DialogContent, DialogActions,
   Button, Box, Typography, LinearProgress,
   IconButton, CircularProgress, Alert, Snackbar,
-  Paper, Divider, Fade
+  Paper, Divider, Fade,
+  TextField
 } from '@mui/material';
 import { 
   Close, 
-  PhotoCamera, 
-  DeleteOutline, 
+  PhotoCamera,
   AddPhotoAlternate, 
   Save,
   FileUpload,
-  InsertDriveFile
+  InsertDriveFile,
+  Check
 } from '@mui/icons-material';
 import Image from 'next/image';
+import { Payment } from '@/domain/entities/Payments';
+import { DatePicker, LocalizationProvider } from '@mui/x-date-pickers';
+import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
+import usePaymentPlanHandlers from '@/presentation/handlers/usePaymentPlanHandlers';
 
 interface ComprobanteDialogProps {
   open: boolean;
   onClose: () => void;
   onUpload: (idpago: number, enlaceComprobante: string | null) => void;
-  enlaceComprobante: string | null;
+  payment: Payment;
   idpago: number;
+  montotal: number;
+  cuotas: number;
+  paymentIndex: number;
+  fechapago: Date;
+  montopago: number;
+  setFechaPago: (v_fecha: Date) => void;
+  setMontoPago: (v_monto: number) => void;
+  payments: Payment[];
+  setPayments: React.Dispatch<React.SetStateAction<Payment[]>>;
 }
 
 const ComprobanteDialog: React.FC<ComprobanteDialogProps> = ({
   open,
   onClose,
-  onUpload,
-  enlaceComprobante,
-  idpago
+  payment,
+  idpago,
+  setMontoPago,
+  setFechaPago,
+  montotal,
+  cuotas,
+  fechapago,
+  montopago,
+  paymentIndex,
+  payments,
+  setPayments
 }) => {
   const [previewUrl, setPreviewUrl] = useState<string>('');
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
@@ -40,23 +62,33 @@ const ComprobanteDialog: React.FC<ComprobanteDialogProps> = ({
   const [uploadProgress, setUploadProgress] = useState(0);
   const [success, setSuccess] = useState(false);
   const [imageLoading, setImageLoading] = useState(true);
+  const [montoPagoOriginal, setMontoPagoOriginal] = useState(0);
 
-  const hasExistingComprobante = !!enlaceComprobante;
+  const hasExistingComprobante = !!payment.enlacecomprobante;
   const hasNewComprobante = !!uploadedFile;
   const showEmptyState = !hasExistingComprobante && !hasNewComprobante;
+
+  const {recalculatePayments2} = usePaymentPlanHandlers();
+
 
   useEffect(() => {
     if (!open) {
       setError('');
       setUploadProgress(0);
       setSuccess(false);
+      setMontoPago(0);
+      setFechaPago(new Date());
+    } else{
+      setMontoPagoOriginal(payment.montopagado ?? 0);
+      setMontoPago(payment.montopagado ?? 0);
+      setFechaPago(new Date(payment.fechapago ?? new Date()));
     }
   }, [open]);
 
   useEffect(() => {
     if (open) {
-      if (enlaceComprobante) {
-        setPreviewUrl(enlaceComprobante);
+      if (payment.enlacecomprobante) {
+        setPreviewUrl(payment.enlacecomprobante);
         setImageLoading(true);
         setUploadedFile(null);
       } else {
@@ -65,7 +97,7 @@ const ComprobanteDialog: React.FC<ComprobanteDialogProps> = ({
         setImageLoading(false);
       }
     }
-  }, [enlaceComprobante, open]);
+  }, [payment.enlacecomprobante, open]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files?.[0]) return;
@@ -86,86 +118,145 @@ const ComprobanteDialog: React.FC<ComprobanteDialogProps> = ({
     setPreviewUrl(URL.createObjectURL(file));
     setImageLoading(true);
   };
+  const handleClose = async () => {
+    setError('');
+    const isValid = await handleInputValidations();
+    if (!isValid) {
+      return;
+    }
 
+    const updatedPayments = handleGuardarPago();
+
+    console.log('Updated Payments');
+    console.log(updatedPayments);
+
+    const payments2 = recalculatePayments2(montotal, cuotas, updatedPayments);
+
+    console.log('new Payments');
+    console.log(payments2);
+
+    setPayments(payments2);
+    handleSaveComprobante();
+    onClose();
+  };
+
+
+  const handleInputValidations = async () => {
+    console.log('Se entro a las validaciones');
+    const pagosPagados = payments.filter(
+      (p) =>
+        p.montopagado &&
+        p.montopagado > 0
+    );
+    const pagosPendientes = payments.filter(
+      (p) => 
+        (p.estado === 'pendiente' ||
+        p.estado === 'editado') &&
+        Number(p.montopagado ?? 0) === 0
+    );
+    console.log('Todos los pagos');
+    console.log(payments);
+    console.log('Pagos pendientes');
+    console.log(pagosPendientes);
+    const montoPagadoTotal = pagosPagados.reduce((total, p) => total + Number(p.montopagado ?? 0), 0);
+    const montoPendienteTotal = pagosPendientes.reduce((total, p) => total + Number(p.montoesperado ?? 0), 0);
+    if(montopago < 20){
+      setError('EL monto ingresado tiene que ser mayor a 20');
+      return false;
+    }
+    const fechaPagoDate = new Date(fechapago);
+    const now = new Date();
+
+    // Establecer fecha mínima permitida: primer día del mes anterior
+    const fechaMinima = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+
+    if (fechaPagoDate < fechaMinima) {
+      /*setError('La fecha ingresada es muy antigua');
+      return false;*/
+    }
+
+    if(new Date(fechapago).getDate() > new Date().getDate()+2){
+      setError('La fecha ingresada no puede ser posterior a la fecha actual');
+      return false;
+    }
+    if(montoPagadoTotal + montopago - montoPagoOriginal > montoPagadoTotal + montoPendienteTotal){
+      const a = montoPagadoTotal + montopago - montoPagoOriginal;
+      const b = montoPendienteTotal;
+      setError('La suma de los pagos es superior al monto a pagar en el plan de pagos (' + b + ')');
+      console.log('La suma de los pagos es superior al monto a pagar en el plan de pagos');
+      console.log(a + ' - ' + b);
+      return false;
+    }
+    console.log('se salieron de las validaciones');
+    return true;
+  };
+
+  const handleImageChange = (value: string | null) => {
+    setPayments(prev =>
+      prev.map((p, i) =>
+        i === paymentIndex ? { ...p, enlacecomprobante: value } : p
+      )
+    );
+  };
+  
   const handleSaveComprobante = async () => {
+    // si no hay ni archivo nuevo ni comprobante existente, nada que hacer
     if (!uploadedFile && !hasExistingComprobante) return;
-
+  
     setLoading(true);
     setError('');
     setUploadProgress(0);
-
+  
     try {
       if (uploadedFile) {
+        // Simulación de progreso
         const progressInterval = setInterval(() => {
-          setUploadProgress(prev => {
-            const newProgress = prev + Math.random() * 15;
-            return newProgress > 95 ? 95 : newProgress;
-          });
+          setUploadProgress(prev => Math.min(prev + Math.random() * 15, 95));
         }, 500);
-
+  
+        // Preparamos el FormData para Pinata
         const formData = new FormData();
         formData.append('file', uploadedFile);
-        formData.append('pinataMetadata', JSON.stringify({
-          name: `comprobante-${idpago}-${Date.now()}`,
-          keyvalues: { pagoId: idpago.toString(), tipo: 'comprobante' }
-        }));
+        formData.append(
+          'pinataMetadata',
+          JSON.stringify({
+            name: `comprobante-${idpago}-${Date.now()}`,
+            keyvalues: { pagoId: idpago.toString(), tipo: 'comprobante' }
+          })
+        );
         formData.append('pinataOptions', JSON.stringify({ cidVersion: 0 }));
-
-        const response = await fetch('/api/files', {
+  
+        // Subimos a Pinata
+        const resp = await fetch('/api/files', {
           method: 'POST',
-          body: formData,
+          body: formData
         });
-
+  
         clearInterval(progressInterval);
         setUploadProgress(96);
-
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.error || 'Error al subir a Pinata');
+  
+        if (!resp.ok) {
+          const err = await resp.json();
+          throw new Error(err.error ?? 'Error al subir a Pinata');
         }
-
-        const data = await response.json();
-        const gatewayUrl = `https://gateway.pinata.cloud/ipfs/${data.IpfsHash}`;
-
-        setUploadProgress(98);
-
-        const saveResponse = await fetch(`/api/payments/${idpago}/comprobante`, {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ enlacecomprobante: gatewayUrl }),
-        });
-
-        if (!saveResponse.ok) throw new Error('Error al guardar en base de datos');
-        const saveData = await saveResponse.json();
-        if (!saveData.success) throw new Error(saveData.error || 'Error al guardar');
-
+  
+        const { IpfsHash } = await resp.json();
+        const gatewayUrl = `https://gateway.pinata.cloud/ipfs/${IpfsHash}`;
+  
+        // 👉 Aquí delegamos al primer handler para actualizar el state
+        handleImageChange(gatewayUrl);
+  
         setUploadProgress(100);
         setSuccess(true);
-        setTimeout(() => {
-          onUpload(idpago, gatewayUrl);
-          onClose();
-        }, 1000);
-      } else if (hasExistingComprobante && !previewUrl) {
-        const saveResponse = await fetch(`/api/payments/${idpago}/comprobante`, {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ enlacecomprobante: null }),
-        });
-
-        if (!saveResponse.ok) throw new Error('Error al eliminar comprobante');
-        const data = await saveResponse.json();
-        if (!data.success) throw new Error(data.error || 'Error al eliminar comprobante');
-
-        onUpload(idpago, null);
-        onClose();
+  
       }
-    } catch (err) {
-      console.error('Error al guardar comprobante:', err);
-      if (err instanceof Error) {
-        setError(err.message);
-      } else {
-        setError('Error desconocido');
+      else if (hasExistingComprobante && !previewUrl) {
+        // quitar comprobante
+        handleImageChange(null);
+        setSuccess(true);
       }
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Error desconocido');
     } finally {
       setLoading(false);
       setUploadProgress(0);
@@ -183,6 +274,25 @@ const ComprobanteDialog: React.FC<ComprobanteDialogProps> = ({
   const handleImageLoad = () => {
     setImageLoading(false);
   };
+
+  const handleGuardarPago = (): Payment[] => {
+    const updatedPayment: Payment = {
+      ...payments[idpago],
+      montopagado: montopago,
+      fechapago: fechapago ?? new Date(),
+      estado: payment?.estado,
+      enlacecomprobante: previewUrl || null,
+    };
+
+    const updatedPayments = [...payments];
+    updatedPayments[idpago] = updatedPayment;
+
+    setPayments(updatedPayments);
+
+    return updatedPayments;
+  };
+
+  
 
   return (
     <>
@@ -264,6 +374,7 @@ const ComprobanteDialog: React.FC<ComprobanteDialogProps> = ({
                   startIcon={<PhotoCamera />} 
                   disabled={loading}
                   sx={{ borderRadius: 28 }}
+                  //onClick={()=>{handleFileChange(e.)}}
                 >
                   Seleccionar imagen
                   <input type="file" hidden accept="image/*" onChange={handleFileChange} />
@@ -336,6 +447,48 @@ const ComprobanteDialog: React.FC<ComprobanteDialogProps> = ({
                 )}
               </>
             )}
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+              {/* ...tu código existente para preview o empty state... */}
+
+              {
+                payment.estado !== 'completado' ? (
+                  <>
+                    {/* Date Picker para la fecha de pago */}
+                    <LocalizationProvider dateAdapter={AdapterDateFns}>
+                      <DatePicker
+                        label="Fecha de pago"
+                        value={fechapago}
+                        onChange={(newValue: Date | null) => {
+                          setFechaPago(newValue ?? new Date());
+                        }}
+                        slotProps={{ textField: { fullWidth: true } }}
+                        disableFuture
+                      />
+                    </LocalizationProvider>
+
+                    {/* Input para monto pagado */}
+                    <TextField
+                      label="Monto pagado"
+                      type="number"
+                      fullWidth
+                      value={montopago}
+                      onChange={(e) => setMontoPago(Number(e.target.value))}
+                      inputProps={{ min: 0 }}
+                    />
+                  </>
+                ) : (
+                  <>
+                    <Typography variant="body2" color="text.secondary">
+                      Fecha de pago: {payment.fechapago ? new Date(payment.fechapago).toLocaleDateString() : 'No registrada'}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      Monto pagado: {payment.montopagado ?? 0} Bs.
+                    </Typography>
+                  </>
+                )
+              }
+              
+            </Box>
           </Box>
         </DialogContent>
 
@@ -344,42 +497,40 @@ const ComprobanteDialog: React.FC<ComprobanteDialogProps> = ({
         <DialogActions sx={{ px: 3, py: 2, justifyContent: 'space-between' }}>
           {/* Left side buttons */}
           <Box>
-            {!showEmptyState && (
-              <>
-                <Button 
-                  component="label" 
-                  variant="outlined" 
-                  startIcon={<PhotoCamera />} 
-                  disabled={loading}
-                  sx={{ mr: 1, borderRadius: 28 }}
-                >
-                  {hasExistingComprobante && !hasNewComprobante ? 'Cambiar' : 'Seleccionar otra'}
-                  <input type="file" hidden accept="image/*" onChange={handleFileChange} />
-                </Button>
-                <Button 
-                  variant="outlined" 
-                  color="error" 
-                  startIcon={<DeleteOutline />} 
-                  onClick={handleRemove} 
-                  disabled={loading}
-                  sx={{ borderRadius: 28 }}
-                >
-                  Eliminar
-                </Button>
-              </>
-            )}
+            <Button 
+              component="label" 
+              variant="outlined" 
+              startIcon={<PhotoCamera />} 
+              disabled={loading}
+              sx={{ mr: 1, borderRadius: 28 }}
+            >
+              {!hasNewComprobante ? 'Cambiar' : 'Seleccionar otra'}
+              <input type="file" hidden accept="image/*" onChange={handleFileChange} />
+            </Button>
+            <Button 
+              variant="outlined" 
+              color="success" 
+              startIcon={<Check />} 
+              onClick={handleClose}
+              sx={{ mr:1, borderRadius: 28 }}
+            >
+              Confirmar
+            </Button>
           </Box>
 
           {/* Right side buttons */}
           <Box>
             <Button 
-              onClick={onClose} 
+              onClick={() => {
+              console.log(payments);
+              onClose();
+              }}
               disabled={loading}
               sx={{ mr: 1, borderRadius: 28 }}
             >
               Cancelar
             </Button>
-            {(hasNewComprobante || (hasExistingComprobante && !previewUrl)) && (
+            {(previewUrl && !loading) && (
               <Button
                 variant="contained"
                 onClick={handleSaveComprobante}
@@ -405,3 +556,11 @@ const ComprobanteDialog: React.FC<ComprobanteDialogProps> = ({
 };
 
 export default ComprobanteDialog;
+
+
+
+
+
+
+
+

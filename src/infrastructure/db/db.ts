@@ -1,17 +1,6 @@
 import { Pool } from 'pg';
 
 let conn: Pool | undefined;
-//============================================================================
-// Conexion a la base de datos
-//============================================================================
-/* 
-  se debe crear un archivo .env en la raiz del proyecto esta se debe llamar
-  .env.local en donde se debe poner las credenciales de la base de datos
-  solo por temas de seguridad. 
-  el gitnore ya tiene ignorado este archivo .env.local para que no se suba al
-  repositorio  
-*/
-/*que haces tocando la db viciosa */
 const getConnection = (): Pool => {
   if (!conn) {
     conn = new Pool({

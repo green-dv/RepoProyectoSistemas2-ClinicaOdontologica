@@ -13,6 +13,11 @@ interface UpdateComprobanteRequest {
 
 export async function PATCH(request: NextRequest, { params }: { params: { id: string } }) {
   try {
+    console.log('paso por la api');
+    /*return NextResponse.json(
+      { success: false, error: 'si existe la maldita ruta' },
+      { status: 400 }
+    );*/
     const id = parseInt(params.id, 10);
     if (isNaN(id)) {
       return NextResponse.json(
@@ -23,7 +28,7 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
 
     const body: UpdateComprobanteRequest = await request.json();
     if (!body.enlacecomprobante) {
-      return NextResponse.json(
+      return NextResponse.json( 
         { success: false, error: 'El campo enlacecomprobante es requerido' },
         { status: 400 }
       );
@@ -48,7 +53,7 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
     const updatedPayment = await paymentService.updatePayment({
       idpago: id,
       enlacecomprobante: body.enlacecomprobante,
-      estado: 'completado' 
+      //estado: 'completado' 
     });
 
     return NextResponse.json(

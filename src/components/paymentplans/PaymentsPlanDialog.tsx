@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -23,7 +23,19 @@ import {
   TextFieldProps,
   Select,
   MenuItem,
+  Typography,
+  CircularProgress,
+  InputAdornment,
 } from '@mui/material';
+
+import {
+  Search as SearchIcon,
+  Print as PrintIcon,
+  Person as PersonIcon,
+  AttachMoney as MoneyIcon,
+  Assignment as AssignmentIcon,
+  Clear as ClearIcon
+} from '@mui/icons-material';
 import { Check, Edit,UploadFile, Receipt } from '@mui/icons-material';
 import { DatePicker } from '@mui/x-date-pickers/';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
@@ -31,6 +43,7 @@ import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { PaymentPlan } from '@/domain/entities/PaymentsPlan';
 import { Payment } from '@/domain/entities/Payments';
 import ComprobanteDialog from '../comprobante/comprobanteDialog';
+import { Patient } from '@/domain/entities/Patient';
 
 interface PaymentPlanDialogProps {
   open: boolean;
@@ -41,10 +54,35 @@ interface PaymentPlanDialogProps {
   handleChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   isEditing: boolean;
   payments: Payment[];
+  status: string;
   handleEditPayment: (index: number, changes: Partial<Payment>) => void;
   isEditingPayment: number;
+  selectedPayment: Payment|null;
+  comprobanteDialogOpen: boolean;
+  selectedIndex: number;
+  paymentIndex: number;
+  fechaPago: Date;
+  montoPago: number;
+
+  patients: Patient[];
+  searchQuery: string | '';
+  searchLoading: boolean | false;
+  handleClearSearch: () => void;
+  handlePatientSelect: (patient: Patient) => void;
+  shouldSearch: boolean;
+
   setIsEditingPayment: (v_editingPayment: number) => void;
+  setFechaPago: (v_fecha: Date) => void;
+  setMontoPago: (v_monto: number) => void;
   handleEditPaymentInput: (index: number, monto: number)=>void;
+  handleStatusChange: (event: { target: { value: string } })=>void;
+  handleOpenComprobanteDialog: (payment: Payment, index: number)=>void;
+  handleUploadComprobante: (idpago: number, enlaceComprobante: string | null)=>void;
+  handleCloseComprobanteDialog: ()=>void;
+  setPayments: React.Dispatch<React.SetStateAction<Payment[]>>;
+  setShouldSearch: React.Dispatch<React.SetStateAction<boolean>>;
+
+  setSearchQuery: React.Dispatch<React.SetStateAction<string>>;
 }
 
 export default function PaymentsPlanDialog({
@@ -56,55 +94,35 @@ export default function PaymentsPlanDialog({
   handleChange,
   isEditing,
   payments,
+  selectedPayment,
+  comprobanteDialogOpen,
+  selectedIndex,
+  status,
+  fechaPago,
+  montoPago,
+  paymentIndex,
   handleEditPayment,
   handleEditPaymentInput,
   isEditingPayment,
-  setIsEditingPayment
+  setIsEditingPayment,
+  handleStatusChange,
+  handleOpenComprobanteDialog,
+  handleUploadComprobante,
+  handleCloseComprobanteDialog,
+  setFechaPago,
+  setMontoPago,
+  setPayments,
 
-}: PaymentPlanDialogProps) {
-  const [status, setStatus] = React.useState(paymentPlan.estado ?? 'pendiente');
-  const [comprobanteDialogOpen, setComprobanteDialogOpen] = useState(false);
-  const [selectedPayment, setSelectedPayment] = useState<Payment | null>(null);
-  
-  
-  const handleStatusChange = (event: { target: { value: string } }) => {
-    setStatus(event.target.value);
-  };
-  
-  const handleOpenComprobanteDialog = (payment: Payment) => {
-    setSelectedPayment(payment);
-    setComprobanteDialogOpen(true);
-  };
-  
+  searchLoading,
+  searchQuery,
+  patients,
+  handleClearSearch,
+  handlePatientSelect,
+  setSearchQuery,
+  setShouldSearch,
+  shouldSearch
+}: Readonly<PaymentPlanDialogProps>) {
 
-  const handleUploadComprobante = async (idpago: number, enlaceComprobante: string | null) => {
-    try {
-      const paymentIndex = payments.findIndex(p => p.idpago === idpago);
-      if (paymentIndex === -1) return;
-      
-      const updatedPayments = [...payments];
-      updatedPayments[paymentIndex] = {
-        ...updatedPayments[paymentIndex],
-        enlacecomprobante: enlaceComprobante,
-        estado: enlaceComprobante ? 'completado' : 'pendiente'
-      };
-      
-      handleEditPayment(paymentIndex, { 
-        enlacecomprobante: enlaceComprobante,
-        estado: enlaceComprobante ? 'completado' : 'pendiente'
-      });
-
-      setComprobanteDialogOpen(false);
-      setSelectedPayment(null);
-    } catch (error) {
-      console.error('Error al actualizar comprobante:', error);
-    }
-  };
-
-  const handleCloseComprobanteDialog = () => {
-    setComprobanteDialogOpen(false);
-    setSelectedPayment(null);
-  };
 
   return (
     <>
@@ -122,7 +140,7 @@ export default function PaymentsPlanDialog({
                 value={paymentPlan.fechacreacion ? new Date(paymentPlan.fechacreacion) : null}
                 onChange={(newValue) =>
                   handleChange({
-                    target: { name: 'fechacreacion', value: newValue?.toISOString() || '' }
+                    target: { name: 'fechacreacion', value: newValue?.toISOString() ?? '' }
                   }as any)
                 }
                 slots={{ textField: TextField }}
@@ -144,7 +162,7 @@ export default function PaymentsPlanDialog({
                 value={paymentPlan.fechalimite ? new Date(paymentPlan.fechalimite) : null}
                 onChange={(newValue) =>
                   handleChange({
-                    target: { name: 'fechalimite', value: newValue?.toISOString() || '' }
+                    target: { name: 'fechalimite', value: newValue?.toISOString() ?? '' }
                   } as any)
                 }
                 slots={{ textField: TextField }}
@@ -179,6 +197,76 @@ export default function PaymentsPlanDialog({
               onChange={handleChange}
               value={paymentPlan.descripcion}
             />
+
+            <Box className="no-print" position="relative">
+              <TextField
+                fullWidth
+                placeholder="Buscar paciente por nombre, apellido o id..."
+                value={searchQuery}
+                onChange={(e) => {
+                  setShouldSearch(true);
+                  setSearchQuery(e.target.value);
+                }}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <SearchIcon />
+                    </InputAdornment>
+                  ),
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      {searchLoading && <CircularProgress size={20} />}
+                      {searchQuery && (
+                        <IconButton onClick={handleClearSearch} size="small">
+                          <ClearIcon />
+                        </IconButton>
+                      )}
+                    </InputAdornment>
+                  ),
+                }}
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    borderRadius: 2,
+                  },
+                }}
+              />
+
+              {/* Lista de pacientes encontrados */}
+              {patients.length > 0 && (
+                <Paper
+                  elevation={4}
+                  sx={{
+                    position: 'absolute',
+                    top: '100%',
+                    left: 0,
+                    right: 0,
+                    zIndex: 1000,
+                    maxHeight: 300,
+                    overflow: 'auto',
+                    mt: 1,
+                  }}
+                >
+                  {patients.map((patient) => (
+                    <Box
+                      key={patient.idpaciente}
+                      sx={{
+                        p: 2,
+                        cursor: 'pointer',
+                        borderBottom: '1px solid #eee',
+                        '&:hover': {
+                          backgroundColor: 'action.hover',
+                        },
+                      }}
+                      onClick={() => handlePatientSelect(patient)}
+                    >
+                      <Typography variant="body1" fontWeight="medium">
+                        {patient.nombres} {patient.apellidos}
+                      </Typography>
+                    </Box>
+                  ))}
+                </Paper>
+              )}
+            </Box>
 
             <FormControl fullWidth margin="dense" variant="outlined">
               <InputLabel htmlFor="native-select-estado">Estado</InputLabel>
@@ -254,7 +342,7 @@ export default function PaymentsPlanDialog({
                           <Tooltip title={pago.enlacecomprobante ? "Ver comprobante" : "Subir comprobante"}>
                             <IconButton 
                               size="small"
-                              onClick={() => handleOpenComprobanteDialog(pago)}
+                              onClick={() => handleOpenComprobanteDialog(pago, index)}
                               color={pago.enlacecomprobante ? "primary" : "default"}
                             >
                               {pago.enlacecomprobante ? <Receipt /> : <UploadFile />}
@@ -306,8 +394,17 @@ export default function PaymentsPlanDialog({
           open={comprobanteDialogOpen}
           onClose={handleCloseComprobanteDialog}
           onUpload={handleUploadComprobante}
-          enlaceComprobante={selectedPayment?.enlacecomprobante || null}  
-          idpago={selectedPayment?.idpago || 0}
+          payment={selectedPayment}  
+          idpago={selectedIndex}
+          montotal={paymentPlan.montotal}
+          cuotas={cuotas}
+          paymentIndex={paymentIndex ?? 0}
+          fechapago={fechaPago}
+          payments={payments}
+          setPayments={setPayments}
+          montopago={montoPago}
+          setFechaPago={setFechaPago}
+          setMontoPago={setMontoPago}
         />
       )}
     </>

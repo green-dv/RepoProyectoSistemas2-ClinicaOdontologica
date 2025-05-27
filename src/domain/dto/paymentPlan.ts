@@ -6,6 +6,7 @@ export interface CreatePaymentPlanDTO {
     descripcion: string | null;
     estado: string;
     idconsulta: number | null;
+    idpaciente: number | null;
     pagos: {
       montoesperado: number | null;
       montopagado: number | null;
@@ -24,6 +25,7 @@ export interface UpdatePaymentPlanDTO {
     descripcion: string | null;
     estado: string;
     idconsulta: number | null;
+    idpaciente: number | null;
     pagos: {
       idpago: number;
       montoesperado: number | null;
