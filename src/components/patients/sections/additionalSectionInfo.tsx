@@ -1,4 +1,3 @@
-// @/presentation/components/patients/sections/AdditionalInfoSection.tsx
 import React from 'react';
 import { TextField, Grid, Typography, Divider } from '@mui/material';
 import { Patient } from '@/domain/entities/Patient';

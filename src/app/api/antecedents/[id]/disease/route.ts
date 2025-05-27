@@ -1,11 +1,9 @@
-// src/app/api/antecedentes/[id]/enfermedades/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { IAntecedenteRepository } from '@/infrastructure/repositories/AntecedentRepository';
 import { AddEnfermedadUseCase, RemoveEnfermedadUseCase } from '@/application/usecases/antecedents/AddRelationsAntecedentUseCases';
 import { GetEnfermedadesByAntecedenteIdUseCase } from '@/application/usecases/antecedents/GetDiseaseAntecedentByID';
 
 
-// Initialize dependencies
 const antecedenteRepository = new IAntecedenteRepository();
 const addEnfermedadUseCase = new AddEnfermedadUseCase(antecedenteRepository);
 const removeEnfermedadUseCase = new RemoveEnfermedadUseCase(antecedenteRepository);
@@ -46,7 +44,6 @@ export async function GET(
     }
 }
 
-// POST /api/antecedentes/[id]/enfermedades
 export async function POST(
   request: NextRequest,
   { params }: RouteParams
@@ -92,7 +89,6 @@ export async function POST(
     }
 }
 
-// DELETE /api/antecedentes/[id]/enfermedades
 export async function DELETE(
   request: NextRequest,
   { params }: RouteParams

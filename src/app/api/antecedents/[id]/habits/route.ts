@@ -1,9 +1,7 @@
-// src/app/api/antecedentes/[id]/habitos/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { IAntecedenteRepository } from '@/infrastructure/repositories/AntecedentRepository';
 import { AddHabitoUseCase, RemoveHabitoUseCase } from '@/application/usecases/antecedents/AddRelationsAntecedentUseCases';
 import { GetHabitosByAntecedenteIdUseCase } from '@/application/usecases/antecedents/GetHabitAntecedentById';
-// Initialize dependencies
 const antecedenteRepository = new IAntecedenteRepository();
 const addHabitoUseCase = new AddHabitoUseCase(antecedenteRepository);
 const removeHabitoUseCase = new RemoveHabitoUseCase(antecedenteRepository);
@@ -44,8 +42,6 @@ export async function GET(
     }
 }
 
-
-// POST /api/antecedentes/[id]/habitos
 export async function POST(
   request: NextRequest,
   { params }: RouteParams
@@ -90,7 +86,6 @@ export async function POST(
   }
 }
 
-// DELETE /api/antecedentes/[id]/habitos
 export async function DELETE(
   request: NextRequest,
   { params }: RouteParams

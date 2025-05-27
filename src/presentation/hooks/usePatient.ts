@@ -9,7 +9,6 @@ export interface NotificationType {
 }
 
 export const usePatientsPage = () => {
-  // Data state
   const [patients, setPatients] = useState<Patient[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -19,20 +18,17 @@ export const usePatientsPage = () => {
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState<string>(searchQuery);
     
-  // Dialog control state
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
   const [viewDialogOpen, setViewDialogOpen] = useState<boolean>(false);
   const [formDialogOpen, setFormDialogOpen] = useState<boolean>(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState<boolean>(false);
   
-  // Notification state
   const [notification, setNotification] = useState<NotificationType>({
     open: false,
     message: '',
     type: 'success'
   });
 
-  // Set up debounce for search query
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedSearchQuery(searchQuery);
@@ -43,14 +39,13 @@ export const usePatientsPage = () => {
     };
   }, [searchQuery]);
 
-  // Fetch patients data from API
   const fetchPatients = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
 
       const queryParams = new URLSearchParams({
-        page: String(page + 1), // API expects 1-based index
+        page: String(page + 1), 
         limit: String(rowsPerPage),
       });
 
@@ -76,7 +71,6 @@ export const usePatientsPage = () => {
     }
   }, [page, rowsPerPage, debouncedSearchQuery]);
 
-  // Load patients on initial render and when dependencies change
   useEffect(() => {
     fetchPatients();
   }, [fetchPatients]);
@@ -112,10 +106,8 @@ export const usePatientsPage = () => {
         throw new Error('Failed to delete patient');
       }
       
-      // Refresh the patient list
       await fetchPatients();
       
-      // Show success notification
       setNotification({
         open: true,
         message: 'Paciente eliminado con éxito',
@@ -137,10 +129,8 @@ export const usePatientsPage = () => {
     }
   };
 
-  // Close dialog handlers
   const handleCloseViewDialog = () => {
     setViewDialogOpen(false);
-    // Don't reset selected patient immediately in case we want to edit
   };
 
   const handleCloseFormDialog = () => {
@@ -153,7 +143,6 @@ export const usePatientsPage = () => {
     setSelectedPatient(null);
   };
 
-  // Handle form submission success
   const handleFormSuccess = () => {
     fetchPatients();
     
@@ -166,14 +155,13 @@ export const usePatientsPage = () => {
     });
   };
 
-  // Other handlers
   const handleCloseNotification = () => {
     setNotification({ ...notification, open: false });
   };
 
   const handleSearchChange = (query: string) => {
     setSearchQuery(query);
-    setPage(0); // Reset to first page when search changes
+    setPage(0); 
   };
 
   const handlePageChange = (newPage: number) => {
@@ -182,16 +170,14 @@ export const usePatientsPage = () => {
 
   const handleRowsPerPageChange = (newRowsPerPage: number) => {
     setRowsPerPage(newRowsPerPage);
-    setPage(0); // Reset to first page when rows per page changes
+    setPage(0);
   };
 
-  // View to Edit transition
   const handleEditFromView = () => {
     setViewDialogOpen(false);
     setFormDialogOpen(true);
   };
 
-  // Manual refresh handler
   const handleRefresh = () => {
     fetchPatients();
   };

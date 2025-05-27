@@ -77,10 +77,8 @@ export const usePatientViewHandlers = ({
                 if (antecedentesCompletos.length > 0) {
                     const primerAntecedente = antecedentesCompletos[0];
                     
-                    // Primero establecemos el antecedente actual
                     setCurrentAntecedente(primerAntecedente);
                     
-                    // Luego obtenemos los datos relacionados usando el ID directamente
                     if (primerAntecedente.idantecedente) {
                         await fetchRelatedDataAndUpdateAntecedente(primerAntecedente.idantecedente, primerAntecedente);
                     }
@@ -122,7 +120,6 @@ export const usePatientViewHandlers = ({
         setLoadingRelatedData(true);
         
         try {
-            // Realizar todas las peticiones en paralelo para mejorar rendimiento
             const [enfermedadesResponse, habitosResponse, medicacionesResponse, atencionesResponse] = await Promise.all([
                 fetch(`/api/antecedents/${antecedenteId}/disease`),
                 fetch(`/api/antecedents/${antecedenteId}/habits`),
@@ -170,7 +167,7 @@ export const usePatientViewHandlers = ({
             setMedicaciones(medicacionesData);
             setAtencionesMedicas(atencionesData);
 
-            // Crear el antecedente completo con los datos relacionados
+            // Crear el antecedente 
             const antecedenteCompleto: AntecedenteCompleto = {
                 ...antecedenteBase,
                 enfermedades: enfermedadesData.map(e => e.idenfermedad),
@@ -199,7 +196,7 @@ export const usePatientViewHandlers = ({
     };
 
     /**
-     * Obtiene los datos relacionados a un antecedente específico (versión legacy para compatibilidad)
+     * Obtiene los datos relacionados a un antecedente específico 
      */
     const fetchRelatedData = async (antecedenteId: number): Promise<void> => {
         const currentAntecedente = hookData.currentAntecedente;

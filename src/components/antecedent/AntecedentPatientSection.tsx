@@ -178,6 +178,9 @@ export default function AntecedenteDialog({
     );
   };
 
+  const today = new Date();
+  const minDate = new Date('2000-01-01');
+
   return (
     <>
       <Dialog 
@@ -249,6 +252,8 @@ export default function AntecedenteDialog({
                       sx={{ width: '100%' }}
                       readOnly={isReadOnly}
                       disabled={isReadOnly}
+                      minDate={minDate}
+                      maxDate={today}
                     />
                   </LocalizationProvider>
                 </Grid>

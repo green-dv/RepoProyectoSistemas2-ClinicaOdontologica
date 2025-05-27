@@ -24,8 +24,10 @@ import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import HomeIcon from '@mui/icons-material/Home';
 import LogoutIcon from '@mui/icons-material/Logout';
+import BarChartOutlined from '@mui/icons-material/BarChartOutlined';
 import { signOut } from "next-auth/react";
 import { animate, stagger } from 'animejs';
+import { text } from 'stream/consumers';
 
 const drawerWidth = 240;
 
@@ -160,6 +162,7 @@ export default function MiniDrawer({ children }: MiniDrawerProps) {
     { text: 'Citas', path: '/dates' },
     { text: 'Calendario', path: '/calendar' },
     { text: 'Tratamientos', path: '/treatments' },
+    { text: 'Reportes', path: '/reports' },
   ];
 
   const getRandomStartPosition = (): number => {
@@ -283,6 +286,7 @@ export default function MiniDrawer({ children }: MiniDrawerProps) {
                     text === 'Citas' ? <AccessTimeIcon/> :
                     text === 'Calendario'? <CalendarMonthIcon/> :
                     text === 'Tratamientos' ? <LocalHospitalIcon/> :
+                    text === 'Reportes' ? <BarChartOutlined/> :
                     <HomeIcon />
                   }
                 </ListItemIcon>

@@ -1,10 +1,8 @@
-// src/app/api/antecedentes/[id]/medication/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { IAntecedenteRepository } from '@/infrastructure/repositories/AntecedentRepository';
 import { AddMedicacionUseCase, RemoveMedicacionUseCase } from '@/application/usecases/antecedents/AddRelationsAntecedentUseCases';
 import { GetMedicacionesByAntecedenteIdUseCase } from '@/application/usecases/antecedents/GetMedicationAntecedentById';
 
-// Initialize dependencies
 const antecedenteRepository = new IAntecedenteRepository();
 const addMedicationUseCase = new AddMedicacionUseCase(antecedenteRepository);
 const removeMedicationUseCase = new RemoveMedicacionUseCase(antecedenteRepository);

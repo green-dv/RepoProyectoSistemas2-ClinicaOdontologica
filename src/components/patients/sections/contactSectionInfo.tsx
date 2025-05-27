@@ -1,4 +1,3 @@
-// @/presentation/components/patients/sections/ContactInfoSection.tsx
 import React from 'react';
 import { TextField, Grid, Typography, Divider } from '@mui/material';
 import { Patient } from '@/domain/entities/Patient';
@@ -46,9 +45,9 @@ export const ContactInfoSection: React.FC<ContactInfoSectionProps> = ({
                             pattern: '[\\d\\s\\-\\+\\(\\)]+',
                             title: 'Solo números, espacios, guiones, paréntesis y signo más'
                         }}
-                        placeholder="Ej: +593 99 123 4567"
+                        placeholder="Ej: +591 668 12 138"
                     />
-                </Grid>
+                </Grid> 
                 
                 <Grid item xs={12} sm={6}>
                     <TextField
@@ -71,7 +70,7 @@ export const ContactInfoSection: React.FC<ContactInfoSectionProps> = ({
                             pattern: '[\\d\\s\\-\\+\\(\\)]+',
                             title: 'Solo números, espacios, guiones, paréntesis y signo más'
                         }}
-                        placeholder="Ej: +593 2 234 5678"
+                        placeholder="Ej: +591 2 234 5678"
                     />
                 </Grid>
                 

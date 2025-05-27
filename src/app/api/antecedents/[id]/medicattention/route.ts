@@ -1,10 +1,8 @@
-// src/app/api/antecedentes/[id]/medicattention/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { IAntecedenteRepository } from '@/infrastructure/repositories/AntecedentRepository';
 import { AddAtencionMedicaUseCase, RemoveAtencionMedicaUseCase } from '@/application/usecases/antecedents/AddRelationsAntecedentUseCases';
 import { GetAtencionesMedicasByAntecedenteIdUseCase } from '@/application/usecases/antecedents/GetMedicationAttentionAntecedentById';
 
-// Initialize dependencies
 const antecedenteRepository = new IAntecedenteRepository();
 const addMedicalAttentionUseCase = new AddAtencionMedicaUseCase(antecedenteRepository);
 const removeMedicalAttentionUseCase = new RemoveAtencionMedicaUseCase(antecedenteRepository);

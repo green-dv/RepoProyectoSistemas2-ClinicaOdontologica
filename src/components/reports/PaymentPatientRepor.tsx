@@ -1,5 +1,4 @@
 'use client';
-
 import React, { useState, useEffect, useCallback } from 'react';
 import {
   Box,
@@ -27,12 +26,14 @@ import {
 import {
   Search as SearchIcon,
   Print as PrintIcon,
+  PictureAsPdf as PdfIcon,
   Person as PersonIcon,
   AttachMoney as MoneyIcon,
   Assignment as AssignmentIcon,
   Clear as ClearIcon
 } from '@mui/icons-material';
 import { styled } from '@mui/material/styles';
+import { PaymentReportsPDF } from './PaymentPatientPDF';
 
 interface PaymentPlanByPatientReport {
   idplanpago: number;
@@ -46,6 +47,38 @@ interface PaymentPlanByPatientReport {
 
 import { Patient } from '@/domain/entities/Patient';
 import { PatientResponse } from '@/domain/dto/patient';
+
+//para exportar a PDF jspdf Good
+import jsPDF from "jspdf";
+
+const exportToPDF = async (elementId: string, fileName: string) => {
+    const pdf = new jsPDF({
+        orientation: "landscape", 
+        unit: "pt",
+        format: "a4",
+    });
+
+    const element = document.getElementById(elementId);
+    if (!element) {
+        console.error("Elemento no encontrado.");
+        return;
+    }
+
+    try {
+        await pdf.html(element, {
+            callback: function(doc) {
+                doc.save(`${fileName}.pdf`);
+            },
+            x: 10,
+            y: 10,
+            width: 800, 
+            windowWidth: element.scrollWidth,
+            autoPaging: 'text'
+        });
+    } catch (error) {
+        console.error("PDF Export Error:", error);
+    }
+};
 
 const PrintableContainer = styled(Box)(({ theme }) => ({
   '@media print': {
@@ -88,6 +121,14 @@ const StyledTableRow = styled(TableRow)(({ theme }) => ({
   },
 }));
 
+const HiddenPDFContainer = styled(Box)({
+  position: 'absolute',
+  left: '-9999px',
+  top: '-9999px',
+  width: '210mm',
+  visibility: 'hidden',
+});
+
 const PaymentReportsPage: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('');
@@ -97,6 +138,7 @@ const PaymentReportsPage: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [searchLoading, setSearchLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [pdfExporting, setPdfExporting] = useState(false);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -152,7 +194,15 @@ const PaymentReportsPage: React.FC = () => {
       const response = await fetch(`/api/reports/PaymentsByPatient/${patientId}`);
       if (response.ok) {
         const data = await response.json();
-        setPayments(data);
+        const processedPayments = data.map((payment: PaymentPlanByPatientReport) => ({
+          ...payment,
+          montotal: Number(payment.montotal) || 0,
+          total_pagado: Number(payment.total_pagado) || 0,
+          total_pendiente: Number(payment.total_pendiente) || 0,
+          cuotas_incompletas: Number(payment.cuotas_incompletas) || 0,
+          porcentaje_pago: Number(payment.porcentaje_pago) || 0,
+        }));
+        setPayments(processedPayments);
       } else {
         const errorData = await response.json();
         setError(errorData.message || 'Error al obtener los pagos');
@@ -167,7 +217,6 @@ const PaymentReportsPage: React.FC = () => {
     }
   };
 
-  // Manejar selección de paciente
   const handlePatientSelect = (patient: Patient) => {
     setSelectedPatient(patient);
     setSearchQuery(`${patient.nombres} ${patient.apellidos} ${patient.idpaciente}`);
@@ -175,9 +224,25 @@ const PaymentReportsPage: React.FC = () => {
     fetchPayments(patient.idpaciente);
   };
 
-  // Función para imprimir
   const handlePrint = () => {
     window.print();
+  };
+
+  // funcioncita para exportar a PDF
+  const handleExportPDF = async () => {
+    if (!selectedPatient || payments.length === 0) {
+      return;
+    }
+
+    setPdfExporting(true);
+    try {
+      const fileName = `Reporte_Pagos_${selectedPatient.nombres}_${selectedPatient.apellidos}_${selectedPatient.idpaciente}`;
+      await exportToPDF('pdf-report-content', fileName);
+    } catch (error) {
+      console.error('Error al exportar PDF:', error);
+    } finally {
+      setPdfExporting(false);
+    }
   };
 
   const handleClearSearch = () => {
@@ -195,28 +260,60 @@ const PaymentReportsPage: React.FC = () => {
     }).format(amount);
   };
 
-  // Calcular totales
-  const formatPercentage = (percentage: number | string): number => {
-    const num = parseFloat(percentage as string);
-    return isNaN(num) ? 0 : num;
+  const getPaymentStatus = (payment: PaymentPlanByPatientReport) => {
+    const montotal = Number(payment.montotal);
+    const totalPagado = Number(payment.total_pagado);
+    
+    if (totalPagado >= montotal) {
+      return {
+        label: 'Completado',
+        color: 'success' as const,
+        severity: 'success' as const
+      };
+    } else if (totalPagado > 0) {
+      return {
+        label: 'En Progreso',
+        color: 'primary' as const,
+        severity: 'info' as const
+      };
+    } else {
+      return {
+        label: 'Pendiente',
+        color: 'default' as const,
+        severity: 'warning' as const
+      };
+    }
   };
 
-  // Calcular totales con validación
+  const getCuotasIncompletasStatus = (cuotasIncompletas: number) => {
+    if (cuotasIncompletas > 0) {
+      return {
+        color: 'warning' as const,
+        severity: 'warning' as const
+      };
+    }
+    return {
+      color: 'success' as const,
+      severity: 'success' as const
+    };
+  };
+
   const totals = payments.reduce(
     (acc, payment) => ({
-      montotal: acc.montotal + (payment.montotal || 0),
-      total_pagado: acc.total_pagado + (payment.total_pagado || 0),
-      total_pendiente: acc.total_pendiente + (payment.total_pendiente || 0),
+      montotal: acc.montotal + Number(payment.montotal || 0),
+      total_pagado: acc.total_pagado + Number(payment.total_pagado || 0),
+      total_pendiente: acc.total_pendiente + Number(payment.total_pendiente || 0),
     }),
     { montotal: 0, total_pagado: 0, total_pendiente: 0 }
   );
 
+  const porcentajeGeneral = totals.montotal > 0 ? (totals.total_pagado / totals.montotal) * 100 : 0;
+
   return (
     <PrintableContainer>
       <Box sx={{ p: 3, maxWidth: 1200, mx: 'auto' }}>
-        {/* Header */}
         <Paper elevation={2} sx={{ p: 3, mb: 3 }}>
-          <Box display="flex" justifyContent="between" alignItems="center" mb={2}>
+          <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
             <Box>
               <Typography variant="h4" component="h1" gutterBottom color="primary">
                 Reporte de Pagos por Paciente
@@ -225,16 +322,33 @@ const PaymentReportsPage: React.FC = () => {
                 Consulta y gestión de planes de pago
               </Typography>
             </Box>
-            <Box className="no-print">
+            <Box className="no-print" display="flex" gap={2}>
               {selectedPatient && payments.length > 0 && (
-                <Button
-                  variant="contained"
-                  startIcon={<PrintIcon />}
-                  onClick={handlePrint}
-                  sx={{ ml: 2 }}
-                >
-                  Imprimir
-                </Button>
+                <>
+                  <Button
+                    variant="outlined"
+                    startIcon={<PrintIcon />}
+                    onClick={handlePrint}
+                  >
+                    Imprimir
+                  </Button>
+                  <Button
+                    variant="contained"
+                    startIcon={<PdfIcon />}
+                    onClick={handleExportPDF}
+                    disabled={pdfExporting}
+                    color="error"
+                  >
+                    {pdfExporting ? (
+                      <>
+                        <CircularProgress size={16} sx={{ mr: 1 }} />
+                        Exportando...
+                      </>
+                    ) : (
+                      'Exportar PDF'
+                    )}
+                  </Button>
+                </>
               )}
             </Box>
           </Box>
@@ -302,7 +416,7 @@ const PaymentReportsPage: React.FC = () => {
                       {patient.nombres} {patient.apellidos}
                     </Typography>
                     <Typography variant="body2" color="text.secondary">
-                      Sexo: {patient.sexo} | Teléfono: {patient.telefonopersonal}
+                      ID: {patient.idpaciente} | Sexo: {patient.sexo} | Teléfono: {patient.telefonopersonal}
                     </Typography>
                   </Box>
                 ))}
@@ -321,7 +435,7 @@ const PaymentReportsPage: React.FC = () => {
               </Typography>
             </Box>
             <Grid container spacing={2}>
-              <Grid item xs={12} md={4}>
+              <Grid item xs={12} md={3}>
                 <Typography variant="body2" color="text.secondary">
                   Nombre Completo
                 </Typography>
@@ -329,15 +443,31 @@ const PaymentReportsPage: React.FC = () => {
                   {selectedPatient.nombres} {selectedPatient.apellidos}
                 </Typography>
               </Grid>
-              <Grid item xs={12} md={4}>
+              <Grid item xs={12} md={2}>
                 <Typography variant="body2" color="text.secondary">
-                  Cédula
+                  ID Paciente
                 </Typography>
                 <Typography variant="body1" fontWeight="medium">
-                  {selectedPatient.sexo === true ? 'Masculino' : 'Femenino'} - {selectedPatient.telefonopersonal}
+                  {selectedPatient.idpaciente}
                 </Typography>
               </Grid>
-              <Grid item xs={12} md={4}>
+              <Grid item xs={12} md={2}>
+                <Typography variant="body2" color="text.secondary">
+                  Sexo
+                </Typography>
+                <Typography variant="body1" fontWeight="medium">
+                  {selectedPatient.sexo === true ? 'Masculino' : 'Femenino'}
+                </Typography>
+              </Grid>
+              <Grid item xs={12} md={2}>
+                <Typography variant="body2" color="text.secondary">
+                  Teléfono
+                </Typography>
+                <Typography variant="body1" fontWeight="medium">
+                  {selectedPatient.telefonopersonal}
+                </Typography>
+              </Grid>
+              <Grid item xs={12} md={3}>
                 <Typography variant="body2" color="text.secondary">
                   Fecha de Reporte
                 </Typography>
@@ -363,55 +493,78 @@ const PaymentReportsPage: React.FC = () => {
           </Alert>
         )}
 
-{/* Resumen de totales */}
+        {/* Resumen de totales */}
         {payments.length > 0 && (
-          <Grid container spacing={3} sx={{ mb: 3 }}>
-            <Grid item xs={12} md={4}>
-              <Card elevation={2}>
-                <CardContent>
-                  <Box display="flex" alignItems="center" mb={1}>
-                    <MoneyIcon color="primary" sx={{ mr: 1 }} />
-                    <Typography variant="h6" color="primary">
-                      Total General
+          <>
+            <Grid container spacing={3} sx={{ mb: 3 }}>
+              <Grid item xs={12} md={3}>
+                <Card elevation={2}>
+                  <CardContent>
+                    <Box display="flex" alignItems="center" mb={1}>
+                      <MoneyIcon color="primary" sx={{ mr: 1 }} />
+                      <Typography variant="h6" color="primary">
+                        Total General
+                      </Typography>
+                    </Box>
+                    <Typography variant="h4" fontWeight="bold">
+                      {formatCurrency(totals.montotal)}
                     </Typography>
-                  </Box>
-                  <Typography variant="h4" fontWeight="bold">
-                    {formatCurrency(totals.montotal)}
-                  </Typography>
-                </CardContent>
-              </Card>
-            </Grid>
-            <Grid item xs={12} md={4}>
-              <Card elevation={2}>
-                <CardContent>
-                  <Box display="flex" alignItems="center" mb={1}>
-                    <AssignmentIcon color="success" sx={{ mr: 1 }} />
-                    <Typography variant="h6" color="success.main">
-                      Total Pagado
+                  </CardContent>
+                </Card>
+              </Grid>
+              <Grid item xs={12} md={3}>
+                <Card elevation={2}>
+                  <CardContent>
+                    <Box display="flex" alignItems="center" mb={1}>
+                      <AssignmentIcon color="success" sx={{ mr: 1 }} />
+                      <Typography variant="h6" color="success.main">
+                        Total Pagado
+                      </Typography>
+                    </Box>
+                    <Typography variant="h4" fontWeight="bold" color="success.main">
+                      {formatCurrency(totals.total_pagado)}
                     </Typography>
-                  </Box>
-                  <Typography variant="h4" fontWeight="bold" color="success.main">
-                    {formatCurrency(totals.total_pagado)}
-                  </Typography>
-                </CardContent>
-              </Card>
-            </Grid>
-            <Grid item xs={12} md={4}>
-              <Card elevation={2}>
-                <CardContent>
-                  <Box display="flex" alignItems="center" mb={1}>
-                    <AssignmentIcon color="error" sx={{ mr: 1 }} />
-                    <Typography variant="h6" color="error.main">
-                      Total Pendiente
+                  </CardContent>
+                </Card>
+              </Grid>
+              <Grid item xs={12} md={3}>
+                <Card elevation={2}>
+                  <CardContent>
+                    <Box display="flex" alignItems="center" mb={1}>
+                      <AssignmentIcon color="error" sx={{ mr: 1 }} />
+                      <Typography variant="h6" color="error.main">
+                        Total Pendiente
+                      </Typography>
+                    </Box>
+                    <Typography variant="h4" fontWeight="bold" color="error.main">
+                      {formatCurrency(totals.total_pendiente)}
                     </Typography>
-                  </Box>
-                  <Typography variant="h4" fontWeight="bold" color="error.main">
-                    {formatCurrency(totals.total_pendiente)}
-                  </Typography>
-                </CardContent>
-              </Card>
+                  </CardContent>
+                </Card>
+              </Grid>
+              <Grid item xs={12} md={3}>
+                <Card elevation={2}>
+                  <CardContent>
+                    <Box display="flex" alignItems="center" mb={1}>
+                      <AssignmentIcon color="info" sx={{ mr: 1 }} />
+                      <Typography variant="h6" color="info.main">
+                        Progreso General
+                      </Typography>
+                    </Box>
+                    <Typography variant="h4" fontWeight="bold" color="info.main">
+                      {porcentajeGeneral.toFixed(1)}%
+                    </Typography>
+                    <LinearProgress
+                      variant="determinate"
+                      value={porcentajeGeneral}
+                      sx={{ mt: 1, height: 6, borderRadius: 3 }}
+                      color={porcentajeGeneral === 100 ? 'success' : porcentajeGeneral >= 50 ? 'primary' : 'warning'}
+                    />
+                  </CardContent>
+                </Card>
+              </Grid>
             </Grid>
-          </Grid>
+          </>
         )}
 
         {/* Tabla de pagos */}
@@ -437,78 +590,72 @@ const PaymentReportsPage: React.FC = () => {
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {payments.map((payment) => (
-                    <StyledTableRow key={payment.idplanpago}>
-                      <TableCell>
-                        <Typography variant="body2" fontWeight="medium">
-                          {payment.descripcion || 'Sin descripción'}
-                        </Typography>
-                        <Typography variant="caption" color="text.secondary">
-                          ID: {payment.idplanpago}
-                        </Typography>
-                      </TableCell>
-                      <TableCell align="center">
-                        <Typography variant="body2" fontWeight="medium">
-                          {formatCurrency(payment.montotal || 0)}
-                        </Typography>
-                      </TableCell>
-                      <TableCell align="center">
-                        <Typography variant="body2" color="success.main" fontWeight="medium">
-                          {formatCurrency(payment.total_pagado || 0)}
-                        </Typography>
-                      </TableCell>
-                      <TableCell align="center">
-                        <Typography variant="body2" color="error.main" fontWeight="medium">
-                          {formatCurrency(payment.total_pendiente || 0)}
-                        </Typography>
-                      </TableCell>
-                      <TableCell align="center">
-                        <Chip
-                          label={payment.cuotas_incompletas || 0}
-                          size="small"
-                          color={(payment.cuotas_incompletas || 0) > 0 ? 'warning' : 'success'}
-                        />
-                      </TableCell>
-                      <TableCell align="center">
-                        <Box sx={{ minWidth: 100 }}>
-                          <LinearProgress
-                            variant="determinate"
-                            value={formatPercentage(payment.porcentaje_pago)}
-                            sx={{ mb: 1, height: 8, borderRadius: 4 }}
-                            color={
-                              formatPercentage(payment.porcentaje_pago) === 100
-                                ? 'success'
-                                : formatPercentage(payment.porcentaje_pago) >= 50
-                                ? 'primary'
-                                : 'warning'
-                            }
-                          />
-                          <Typography variant="caption" color="text.secondary">
-                            {formatPercentage(payment.porcentaje_pago).toFixed(1)}%
+                  {payments.map((payment) => {
+                    const status = getPaymentStatus(payment);
+                    const cuotasStatus = getCuotasIncompletasStatus(payment.cuotas_incompletas);
+                    const porcentaje = Number(payment.porcentaje_pago) || 0;
+                    
+                    return (
+                      <StyledTableRow key={payment.idplanpago}>
+                        <TableCell>
+                          <Typography variant="body2" fontWeight="medium">
+                            {payment.descripcion || 'Sin descripción'}
                           </Typography>
-                        </Box>
-                      </TableCell>
-                      <TableCell align="center">
-                        <Chip
-                          label={
-                            formatPercentage(payment.porcentaje_pago) === 100
-                              ? 'Completado'
-                              : formatPercentage(payment.porcentaje_pago) > 0
-                              ? 'En Progreso'
-                              : 'Pendiente'
-                          }
-                          color={
-                            formatPercentage(payment.porcentaje_pago) === 100
-                              ? 'success'
-                              : formatPercentage(payment.porcentaje_pago) > 0
-                              ? 'primary'
-                              : 'default'
-                          }
-                          size="small"
-                        />
-                      </TableCell>
-                    </StyledTableRow>
-                  ))}
+                          <Typography variant="caption" color="text.secondary">
+                            ID: {payment.idplanpago}
+                          </Typography>
+                        </TableCell>
+                        <TableCell align="center">
+                          <Typography variant="body2" fontWeight="medium">
+                            {formatCurrency(payment.montotal)}
+                          </Typography>
+                        </TableCell>
+                        <TableCell align="center">
+                          <Typography variant="body2" color="success.main" fontWeight="medium">
+                            {formatCurrency(payment.total_pagado)}
+                          </Typography>
+                        </TableCell>
+                        <TableCell align="center">
+                          <Typography variant="body2" color="error.main" fontWeight="medium">
+                            {formatCurrency(payment.total_pendiente)}
+                          </Typography>
+                        </TableCell>
+                        <TableCell align="center">
+                          <Chip
+                            label={payment.cuotas_incompletas}
+                            size="small"
+                            color={cuotasStatus.color}
+                          />
+                        </TableCell>
+                        <TableCell align="center">
+                          <Box sx={{ minWidth: 100 }}>
+                            <LinearProgress
+                              variant="determinate"
+                              value={Math.min(porcentaje, 100)}
+                              sx={{ mb: 1, height: 8, borderRadius: 4 }}
+                              color={
+                                porcentaje >= 100
+                                  ? 'success'
+                                  : porcentaje >= 50
+                                  ? 'primary'
+                                  : 'warning'
+                              }
+                            />
+                            <Typography variant="caption" color="text.secondary">
+                              {porcentaje.toFixed(1)}%
+                            </Typography>
+                          </Box>
+                        </TableCell>
+                        <TableCell align="center">
+                          <Chip
+                            label={status.label}
+                            color={status.color}
+                            size="small"
+                          />
+                        </TableCell>
+                      </StyledTableRow>
+                    );
+                  })}
                 </TableBody>
               </Table>
             </TableContainer>
@@ -545,6 +692,18 @@ const PaymentReportsPage: React.FC = () => {
           </Typography>
         </Box>
       </Box>
+
+      {/* Componente del PDF que se va a exportar */}
+      {selectedPatient && typeof selectedPatient.idpaciente === 'number' && payments.length > 0 && (
+        <HiddenPDFContainer>
+          <PaymentReportsPDF
+            patient={{ ...selectedPatient, idpaciente: selectedPatient.idpaciente as number }}
+            payments={payments}
+            totals={totals}
+            porcentajeGeneral={porcentajeGeneral}
+          />
+        </HiddenPDFContainer>
+      )}
     </PrintableContainer>
   );
 };

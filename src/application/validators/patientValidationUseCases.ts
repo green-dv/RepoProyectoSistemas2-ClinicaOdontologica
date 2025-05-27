@@ -131,19 +131,24 @@ export class PatientValidationUseCaseImpl implements PatientValidationUseCase {
         const errors: Record<string, string> = {};
 
         if (patient.fechanacimiento) {
-        const birthDate = new Date(patient.fechanacimiento);
-        const today = new Date();
-        const age = today.getFullYear() - birthDate.getFullYear();
-        const monthDiff = today.getMonth() - birthDate.getMonth();
-        
-        let actualAge = age;
-        if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
-            actualAge = age - 1;
-        }
-
-        if (actualAge < 0) {
-            errors.fechanacimiento = 'La fecha de nacimiento no puede ser futura';
-        }
+            const birthDate = new Date(patient.fechanacimiento);
+            const today = new Date();
+            const age = today.getFullYear() - birthDate.getFullYear();
+            const monthDiff = today.getMonth() - birthDate.getMonth();
+            
+            let actualAge = age;
+            if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+                actualAge = age - 1;
+            }
+            if (actualAge < 3) {
+                errors.fechanacimiento = 'La edad mínima para un paciente es de 3 años';
+            }
+            if (actualAge > 90) {
+                errors.fechanacimiento = 'La edad máxima para un paciente es de 90 años';
+            }
+            if (actualAge < 0) {
+                errors.fechanacimiento = 'La fecha de nacimiento no puede ser futura';
+            }
         }
 
         if (patient.estadocivil === 'Viudo/a' && patient.fechanacimiento) {
@@ -160,7 +165,9 @@ export class PatientValidationUseCaseImpl implements PatientValidationUseCase {
             errors.telefonodomicilio = 'Los teléfonos personal y domicilio no pueden ser iguales';
         }
         }
-
+        if (typeof patient.lugarnacimiento === 'string' && patient.lugarnacimiento.length < 3) {
+            errors.lugarnacimiento = 'El lugar de nacimiento debe tener al menos 3 caracteres o más';
+        }
 
         return {
         isValid: Object.keys(errors).length === 0,

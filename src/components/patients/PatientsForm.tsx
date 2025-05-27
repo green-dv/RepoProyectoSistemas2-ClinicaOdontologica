@@ -1,4 +1,3 @@
-// @/presentation/components/patients/PatientForm.tsx
 import React from 'react';
 import { Box, Alert, LinearProgress } from '@mui/material';
 import { Patient } from '@/domain/entities/Patient';

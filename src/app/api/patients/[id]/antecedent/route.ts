@@ -1,4 +1,3 @@
-//api/patients/[id]/antecedents
 import { NextRequest, NextResponse } from 'next/server';
 import { IAntecedenteRepository } from '@/infrastructure/repositories/AntecedentRepository';
 import { GetAntecedentesByPatientIdUseCase } from '@/application/usecases/antecedents/GetAntecedentByPatientUseCases';

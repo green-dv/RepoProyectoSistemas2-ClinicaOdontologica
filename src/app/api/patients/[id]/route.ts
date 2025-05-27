@@ -219,10 +219,8 @@ import { DeletePatientUseCase } from '@/application/usecases/patients/DeletePati
 
 import { IPatientRepository } from '@/infrastructure/repositories/PatientRepository';
 
-
 import { Patient } from '@/domain/entities/Patient';
 
-// Initialize dependencies
 const patientRepository = new IPatientRepository();
 const getPatientByIdUseCase = new GetPatientByIdUseCase(patientRepository);
 const updatePatientUseCase = new UpdatePatientUseCase(patientRepository);
@@ -234,7 +232,6 @@ interface RouteParams {
   };
 }
 
-// GET /api/pacientes/[id]
 export async function GET(
   request: NextRequest,
   { params }: RouteParams
@@ -268,7 +265,6 @@ export async function GET(
   }
 }
 
-// PUT /api/pacientes/[id]
 export async function PUT(
   request: NextRequest,
   { params }: RouteParams
@@ -285,7 +281,6 @@ export async function PUT(
     
     const data = await request.json();
     
-    // Basic validation
     if (!data.nombres || !data.apellidos) {
       return NextResponse.json(
         { message: 'Nombres y apellidos son requeridos' },

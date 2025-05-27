@@ -1,4 +1,3 @@
-// @/presentation/components/patients/sections/PersonalInfoSection.tsx
 import React from 'react';
 import {
     TextField,

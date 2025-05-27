@@ -76,7 +76,7 @@ export default function PatientsPage() {
                 onEdit={handleEditFromView}
             />
 
-            {/* Patient Form Dialog for both Create and Edit */}
+            {/* Patient Form Dialog  */}
             <PatientForm
                 open={formDialogOpen}
                 onClose={handleCloseFormDialog}

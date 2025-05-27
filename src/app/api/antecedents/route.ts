@@ -4,12 +4,10 @@ import { GetAntecedentesUseCase } from '@/application/usecases/antecedents/GetAn
 import { CreateAntecedenteUseCase } from '@/application/usecases/antecedents/CreateAntecedentUseCases';
 import { AntecedenteCompleto } from '@/domain/entities/Antecedent';
 
-// Initialize dependencie
 const antecedenteRepository = new IAntecedenteRepository();
 const getAntecedentesUseCase = new GetAntecedentesUseCase(antecedenteRepository);
 const createAntecedenteUseCase = new CreateAntecedenteUseCase(antecedenteRepository);
 
-// GET /api/antecedentes
 export async function GET(request: NextRequest) {
     try {
         const searchParams = request.nextUrl.searchParams;
@@ -27,12 +25,10 @@ export async function GET(request: NextRequest) {
     }
 }
 
-// POST /api/antecedentes
 export async function POST(request: NextRequest) {
     try {
         const data = await request.json();
         
-        // Basic validation
         if (!data.idpaciente) {
         return NextResponse.json(
             { message: 'ID del paciente es requerido' },

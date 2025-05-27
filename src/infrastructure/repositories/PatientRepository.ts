@@ -29,7 +29,6 @@ export class IPatientRepository implements PatientRepository {
         
         queryParams.push(limit, offset);
         
-        // Execute the main query with ORDER BY idpaciente DESC for latest first
         const result = await this.db.query(
             `SELECT * FROM pacientes ${whereClause} ORDER BY idpaciente DESC LIMIT $${queryParams.length - 1} OFFSET $${queryParams.length}`,
             queryParams
@@ -67,7 +66,6 @@ export class IPatientRepository implements PatientRepository {
         
         queryParams.push(limit, offset);
         
-        // Execute the main query with ORDER BY idpaciente DESC for latest first
         const result = await this.db.query(
             `SELECT * FROM pacientes ${whereClause} ORDER BY idpaciente DESC LIMIT $${queryParams.length - 1} OFFSET $${queryParams.length}`,
             queryParams

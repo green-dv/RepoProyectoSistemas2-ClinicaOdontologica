@@ -130,7 +130,6 @@ const createPatientUseCase = new CreatePatientUseCase(patientRepository);
   
 export async function GET(request: NextRequest) {
     try {
-        // Extract pagination parameters from query string
         const searchParams = request.nextUrl.searchParams;
         const page = parseInt(searchParams.get('page') || '1');
         const limit = parseInt(searchParams.get('limit') || '10');
@@ -152,7 +151,6 @@ export async function POST(request: NextRequest) {
     try {
         const data = await request.json();
         
-        // Basic validation
         if (!data.nombres || !data.apellidos) {
           return NextResponse.json(
             { message: 'Nombres y apellidos son requeridos' },

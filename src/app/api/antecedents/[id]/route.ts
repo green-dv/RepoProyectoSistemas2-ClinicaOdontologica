@@ -5,7 +5,6 @@ import { UpdateAntecedenteUseCase } from '@/application/usecases/antecedents/Upd
 import { DeleteAntecedenteUseCase } from '@/application/usecases/antecedents/DeleteAntecedentUseCases';
 import { AntecedenteCompleto } from '@/domain/entities/Antecedent';
 
-// Initialize dependencies
 const antecedenteRepository = new IAntecedenteRepository();
 const getAntecedenteByIdUseCase = new GetAntecedenteByIdUseCase(antecedenteRepository);
 const updateAntecedenteUseCase = new UpdateAntecedenteUseCase(antecedenteRepository);
@@ -17,7 +16,6 @@ interface RouteParams {
     };
 }
 
-// GET /api/antecedentes/[id]
 export async function GET(
   request: NextRequest,
   { params }: RouteParams
@@ -51,7 +49,6 @@ export async function GET(
     }
 }
 
-// PUT /api/antecedentes/[id]
 export async function PUT(
   request: NextRequest,
   { params }: RouteParams
@@ -106,7 +103,6 @@ export async function PUT(
     }
 }
 
-// DELETE /api/antecedentes/[id]
 export async function DELETE(
   request: NextRequest,
   { params }: RouteParams

@@ -29,7 +29,6 @@ export const useAntecedentForm = (initialData?: AntecedenteCompleto) => {
         [name]: value,
       }));
 
-      // Clear the error for this field when the user changes it
       if (antecedentErrors[name as keyof AntecedentFormErrors]) {
         setAntecedentErrors((prev) => ({
           ...prev,
@@ -43,7 +42,6 @@ export const useAntecedentForm = (initialData?: AntecedenteCompleto) => {
     const errors: AntecedentFormErrors = {};
     let isValid = true;
 
-    // Required fields validation
     if (!antecedentForm.fecha) {
       errors.fecha = 'La fecha es obligatoria';
       isValid = false;

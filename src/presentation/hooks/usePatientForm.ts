@@ -83,7 +83,6 @@ const [addedPatient, setAddedPatient] = useState<Patient | null>(null);
         }
     }, [validationUseCase]);
 
-    // Verificar si un campo es requerido
     const isFieldRequired = useCallback((fieldName: keyof Patient): boolean => {
         return PatientValidator.isFieldRequired(fieldName);
     }, []);
@@ -128,7 +127,6 @@ const [addedPatient, setAddedPatient] = useState<Patient | null>(null);
         }
     }, [formData, isEditMode, existingPatients, patient?.idpaciente, validationUseCase]);
 
-    // Efecto para inicializar el formulario
     useEffect(() => {
         setErrors({});
         setSubmitError(null);
@@ -158,7 +156,6 @@ const [addedPatient, setAddedPatient] = useState<Patient | null>(null);
         }
     }, [patient]);
 
-    // Manejar cambios en inputs de texto
     const handleInputChange = useCallback(async (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         const { name, value } = e.target;
         const fieldName = name as keyof Patient;
@@ -168,7 +165,6 @@ const [addedPatient, setAddedPatient] = useState<Patient | null>(null);
             [name]: value
         }));
         
-        // Limpiar error del campo si existe
         if (errors[fieldName]) {
             setErrors(prev => ({
                 ...prev,
@@ -176,7 +172,6 @@ const [addedPatient, setAddedPatient] = useState<Patient | null>(null);
             }));
         }
 
-        // Validación en tiempo real para campos críticos
         if (['nombres', 'apellidos', 'telefonopersonal'].includes(name)) {
             const error = await validateField(fieldName, value);
             if (error) {
@@ -188,7 +183,6 @@ const [addedPatient, setAddedPatient] = useState<Patient | null>(null);
         }
     }, [errors, validateField]);
 
-    // Manejar cambios en radio buttons
     const handleRadioChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
         const value = e.target.value === 'true';
         setFormData(prevData => ({
@@ -197,7 +191,6 @@ const [addedPatient, setAddedPatient] = useState<Patient | null>(null);
         }));
     }, []);
 
-    // Manejar cambios en fecha
     const handleDateChange = useCallback(async (date: Date | null) => {
         setBirthDate(date);
         
@@ -226,7 +219,6 @@ const [addedPatient, setAddedPatient] = useState<Patient | null>(null);
         }
     }, [validateField]);
 
-    // Manejar envío del formulario
     const handleSubmit = useCallback(async (e: React.FormEvent) => {
         e.preventDefault();
         setSubmitError(null);
@@ -242,7 +234,6 @@ const [addedPatient, setAddedPatient] = useState<Patient | null>(null);
             let response;
             
             if (isEditMode) {
-                // Actualizar paciente existente
                 response = await fetch(`/api/patients/${patient!.idpaciente}`, {
                     method: 'PUT',
                     headers: {
@@ -285,7 +276,6 @@ const [addedPatient, setAddedPatient] = useState<Patient | null>(null);
         }
     }, [validateForm, isEditMode, patient, formData, onSubmitSuccess]);
 
-    // Manejar cierre de confirmación
     const handleCloseConfirmation = useCallback(() => {
         setConfirmationOpen(false);
         setSubmitSuccess(false); 
