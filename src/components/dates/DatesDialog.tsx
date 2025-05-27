@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -11,14 +11,18 @@ import {
   Box,
   TextFieldProps,
   Typography,
-  Autocomplete
+  InputAdornment,
+  CircularProgress,
+  IconButton,
+  Paper
 } from '@mui/material';
 import { DateDTO } from '@/domain/entities/Dates';
 import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { Patient } from '@/domain/entities/Patient';
-import debounce from 'lodash/debounce';
+import { Clear } from '@mui/icons-material';
+import { Search } from '@mui/icons-material';
 
 interface DateDialogProps {
   open: boolean;
@@ -27,8 +31,13 @@ interface DateDialogProps {
   date: DateDTO;
   handleChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   isEditing: boolean;
-  patients: Patient[];                          // ahora viene por props
-  fetchPatients: (query: string) => void;       // función para buscar pacientes
+  patients: Patient[];
+  searchQuery: string;
+  setSearchQuery: (q: string) => void;
+  selectedPatient: Patient | null;
+  searchLoading: boolean;
+  setSelectedPatient: (p: Patient | null) => void;
+  handlePatientSelect: (p: Patient) => void;
 }
 
 export default function DatesDialog({
@@ -39,28 +48,24 @@ export default function DatesDialog({
   handleChange,
   isEditing,
   patients,
-  fetchPatients
+  searchQuery,
+  setSearchQuery,
+  searchLoading,
+  setSelectedPatient
 }: DateDialogProps) {
   const [hours, setHours] = useState(0);
   const [minutes, setMinutes] = useState(0);
 
-  // Si quieres debounce aquí:
-  const debouncedFetchPatients = useMemo(
-    () => debounce((q: string) => fetchPatients(q), 300),
-    [fetchPatients]
-  );
-
-  useEffect(() => {
-    return () => {
-      debouncedFetchPatients.cancel();
-    };
-  }, [debouncedFetchPatients]);
-
-  // Calcular paciente seleccionado a partir del prop patients
-  const selectedPatient = useMemo(
-    () => patients.find(p => p.idpaciente === date.idpaciente) || null,
-    [patients, date.idpaciente]
-  );
+  const handleClearSearch = () => {
+    setSearchQuery('');
+    setSelectedPatient(null);
+    handleChange({
+      target: {
+        name: 'idpaciente',
+        value: 0,
+      },
+    } as any);
+  };
 
   // Inicializar horas/minutos cuando cambia date.duracionaprox
   useEffect(() => {
@@ -75,6 +80,11 @@ export default function DatesDialog({
     handleChange({
       target: { name: 'duracionaprox', value: duracionAprox.toString() }
     } as React.ChangeEvent<HTMLInputElement>);
+  };
+
+  const handlePatientSelect = (patient: Patient) => {
+    setSelectedPatient(patient);
+    setSearchQuery(`${patient.nombres} ${patient.apellidos} ${patient.idpaciente}`);
   };
 
   return (
@@ -109,26 +119,92 @@ export default function DatesDialog({
           />
         </LocalizationProvider>
 
-        <Autocomplete
-          options={patients}
-          onFocus={() => fetchPatients("")}
-          value={selectedPatient}
-          getOptionLabel={o => `${o.nombres} ${o.apellidos}`}
-          onChange={(_, newVal) => {
-            handleChange({
-              target: { name: 'idpaciente', value: newVal?.idpaciente || '' }
-            } as any);
-          }}
-          onInputChange={(_, value, reason) => {
-            if (reason === 'input') {
-              debouncedFetchPatients(value);
-            }
-          }}
-          renderInput={params => (
-            <TextField {...params} label="Buscar Paciente" fullWidth margin="dense" />
+        <Box sx={{ position: 'relative' }}>
+          <TextField
+            fullWidth
+            placeholder="Buscar paciente por nombre, apellido o ID..."
+            value={searchQuery}
+            onChange={(e) => {
+              setSearchQuery(e.target.value);
+            }}
+            onFocus={() => {
+              if (!searchQuery) setSearchQuery(""); // Forzar búsqueda inicial
+            }}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <Search />
+                </InputAdornment>
+              ),
+              endAdornment: (
+                <>
+                  {searchLoading && (
+                    <InputAdornment position="end">
+                      <CircularProgress size={20} />
+                    </InputAdornment>
+                  )}
+                  {searchQuery && (
+                    <InputAdornment position="end">
+                      <IconButton onClick={handleClearSearch} size="small">
+                        <Clear/>
+                      </IconButton>
+                    </InputAdornment>
+                  )}
+                </>
+              ),
+            }}
+            sx={{
+              '& .MuiOutlinedInput-root': {
+                borderRadius: 2,
+              },
+            }}
+          />
+
+          {/* Lista de pacientes */}
+          {patients.length > 0 && (
+            <Paper
+              elevation={4}
+              sx={{
+                position: 'absolute',
+                top: '100%',
+                left: 0,
+                right: 0,
+                zIndex: 1300,
+                maxHeight: 300,
+                overflow: 'auto',
+                mt: 1,
+              }}
+            >
+              {patients.map((patient) => (
+                <Box
+                  key={patient.idpaciente}
+                  sx={{
+                    p: 2,
+                    cursor: 'pointer',
+                    borderBottom: '1px solid #eee',
+                    '&:hover': {
+                      backgroundColor: 'action.hover',
+                    },
+                  }}
+                  onClick={() => {
+                    handlePatientSelect(patient); // actualiza selectedPatient y otros estados en el padre
+                    handleChange({
+                      target: {
+                        name: 'idpaciente',
+                        value: patient.idpaciente,
+                      },
+                    } as any); // para que se actualice también en DateDTO
+                    setSearchQuery(`${patient.nombres} ${patient.apellidos}`);
+                  }}
+                >
+                  <Typography variant="body1" fontWeight="medium">
+                    {patient.nombres} {patient.apellidos}
+                  </Typography>
+                </Box>
+              ))}
+            </Paper>
           )}
-          isOptionEqualToValue={(o, v) => o.idpaciente === v?.idpaciente}
-        />
+        </Box>
 
         <TextField
           label="Descripción"

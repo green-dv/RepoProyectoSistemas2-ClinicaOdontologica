@@ -1,9 +1,8 @@
 "use client";
 import moment from 'moment';
-import { Add } from '@mui/icons-material';
+import { Add, Clear, Search } from '@mui/icons-material';
 import { 
   useState, 
-  useMemo, 
   useEffect 
 } from 'react';
 import {
@@ -12,7 +11,9 @@ import {
   Button,
   Typography,
   TextField,
-  Autocomplete,
+  InputAdornment,
+  CircularProgress,
+  IconButton,
 } from '@mui/material';
 
 import DateCard from '@/components/dates/DateCard';
@@ -48,7 +49,11 @@ export function DatesComponent() {
     setPacienteId,
     setFechaFin,
     setFechaInicio,
-    setEstadoFiltro
+    setEstadoFiltro,
+    //PACIENTES
+    handlePatientSelect,
+    handleClearSearch, 
+
   } = useDatesHandlers(datesState);
 
   const {
@@ -63,32 +68,44 @@ export function DatesComponent() {
     pacienteId,
     fechaFin,
     fechaInicio,
-    estadoFiltro
+    estadoFiltro,
+
+    searchQuery,
+    debouncedSearchQuery,
+    patients,
+    selectedPatient,
+    loading,
+    searchLoading,
+    error,
+    setSearchQuery,
+    setDebouncedSearchQuery,
+    setPatients,
+    setSelectedPatient,
+    setLoading,
+    setSearchLoading,
+    setError,
+    shouldSearch,
+    setShouldSearch,
   } = datesState;
   const [filteredDates, setFilteredDates] = useState(dates);
   const [statusList, setStatus] = useState<Status[]>([]);
-  const [patients, setPatients] = useState<Patient[]>([]);
-
-  const fetchPatients = useMemo(() => createPatientFetcher(setPatients), []);
   useEffect(() => {
-    handleFetchDates(searchTerm);
-    return () => handleFetchDates.cancel();
-  }, [searchTerm, handleFetchDates]);
-  
+      handleFetchDates(searchTerm);
+      return () => handleFetchDates.cancel();
+    }, [searchTerm, handleFetchDates]);
+
+  useEffect(() => {
+    const citasFiltradas = handleDatesFilter();
+    setFilteredDates(citasFiltradas);
+  }, [dates, estadoFiltro, fechaInicio, fechaFin, pacienteId]);
+
   useEffect(() => {
     const fetchStatuses = async () => {
       const statuses = await fetchStatus();
       setStatus(statuses);
     };
-    
-  
     fetchStatuses();
   }, []);
-
-  useEffect(() => {
-    const resultadosFiltrados = handleDatesFilter();
-    setFilteredDates(resultadosFiltrados);
-  }, [dates, estadoFiltro, pacienteId, fechaInicio, fechaFin]);
   
 
   const today = moment().startOf('day');
@@ -155,22 +172,80 @@ export function DatesComponent() {
           </Button>
         </Box>
         <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, my: 2 }}>
-          <Autocomplete
-            sx={{ width: '200px' }}
-            options={patients}
-            onFocus={() => fetchPatients("")}
-            getOptionLabel={(option) => `${option.nombres} ${option.apellidos}`}
-            onInputChange={(_, value) => {
-              fetchPatients(value);
+          <Box className="no-print" position="relative" sx={{ width: '100%', maxWidth: 300 }}>
+          <TextField
+            fullWidth
+            placeholder="Buscar paciente por nombre, apellido o id..."
+            value={searchQuery}
+            onChange={(e) => {
+              setShouldSearch(true);
+              setSearchQuery(e.target.value);
             }}
-            onChange={(_, value) => {
-              setPacienteId(value ? value.idpaciente : null);
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <Search />
+                </InputAdornment>
+              ),
+              endAdornment: (
+                <InputAdornment position="end">
+                  {searchLoading && <CircularProgress size={20} />}
+                  {searchQuery && (
+                    <IconButton onClick={handleClearSearch} size="small">
+                      <Clear />
+                    </IconButton>
+                  )}
+                </InputAdornment>
+              ),
             }}
-            
-            renderInput={(params) => <TextField {...params} label="Buscar Paciente" />}
-            isOptionEqualToValue={(option, value) => option.idpaciente === value.idpaciente}
+            sx={{
+              '& .MuiOutlinedInput-root': {
+                borderRadius: 2,
+              },
+            }}
           />
 
+          {/* Lista de pacientes encontrados */}
+          {patients.length > 0 && (
+            <Paper
+              elevation={4}
+              sx={{
+                position: 'absolute',
+                top: '100%',
+                left: 0,
+                right: 0,
+                zIndex: 1000,
+                maxHeight: 300,
+                overflow: 'auto',
+                mt: 1,
+              }}
+            >
+              {patients.map((patient) => (
+                <Box
+                  key={patient.idpaciente}
+                  sx={{
+                    p: 2,
+                    cursor: 'pointer',
+                    borderBottom: '1px solid #eee',
+                    '&:hover': {
+                      backgroundColor: 'action.hover',
+                    },
+                  }}
+                  onClick={() => {
+                    handlePatientSelect(patient);        // ← tu lógica para selección
+                    setPacienteId(Number(patient.idpaciente) ?? null);   // ← filtro en citas
+                    setSearchQuery(`${patient.nombres} ${patient.apellidos}`); // opcional: mostrar nombre en input
+                    setPatients([]);                     // opcional: cerrar dropdown
+                  }}
+                >
+                  <Typography variant="body1" fontWeight="medium">
+                    {patient.nombres} {patient.apellidos}
+                  </Typography>
+                </Box>
+              ))}
+            </Paper>
+              )}
+            </Box>
           <Box sx={{ maxWidth: '200px', width: '100%' }}>
             <StatusDropDown
               isDropDownLoading={false}
@@ -182,6 +257,7 @@ export function DatesComponent() {
               isFilter={true}
             />
           </Box>
+
 
           <TextField
             label="Fecha Inicio"
@@ -236,13 +312,18 @@ export function DatesComponent() {
 
       <DatesDialog
         patients={patients}
-        fetchPatients={createPatientFetcher(setPatients)}
+        searchQuery={searchQuery}
+        setSearchQuery={setSearchQuery}
+        selectedPatient={selectedPatient}
+        searchLoading={searchLoading}
+        handlePatientSelect={handlePatientSelect}
         open={open}
         onClose={handleClose}
         onSubmit={handleSubmit}
         date={newDate}
         handleChange={handleChange}
         isEditing={!!selectedDate}
+        setSelectedPatient={setSelectedPatient}
       />
 
       <SnackbarAlert

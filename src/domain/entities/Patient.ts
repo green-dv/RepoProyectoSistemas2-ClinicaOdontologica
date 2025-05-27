@@ -13,3 +13,5 @@ export interface Patient {
     aseguradora: string;
     habilitado: boolean;
 }
+
+export type PatientDTO = Omit<Patient, 'idpaciente' | 'habilitado'>;

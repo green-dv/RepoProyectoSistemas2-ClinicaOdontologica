@@ -1,4 +1,4 @@
-import { useCallback } from "react";
+import { useCallback, useEffect } from "react";
 import debounce from 'lodash/debounce';
 import { Date as DateObj, DateDTO } from "@/domain/entities/Dates";
 import { AlertColor } from "@mui/material";
@@ -11,6 +11,8 @@ import{
   restoreDate,
   deleteDatePermanently
 } from '@/application/usecases/dates';
+import { Patient } from "@/domain/entities/Patient";
+import { PatientResponse } from "@/domain/dto/patient";
 
 interface DatesState{
   dates: DateObj[];
@@ -26,6 +28,16 @@ interface DatesState{
   fechaFin: moment.Moment | null;
   pacienteId: number | null;
 
+  //PACIENTES
+  searchQuery: string | '';
+  debouncedSearchQuery: string | '';
+  patients: Patient[] | [];
+  selectedPatient: Patient | null;
+  loading: boolean | false;
+  searchLoading: boolean | false;
+  error: string | null;
+  shouldSearch: boolean;
+
   setDates: React.Dispatch<React.SetStateAction<DateObj[]>>;
   setOpen: React.Dispatch<React.SetStateAction<boolean>>;
   setSearchTerm: React.Dispatch<React.SetStateAction<string>>;
@@ -39,6 +51,16 @@ interface DatesState{
   setFechaInicio: React.Dispatch<React.SetStateAction<moment.Moment | null>>;
   setFechaFin: React.Dispatch<React.SetStateAction<moment.Moment | null>>;
   setPacienteId: React.Dispatch<React.SetStateAction<number | null>>;
+
+  //PACIENTES
+  setSearchQuery: React.Dispatch<React.SetStateAction<string>>;
+  setDebouncedSearchQuery: React.Dispatch<React.SetStateAction<string>>;
+  setPatients: React.Dispatch<React.SetStateAction<Patient[]>>;
+  setSelectedPatient: React.Dispatch<React.SetStateAction<Patient | null>>;
+  setLoading: React.Dispatch<React.SetStateAction<boolean>>;
+  setSearchLoading: React.Dispatch<React.SetStateAction<boolean>>;
+  setError: React.Dispatch<React.SetStateAction<string | null>>;
+  setShouldSearch: React.Dispatch<React.SetStateAction<boolean>>;
 
   resetForm: () => void;
   showMessage: (message: string, severity: AlertColor) => void;
@@ -66,6 +88,23 @@ export default function useDatesHandlers(state: DatesState){
     setFechaInicio,
     setFechaFin,
     setPacienteId,
+    //PACIENTES
+    searchQuery,
+    debouncedSearchQuery,
+    patients,
+    selectedPatient,
+    loading,
+    searchLoading,
+    error,
+    setSearchQuery,
+    setDebouncedSearchQuery,
+    setPatients,
+    setSelectedPatient,
+    setLoading,
+    setSearchLoading,
+    setError,
+    shouldSearch,
+    setShouldSearch,
   } = state;
 
 
@@ -113,10 +152,18 @@ export default function useDatesHandlers(state: DatesState){
       idpaciente: date.idpaciente || 1,
       idconsulta: date.idconsulta ?? 0,
       descripcion: date.descripcion || '',
-      idestadocita: 1, // Adjust this if `idestadocita` is part of the `DateObj`
+      idestadocita: 1,
       fechacita: date.fechacita ? moment(date.fechacita).format('YYYY-MM-DDTHH:mm') : '',
       duracionaprox: date.duracionaprox || 0
-  });
+    });
+
+    // Buscar paciente actual para mostrarlo en el input (opcional)
+    const paciente = patients.find(p => p.idpaciente === date.idpaciente);
+    if (paciente) {
+      setSearchQuery(`${paciente.nombres} ${paciente.apellidos}`);
+      setSelectedPatient(paciente);
+    }
+
     setSelectedDate(date);
     setOpen(true);
   };
@@ -280,6 +327,69 @@ export default function useDatesHandlers(state: DatesState){
   };
   
 
+
+
+  //PACIENTES
+    const fetchPatients = useCallback(async () => {
+      if (!debouncedSearchQuery.trim()) {
+        setPatients([]);
+        return;
+      }
+  
+      try {
+        setSearchLoading(true);
+        setError(null);
+  
+        const queryParams = new URLSearchParams({
+          page: '1',
+          limit: '10',
+          search: debouncedSearchQuery,
+        });
+  
+        const response = await fetch(`/api/patients?${queryParams}`);
+        
+        if (!response.ok) {
+          throw new Error('Error al cargar los pacientes');
+        }
+        
+        const data: PatientResponse = await response.json();
+        setPatients(data.data);
+      } catch (err) {
+        console.error('Error fetching patients:', err);
+        setError(err instanceof Error ? err.message : 'Error desconocido');
+        setPatients([]);
+      } finally {
+        setSearchLoading(false);
+      }
+    }, [debouncedSearchQuery]);
+  
+    useEffect(() => {
+      fetchPatients();
+    }, [fetchPatients]);
+  
+    const handlePatientSelect = (patient: Patient) => {
+      setSelectedPatient(patient);
+      setSearchQuery(`${patient.nombres} ${patient.apellidos} ${patient.idpaciente}`);
+      setPatients([]);
+      setPacienteId(patient?.idpaciente ?? null); 
+    };
+
+  
+    const handleClearSearch = () => {
+      setSearchQuery('');
+      setSelectedPatient(null);
+      setPacienteId(null);
+    };
+    useEffect(() => {
+      if (!shouldSearch) return;
+  
+      const timer = setTimeout(() => {
+        setDebouncedSearchQuery(searchQuery);
+      }, 500);
+  
+      return () => clearTimeout(timer);
+    }, [searchQuery, shouldSearch]);
+
   return {
     handleFetchDates,
     handleOpen,
@@ -296,7 +406,16 @@ export default function useDatesHandlers(state: DatesState){
     setPacienteId,
     setFechaFin,
     setFechaInicio,
-    setEstadoFiltro
+    setEstadoFiltro,
+    searchQuery,
+    debouncedSearchQuery,
+    patients,
+    selectedPatient,
+    loading,
+    searchLoading,
+    error,
+    handlePatientSelect,
+    handleClearSearch,  
   };
 
 }

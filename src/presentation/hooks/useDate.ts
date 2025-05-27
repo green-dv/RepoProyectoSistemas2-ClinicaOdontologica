@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Date as DateObj, DateDTO } from "@/domain/entities/Dates";
 import { AlertColor } from "@mui/material";
+import { Patient } from "@/domain/entities/Patient";
 
 export interface SnackbarMessage{
   message: string;
@@ -21,6 +22,16 @@ export interface DatesState{
   fechaFin: moment.Moment | null;
   pacienteId: number | null;
 
+  //PACIENTES
+  searchQuery: string | '';
+  debouncedSearchQuery: string | '';
+  patients: Patient[] | [];
+  selectedPatient: Patient | null;
+  loading: boolean | false;
+  searchLoading: boolean | false;
+  error: string | null;
+  shouldSearch: boolean;
+
   setDates: React.Dispatch<React.SetStateAction<DateObj[]>>;
   setOpen: React.Dispatch<React.SetStateAction<boolean>>;
   setSearchTerm: React.Dispatch<React.SetStateAction<string>>;
@@ -34,6 +45,16 @@ export interface DatesState{
   setFechaInicio: React.Dispatch<React.SetStateAction<moment.Moment | null>>;
   setFechaFin: React.Dispatch<React.SetStateAction<moment.Moment | null>>;
   setPacienteId: React.Dispatch<React.SetStateAction<number | null>>;
+
+  //PACIENTES
+  setSearchQuery: React.Dispatch<React.SetStateAction<string>>;
+  setDebouncedSearchQuery: React.Dispatch<React.SetStateAction<string>>;
+  setPatients: React.Dispatch<React.SetStateAction<Patient[]>>;
+  setSelectedPatient: React.Dispatch<React.SetStateAction<Patient | null>>;
+  setLoading: React.Dispatch<React.SetStateAction<boolean>>;
+  setSearchLoading: React.Dispatch<React.SetStateAction<boolean>>;
+  setError: React.Dispatch<React.SetStateAction<string | null>>;
+  setShouldSearch: React.Dispatch<React.SetStateAction<boolean>>;
   
   resetForm: () => void;
   showMessage: (message: string, severity: AlertColor) => void;
@@ -60,6 +81,17 @@ export default function useDates(): DatesState{
   const [pacienteId, setPacienteId] = useState<number | null>(0);
   const [selectedDate, setSelectedDate] = useState<DateObj | null>(null);
   const [snackbar, setSnackbar] = useState<SnackbarMessage | null>(null);
+
+  //PACIENTES
+  
+  const [searchQuery, setSearchQuery] = useState('');
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('');
+  const [patients, setPatients] = useState<Patient[]>([]);
+  const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [searchLoading, setSearchLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [shouldSearch, setShouldSearch] = useState(true);
 
   const resetForm = () => {
     setNewDate({
@@ -102,6 +134,24 @@ export default function useDates(): DatesState{
     setFechaInicio,
     setFechaFin,
     setPacienteId,
+
+    //PACIENTES
+    searchQuery,
+    debouncedSearchQuery,
+    patients,
+    selectedPatient,
+    loading,
+    searchLoading,
+    error,
+    setSearchQuery,
+    setDebouncedSearchQuery,
+    setPatients,
+    setSelectedPatient,
+    setLoading,
+    setSearchLoading,
+    setError,
+    shouldSearch,
+    setShouldSearch,
 
     resetForm,
     showMessage,

@@ -174,18 +174,14 @@ export default function usePaymentPlanHandlers(){
   }
 
   const handleSubmit = async () => {
-
-    console.log('se entro a handle submit');
     newPaymentPlan.pagos = payments;
-    if(newPaymentPlan?.idpaciente){
-      console.log('DEBUGidpaciente: ' +  newPaymentPlan?.idpaciente);
+    if(selectedPatient){
+      newPaymentPlan.idpaciente =  Number(selectedPatient?.idpaciente) ?? null;
+    }
+    else if(newPaymentPlan?.idpaciente){
       newPaymentPlan.idpaciente = Number(newPaymentPlan?.idpaciente) ?? null;
     }
-    else{
-      console.log('DEBUGidpaciente: ' +  Number(selectedPatient?.idpaciente));
-      setNewPaymentPlan(newPaymentPlan)
-    }
-    
+    setNewPaymentPlan(newPaymentPlan)
     
     if(!validations()){
       return;
@@ -571,9 +567,6 @@ const recalculatePayments2 = (
   const handleClearSearch = () => {
     setSearchQuery('');
     setSelectedPatient(null);
-    setPatients([]);
-    setPayments([]);
-    setError(null);
   };
   useEffect(() => {
     if (!shouldSearch) return;
