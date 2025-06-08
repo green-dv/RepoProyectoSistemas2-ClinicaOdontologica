@@ -1,4 +1,4 @@
-import { OdontogramDescription } from '@/domain/entities/DescripcionOdontograma'
+import { OdontogramDescription } from '@/domain/entities/OdontogramDescription'
 export interface Odontogram{
   idodontograma: number;
   idpaciente: number;
@@ -12,5 +12,6 @@ export interface Odontogram{
 export interface CreateOdontogram{
   idpaciente: number;
   idconsulta?: number;
+  fechacreacion?: Date;
   observaciones?: string;
 }

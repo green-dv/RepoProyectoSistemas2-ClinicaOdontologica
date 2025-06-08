@@ -1,6 +1,7 @@
 export interface OdontogramDescription{
   idcara: number;
   cara: string;
+  idpieza: number;
   codigofdi: number;
   nombrepieza: string;
   iddiagnostico: number;

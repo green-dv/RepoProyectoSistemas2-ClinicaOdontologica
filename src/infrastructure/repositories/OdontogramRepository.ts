@@ -52,7 +52,7 @@ export class IOdontogramrepository implements OdontogramaRepository {
   
   async getOdontogramByConsultationId(consultationId: number): Promise<Odontogram | null> {
 
-    let whereClause = `WHERE o.idconsulta = $1`;
+    const whereClause = `WHERE o.idconsulta = $1`;
     const values: (number | string)[] = [consultationId];
 
 
@@ -128,27 +128,34 @@ export class IOdontogramrepository implements OdontogramaRepository {
   }
 
   async addDescription(descripcion: OdontogramDescriptionDTO): Promise<OdontogramDescriptionDTO | null>{
-    const result = await this.db.query(
-      `
-        INSERT INTO descripcionodontogramas (idcara, idpieza, iddiagnostico, idodontograma)
-        VALUES($1, $2, $23, $4)
-        RETURNING idcara, idpieza, iddiagnostico, idodontograma
-      `, [
-        descripcion.idcara,
-        descripcion.idpieza,
-        descripcion.iddiagnostico,
-        descripcion.idodontograma
-        ]
-    );
-    if(result.rows.length === 0) return null;
+    try{
 
-    const description = result.rows[0] as OdontogramDescriptionDTO;
-
-    return description;
+      const result = await this.db.query(
+        `
+          INSERT INTO descripcionodontogramas (idcara, idpieza, iddiagnostico, idodontograma)
+          VALUES($1, $2, $23, $4)
+          RETURNING idcara, idpieza, iddiagnostico, idodontograma
+        `, [
+          descripcion.idcara,
+          descripcion.idpieza,
+          descripcion.iddiagnostico,
+          descripcion.idodontograma
+          ]
+      );
+      if(result.rows.length === 0) return null;
+  
+      const description = result.rows[0] as OdontogramDescriptionDTO;
+      return description;
+    }
+    catch (error) {
+      console.error('Error al agregar la descripción:', error);
+      throw new Error('Error al agregar la descripción');
+    }
+    
   }
 
   async getLastOdontogramPerPatientId(patientId: number): Promise<Odontogram | null>{
-    let whereClause = `WHERE o.idpaciente = $1`;
+    const whereClause = `WHERE o.idpaciente = $1`;
     const values: (number | string)[] = [patientId];
 
 
@@ -179,16 +186,21 @@ export class IOdontogramrepository implements OdontogramaRepository {
   }
 
   async removeDescription(idOdontograma: number,idCara: number, idPieza: number,  iddiagnostico: number): Promise<OdontogramDescription | null>{
-    const result = await this.db.query(
-      `
-        DELETE FROM descripctionodontogramas 
-        WHERE idcara = $1 AND idpieza = $2 AND iddiagnostico = $3 AND idodontograma = $4
-        RETURNING *;
-      `,
-      [idCara, idPieza, iddiagnostico, idOdontograma]
-    );
-    if(result.rows.length === 0) return null;
-    const description = result.rows[0] as OdontogramDescription;
-    return description;
+    try{
+      const result = await this.db.query(
+        `
+          DELETE FROM descripctionodontogramas 
+          WHERE idcara = $1 AND idpieza = $2 AND iddiagnostico = $3 AND idodontograma = $4
+          RETURNING *;
+        `,
+        [idCara, idPieza, iddiagnostico, idOdontograma]
+      );
+      if(result.rows.length === 0) return null;
+      const description = result.rows[0] as OdontogramDescription;
+      return description;
+    } catch{
+      throw new Error('Error al eliminar');
+    }
+    
   }
 }
