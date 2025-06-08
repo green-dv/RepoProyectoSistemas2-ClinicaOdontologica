@@ -7,18 +7,13 @@ from 'react';
 import { styled } from '@mui/material/styles';
 import Card from '@mui/material/Card';
 import CardHeader from '@mui/material/CardHeader';
-import CardMedia from '@mui/material/CardMedia';
 import CardContent from '@mui/material/CardContent';
 import CardActions from '@mui/material/CardActions';
 import Collapse from '@mui/material/Collapse';
 import Avatar from '@mui/material/Avatar';
 import IconButton, { IconButtonProps } from '@mui/material/IconButton';
 import Typography from '@mui/material/Typography';
-import { red } from '@mui/material/colors';
-import FavoriteIcon from '@mui/icons-material/Favorite';
-import ShareIcon from '@mui/icons-material/Share';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import MoreVertIcon from '@mui/icons-material/MoreVert';
 
 import WatchLaterIcon from '@mui/icons-material/WatchLater';
 import PersonIcon from '@mui/icons-material/Person';
@@ -28,6 +23,7 @@ import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 
 import {
   Box,
+  Chip,
   CircularProgress,
   Grid
 }from '@mui/material'
@@ -124,6 +120,23 @@ export function DateCard({
   const handleCalendarClick = (fechacita: DateTime) =>{
     router.push(`calendar?date=${fechacita}`);
   };
+
+  const getStatusChipColor = (
+    estado: string
+  ): { label: string; color: "default" | "primary" | "secondary" | "error" | "info" | "success" | "warning" } => {
+    switch (estado.toLowerCase()) {
+      case "completado":
+        return { label: "COMPLETO", color: "success" };
+      case "pendiente":
+        return { label: "PENDIENTE", color: "warning" };
+      case "cancelado":
+        return { label: "CANCELADO", color: "default" };
+      default:
+        return { label: estado.toUpperCase(), color: "primary" };
+    }
+  };
+
+  
   
   if (isLoading) {
     return (
@@ -145,23 +158,32 @@ export function DateCard({
   
   return (
     <Grid container spacing={2} justifyContent="center" alignItems="center">
-      {dates.map((date, index) => (
+      {dates.map((date, index) => {
+        const { label, color } = getStatusChipColor(date.estado);
+        return(
         <Grid item xs={12} sm={6} md={4} lg={3} key={index}>
           <Card sx={{ maxWidth: 345, width: '100%' }}>
             <CardHeader
               avatar={
                 <Avatar>
-                  <WatchLaterIcon/>
+                  <WatchLaterIcon />
                 </Avatar>
               }
               action={
-                <IconButton aria-label="settings" onClick={() => handleCalendarClick(date.fechacita)}>
-                  <CalendarMonthIcon/>
-                </IconButton>
+                <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 1 }}>
+                  <Chip
+                    label={label}
+                    color={color}
+                    size="small"
+                  />
+                  <IconButton aria-label="settings" onClick={() => handleCalendarClick(date.fechacita)}>
+                    <CalendarMonthIcon />
+                  </IconButton>
+                </Box>
               }
               title={date.descripcion}
-            >
-            </CardHeader>
+            />
+
 
             <CardContent>
               <PersonIcon/> {date.paciente}
@@ -288,7 +310,8 @@ export function DateCard({
             </Collapse>
           </Card>
         </Grid>
-      ))}
+    )
+    })}
     </Grid>
   );
 }

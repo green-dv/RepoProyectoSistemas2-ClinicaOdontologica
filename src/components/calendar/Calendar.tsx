@@ -1,19 +1,17 @@
 "use client";
 import { Calendar } from "@/components/calendar/BigCalendar";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect } from "react";
 import moment from "moment";
 import SnackbarAlert from "@/components/SnackbarAlert";
 import DatesDialog from "@/components/dates/DatesDialog";
 import useCalendar from "@/presentation/hooks/useCalendar";
 import useCalendarHandler from "@/presentation/handlers/useCalendarHandler";
-import { createPatientFetcher } from "@/presentation/handlers/patientsUtil";
-import { Patient } from "@/domain/entities/Patient";
+import useDates from '@/presentation/hooks/useDate';
+import useDatesHandlers from '@/presentation/handlers/useDateHandler';
 
 export function CalendarComponent({ initialDate }: { initialDate: string }) {
   const calendarState = useCalendar();
-  const [patients, setPatients] = useState<Patient[]>([]);
-  
-  const fetchPatients = useMemo(() => createPatientFetcher(setPatients), []);
+  const datesState = useDates();
   const{
       handleFetchDates,
       handleEdit,
@@ -33,6 +31,21 @@ export function CalendarComponent({ initialDate }: { initialDate: string }) {
     setOpen,
     setNewDate,
   } = calendarState;
+
+  const {
+      //PACIENTES
+      handlePatientSelectDialog,
+    } = useDatesHandlers(datesState);
+  
+    const {
+  
+      searchQueryDialog,
+      patientsDialog,
+      selectedPatientDialog,
+      searchLoadingDialog,
+      setSearchQueryDialog,
+      setSelectedPatientDialog,
+    } = datesState;
 
   useEffect(() => {
     if (initialDate) {
@@ -70,7 +83,6 @@ export function CalendarComponent({ initialDate }: { initialDate: string }) {
 
   const handleSelectSlot = (slotInfo: any) => {
     const start = moment(slotInfo.start);
-    const end = moment(slotInfo.end);
 
     setNewDate({
       fecha: "",
@@ -107,14 +119,19 @@ export function CalendarComponent({ initialDate }: { initialDate: string }) {
         views={["month", "week", "day"]}
       />
       <DatesDialog
-        patients={patients}
-        fetchPatients={createPatientFetcher(setPatients)}
+        patients={patientsDialog}
+        searchQueryDialog={searchQueryDialog}
+        setSearchQueryDialog={setSearchQueryDialog}
+        selectedPatientDialog={selectedPatientDialog}
+        searchLoadingDialog={searchLoadingDialog}
+        handlePatientSelectDialog={handlePatientSelectDialog}
         open={open}
-        onClose={() => setOpen(false)}
+        onClose={()=>{setOpen(false)}}
+        onSubmit={handleSubmit}
         date={newDate}
         handleChange={handleChange}
         isEditing={!!selectedDate}
-        onSubmit={handleSubmit}
+        setSelectedPatientDialog={setSelectedPatientDialog}
       />
       <SnackbarAlert snackbar={snackbar} onClose={() => {}} />
     </div>

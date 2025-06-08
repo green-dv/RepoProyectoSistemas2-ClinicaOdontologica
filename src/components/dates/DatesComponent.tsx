@@ -53,7 +53,8 @@ export function DatesComponent() {
     //PACIENTES
     handlePatientSelect,
     handleClearSearch, 
-
+    handlePatientSelectDialog,
+    handleClearSearchDialog,
   } = useDatesHandlers(datesState);
 
   const {
@@ -71,21 +72,18 @@ export function DatesComponent() {
     estadoFiltro,
 
     searchQuery,
-    debouncedSearchQuery,
     patients,
-    selectedPatient,
-    loading,
     searchLoading,
-    error,
     setSearchQuery,
-    setDebouncedSearchQuery,
     setPatients,
-    setSelectedPatient,
-    setLoading,
-    setSearchLoading,
-    setError,
-    shouldSearch,
     setShouldSearch,
+
+    searchQueryDialog,
+    patientsDialog,
+    selectedPatientDialog,
+    searchLoadingDialog,
+    setSearchQueryDialog,
+    setSelectedPatientDialog,
   } = datesState;
   const [filteredDates, setFilteredDates] = useState(dates);
   const [statusList, setStatus] = useState<Status[]>([]);
@@ -289,15 +287,11 @@ export function DatesComponent() {
             Aplicar filtros
           </Button>
         </Box>
-        {secciones
-          .filter(section => section.show)
-          .map(section => (
-            <Paper key={section.id} elevation={24} sx={{ mb: 3, p: 2 }}>
-              <Typography variant="h5" component="h2" mb={2}>
-                {section.title}
-              </Typography>
+        
+            <Paper elevation={24} sx={{ mb: 3, p: 2 }}>
+              
               <DateCard
-                dates={section.dates}
+                dates={dates}
                 isLoading={isLoading}
                 showDisabled={showDisabled}
                 onEdit={handleEdit}
@@ -307,23 +301,22 @@ export function DatesComponent() {
                 onUpdate={() => handleFetchDates(searchTerm)}
               />
             </Paper>
-        ))}
       </Paper>
 
       <DatesDialog
-        patients={patients}
-        searchQuery={searchQuery}
-        setSearchQuery={setSearchQuery}
-        selectedPatient={selectedPatient}
-        searchLoading={searchLoading}
-        handlePatientSelect={handlePatientSelect}
+        patients={patientsDialog}
+        searchQueryDialog={searchQueryDialog}
+        setSearchQueryDialog={setSearchQueryDialog}
+        selectedPatientDialog={selectedPatientDialog}
+        searchLoadingDialog={searchLoadingDialog}
+        handlePatientSelectDialog={handlePatientSelectDialog}
         open={open}
         onClose={handleClose}
         onSubmit={handleSubmit}
         date={newDate}
         handleChange={handleChange}
         isEditing={!!selectedDate}
-        setSelectedPatient={setSelectedPatient}
+        setSelectedPatientDialog={setSelectedPatientDialog}
       />
 
       <SnackbarAlert
