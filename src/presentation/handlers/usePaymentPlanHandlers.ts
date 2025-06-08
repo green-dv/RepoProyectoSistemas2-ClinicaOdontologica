@@ -191,9 +191,7 @@ export default function usePaymentPlanHandlers(){
     if(!submitValidations()){
       return;
     }
-    //Si es que existe un plan de pagos seleccionado
     if(selectedPaymentPlan){
-      //update
       try {
         
         const res = await fetch(`/api/paymentsplan/${newPaymentPlan.idplanpago}`, {
