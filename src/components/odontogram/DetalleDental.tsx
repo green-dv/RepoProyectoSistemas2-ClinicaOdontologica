@@ -14,106 +14,28 @@ import {
   AccordionDetails
 } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import { DentalPiece, EstadoDental, CaraDental } from '@/presentation/config/odontogrmaConfig';
 
+import { Diagnosis } from '@/domain/entities/Diagnosis';
+import { Cara, DentalPiece } from '@/presentation/config/odontogrmaConfig';
 
 interface DetalleDentalProps {
-  //selectedTooth: number | null;
   diente: DentalPiece | null;
   diagnosis: Diagnosis[] | null;
-  onFaceStateChange: (numero: number, cara: CaraDental, estado: string) => void;
+  onFaceStateChange: (idpieza: number, idcara: number, iddiagnostico: number, codigofdi: number, nombrepieza: string, cara: string, idodontograma: number) => void;
 }
-import { Diagnosis } from '@/domain/entities/Diagnosis';
-import { Cara } from '@/domain/entities/Cara';
 
 const DetalleDental: React.FC<DetalleDentalProps> = ({
   diente,
   diagnosis,
   onFaceStateChange
 }) => {
-
-
-  const estados: string[] = diagnosis ? diagnosis.map(d => d.descripcion) : ['sano', 'caries'];
-  /*const estados: EstadoDental[] = [
-    'sano', 'caries', 'obturado', 'extraido', 
-    'endodoncia', 'corona', 'implante'
-  ];*/
-
-  const caras: CaraDental[] = ['vestibular', 'mesial', 'lingual', 'distal', 'oclusal'];
-
-  let getEstadoLabel = (estado: string): string => estado; // por defecto
-  let getEstadoColor = (estado: string): string => '#000000'; // color por defecto
-
-  if (diagnosis) {
-    const labels: Record<string, string> = {};
-    const colors: Record<string, string> = {};
-
-    diagnosis.forEach((diag) => {
-      labels[diag.descripcion] = diag.descripcion;
-      colors[diag.descripcion] = diag.enlaceicono || '#000000';
-    });
-
-    getEstadoLabel = (estado: string): string => {
-      return labels[estado] || estado;
-    };
-
-    getEstadoColor = (estado: string): string => {
-      return colors[estado] || '#000000';
-    };
-  } else {
-    const fallbackLabels: Record<string, string> = {
-      sano: 'Sano',
-      caries: 'Caries',
-    };
-
-    const fallbackColors: Record<string, string> = {
-      sano: '#4caf50',
-      caries: '#f44336',
-    };
-
-    getEstadoLabel = (estado: string): string => {
-      return fallbackLabels[estado] || estado;
-    };
-
-    getEstadoColor = (estado: string): string => {
-      return fallbackColors[estado] || '#000000';
-    };
-  }
-  
-
-  const getCaraLabel = (cara: CaraDental): string => {
-    const labels = {
-      vestibular: 'Vestibular',
-      mesial: 'Mesial',
-      lingual: 'Lingual/Palatina',
-      distal: 'Distal',
-      oclusal: 'Oclusal/Incisal'
-    };
-    return labels[cara];
-  };
-
-  const getCuadranteNombre = (cuadrante: number): string => {
-    const nombres = {
-      1: 'Superior Derecho',
-      2: 'Superior Izquierdo',
-      3: 'Inferior Izquierdo',
-      4: 'Inferior Derecho'
-    };
-    return nombres[cuadrante as keyof typeof nombres] || 'Desconocido';
-  };
-
-  /*const getEstadoColor = (estado: EstadoDental): string => {
-    const colors = {
-      sano: '#4caf50',
-      caries: '#f44336',
-      obturado: '#2196f3',
-      extraido: '#9e9e9e',
-      endodoncia: '#ff9800',
-      corona: '#9c27b0',
-      implante: '#607d8b'
-    };
-    return colors[estado];
-  };*/
+  const facesConfig = [
+    { id: 1, name: 'Vestibular' },
+    { id: 2, name: 'Mesial' },
+    { id: 3, name: 'Distal' },
+    { id: 4, name: 'Lingual' },
+    { id: 5, name: 'Oclusal/Incisal' }
+  ];
 
   if (!diente) {
     return (
@@ -138,12 +60,25 @@ const DetalleDental: React.FC<DetalleDentalProps> = ({
     );
   }
 
+  const getCuadranteNombre = (cuadrante: number): string => {
+    const nombres = {
+      1: 'Superior Derecho',
+      2: 'Superior Izquierdo',
+      3: 'Inferior Izquierdo',
+      4: 'Inferior Derecho'
+    };
+    return nombres[cuadrante as keyof typeof nombres] || 'Desconocido';
+  };
+
+  const getCaraData = (nombre: string): Cara | undefined =>
+    diente.caras.find((c) => c.nombrecara.toLowerCase() === nombre.toLowerCase());
+
   return (
     <Paper sx={{ p: 3, height: 'fit-content' }}>
       <Typography variant="h6" gutterBottom color="primary">
         Diente {diente.numero}
       </Typography>
-      
+
       <Box mb={3}>
         <Typography variant="subtitle1" gutterBottom>
           {diente.nombre}
@@ -161,63 +96,86 @@ const DetalleDental: React.FC<DetalleDentalProps> = ({
         Estado por Caras:
       </Typography>
 
-      {/* Estado actual de cada cara */}
       <Box mb={3}>
-        {caras.map((cara) => (
-          <Box key={cara} display="flex" alignItems="center" justifyContent="space-between" mb={1}>
-            <Typography variant="body2" sx={{ minWidth: 100 }}>
-              {getCaraLabel(cara)}:
-            </Typography>
-            <Chip
-              label={getEstadoLabel(diente.caras[cara])}
-              size="small"
-              sx={{
-                backgroundColor: getEstadoColor(diente.caras[cara]),
-                color: 'white',
-                fontWeight: 'bold'
-              }}
-            />
-          </Box>
-        ))}
+        {facesConfig.map(({ name }) => {
+          const cara = getCaraData(name);
+          if (!cara) return null;
+
+          return (
+            <Box key={name} display="flex" alignItems="center" justifyContent="space-between" mb={1}>
+              <Typography variant="body2" sx={{ minWidth: 100 }}>
+                {name}:
+              </Typography>
+              <Chip
+                label={cara.descripciondiagnostico}
+                size="small"
+                sx={{
+                  backgroundColor: cara.colorDiagnostico || '#000000',
+                  color: 'white',
+                  fontWeight: 'bold'
+                }}
+              />
+            </Box>
+          );
+        })}
       </Box>
 
       <Divider sx={{ my: 2 }} />
 
-      {/* Controles para cambiar estado por cara */}
-      {caras.map((cara) => (
-        <Accordion key={cara} sx={{ mb: 1 }}>
-          <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-            <Typography variant="body2" fontWeight="medium">
-              Editar {getCaraLabel(cara)}
-            </Typography>
-          </AccordionSummary>
-          <AccordionDetails>
-            <Grid container spacing={1}>
-              {estados.map((estado) => (
-                <Grid item xs={6} key={`${cara}-${estado}`}>
-                  <Button
-                    fullWidth
-                    variant={diente.caras[cara] === estado ? 'contained' : 'outlined'}
-                    size="small"
-                    onClick={() => onFaceStateChange(diente.numero, cara, estado)}
-                    sx={{ 
-                      mb: 0.5,
-                      textTransform: 'none',
-                      fontSize: '0.75rem',
-                      backgroundColor: diente.caras[cara] === estado ? getEstadoColor(estado) : 'transparent',
-                      '&:hover': {
-                        backgroundColor: diente.caras[cara] === estado ? getEstadoColor(estado) : 'rgba(0,0,0,0.04)',
-                      }
-                    }}
-                  >
-                    {getEstadoLabel(estado)}
-                  </Button>
-                </Grid>
-              ))}
-            </Grid>
-          </AccordionDetails>
-        </Accordion>
-      ))}
+      {facesConfig.map(({ id, name }) => {
+        const cara = getCaraData(name);
+        if (!cara) return null;
+
+        return (
+          <Accordion key={name} sx={{ mb: 1 }}>
+            <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+              <Typography variant="body2" fontWeight="medium">
+                Editar {name}
+              </Typography>
+            </AccordionSummary>
+            <AccordionDetails>
+              <Grid container spacing={1}>
+                {diagnosis?.map((estado, index) => {
+                  const esSeleccionado = cara.iddiagnostico === estado.iddiagnostico;
+
+                  return (
+                    <Grid item xs={6} key={`${name}-${estado.iddiagnostico ?? index}`}>
+                      <Button
+                        fullWidth
+                        variant={esSeleccionado ? 'contained' : 'outlined'}
+                        size="small"
+                        onClick={() => onFaceStateChange(
+                          diente.numero,
+                          id,
+                          estado.iddiagnostico,
+                          diente.numero,
+                          diente.nombre,
+                          name.toLowerCase(),
+                          0
+                        )}
+                        sx={{
+                          mb: 0.5,
+                          textTransform: 'none',
+                          fontSize: '0.75rem',
+                          backgroundColor: esSeleccionado ? estado.enlaceicono : 'transparent',
+                          color: esSeleccionado ? 'white' : 'inherit',
+                          '&:hover': {
+                            backgroundColor: esSeleccionado
+                              ? estado.enlaceicono
+                              : 'rgba(0,0,0,0.04)',
+                          },
+                        }}
+                      >
+                        {estado.descripcion}
+                      </Button>
+                    </Grid>
+                  );
+                })}
+              </Grid>
+            </AccordionDetails>
+          </Accordion>
+        );
+      })}
     </Paper>
   );
 };

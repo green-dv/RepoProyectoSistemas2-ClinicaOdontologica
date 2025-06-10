@@ -3,6 +3,7 @@ import { Odontogram, CreateOdontogram } from '@/domain/entities/Odontogram';
 import { OdontogramDescription, OdontogramDescriptionDTO } from '@/domain/entities/OdontogramDescription';
 import { Diagnosis } from '@/domain/entities/Diagnosis';
 import { AlertColor } from '@mui/material';
+import { DentalPiece } from '../config/odontogrmaConfig';
 
 
 export interface SnackbarMessage {
@@ -13,19 +14,28 @@ export interface SnackbarMessage {
 export interface OdontogramState{
   odontograms: Odontogram[] | null;
   odontogram: Odontogram | null;
-  searchTerm: string;
+  
   descriptions: OdontogramDescription[] | null;
-  createDescription: OdontogramDescriptionDTO | null;
+  
   createOdontogram: CreateOdontogram | null;
+
+  createDescription: OdontogramDescriptionDTO | null;
   createdDescriptions: OdontogramDescription[] | null;
+
   diagnosis: Diagnosis[] | null ;
   selectedDiagnosis: Diagnosis | null;
+  
+  //Dientes
+  selectedTooth: DentalPiece | null;
+  selectedFace: number | null
 
   page: number;
   rowsperpage: number;
   total: number;
 
+  isCreating: boolean;
   open: boolean;
+  searchTerm: string;
   
   isLoading: boolean;
   snackbar: SnackbarMessage | null;
@@ -42,11 +52,17 @@ export interface OdontogramState{
   setDiagnosis: React.Dispatch<React.SetStateAction<Diagnosis[] | null>>;
   setSelectedDiagnosis: React.Dispatch<React.SetStateAction<Diagnosis | null>>;
 
+  //Dientes
+  setSelectedTooth: React.Dispatch<React.SetStateAction<DentalPiece | null>>;
+  setSelectedFace: React.Dispatch<React.SetStateAction<number | null>>;
+
   setPage: React.Dispatch<React.SetStateAction<number>>;
   setRowsPerPage: React.Dispatch<React.SetStateAction<number>>;
   setTotal: React.Dispatch<React.SetStateAction<number>>;
   
+  setIsCreating: React.Dispatch<React.SetStateAction<boolean>>;
   setOpen: React.Dispatch<React.SetStateAction<boolean>>;
+
   setSearchTerm: React.Dispatch<React.SetStateAction<string>>;
   setIsLoanding: React.Dispatch<React.SetStateAction<boolean>>;
   setSnackbar: React.Dispatch<React.SetStateAction<SnackbarMessage | null>>;
@@ -65,6 +81,12 @@ export default function useOdontogram(): OdontogramState {
   const[createdDescriptions, setCreatedDestiptions] = useState<OdontogramDescription[] | null>(null);
   const[diagnosis, setDiagnosis] = useState<Diagnosis[] | null>(null);
   const[selectedDiagnosis, setSelectedDiagnosis] = useState<Diagnosis | null>(null);
+
+  //Dientes
+  const[selectedTooth, setSelectedTooth] = useState<DentalPiece | null>(null); 
+  const[selectedFace, setSelectedFace] = useState<number | null>(null); 
+
+  const[isCreating, setIsCreating] = useState<boolean>(true);
   const[open, setOpen] = useState<boolean>(false);
   const[isLoading, setIsLoanding] = useState<boolean>(false);
   const[snackbar, setSnackbar] = useState<SnackbarMessage | null>(null);
@@ -92,6 +114,10 @@ export default function useOdontogram(): OdontogramState {
     diagnosis,
     selectedDiagnosis,
 
+    selectedTooth,
+    selectedFace,
+
+    isCreating,
     open,
     
     isLoading,
@@ -114,6 +140,11 @@ export default function useOdontogram(): OdontogramState {
     setDescriptions,
     setDiagnosis,
     setSelectedDiagnosis,
+
+    setSelectedTooth,
+    setSelectedFace,
+
+    setIsCreating,
     
     setOpen,
     setSearchTerm,

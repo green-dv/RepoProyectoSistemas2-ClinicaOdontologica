@@ -208,7 +208,7 @@ export class IOdontogramrepository implements OdontogramaRepository {
     try{
       const result = await this.db.query(
         `
-          SELECT id, descripcion, enlaceicono FROM diagnosticos
+          SELECT id AS iddiagnostico, descripcion, enlaceicono FROM diagnosticos
         `
       );
       if(result.rows.length === 0) return null;
