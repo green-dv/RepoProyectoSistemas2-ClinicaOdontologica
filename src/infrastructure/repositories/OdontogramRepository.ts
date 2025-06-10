@@ -1,4 +1,5 @@
 import { Odontogram, CreateOdontogram } from "@/domain/entities/Odontogram"
+import { Diagnosis } from "@/domain/entities/Diagnosis"
 import { OdontogramDescription, OdontogramDescriptionDTO } from "@/domain/entities/OdontogramDescription"
 import { getConnection } from '../db/db';
 import { OdontogramaRepository } from "@/domain/repositories/OdontogramaRepository";
@@ -133,7 +134,7 @@ export class IOdontogramrepository implements OdontogramaRepository {
       const result = await this.db.query(
         `
           INSERT INTO descripcionodontogramas (idcara, idpieza, iddiagnostico, idodontograma)
-          VALUES($1, $2, $23, $4)
+          VALUES($1, $2, $3, $4)
           RETURNING idcara, idpieza, iddiagnostico, idodontograma
         `, [
           descripcion.idcara,
@@ -202,5 +203,67 @@ export class IOdontogramrepository implements OdontogramaRepository {
       throw new Error('Error al eliminar');
     }
     
+  }
+  async getDiagnosis(): Promise<Diagnosis[] | null> {
+    try{
+      const result = await this.db.query(
+        `
+          SELECT id, descripcion, enlaceicono FROM diagnosticos
+        `
+      );
+      if(result.rows.length === 0) return null;
+      const diagnosis = result.rows as Diagnosis[];
+      return diagnosis
+    } catch{
+      throw new Error('Error al eliminar');
+    }
+  }
+
+  async createDiagnosis(diagnosis: Diagnosis): Promise<Diagnosis | null> {
+    try{
+
+      const result = await this.db.query(
+        `
+          INSERT INTO diagnosticos (descripcion, enlaceicono)
+          VALUES($1, $2)
+          RETURNING id, descripcion, enlaceicono
+        `, [
+          diagnosis.descripcion,
+          diagnosis.enlaceicono
+          ]
+      );
+      if(result.rows.length === 0) return null;
+  
+      const createdDiagnosis = result.rows[0] as Diagnosis;
+      return createdDiagnosis;
+    }
+    catch (error) {
+      console.error('Error al crear el diagnostico:', error);
+      throw new Error('Error al crear el diagnostico');
+    }
+  }
+  async updateDiagnosis(diagnosis: Diagnosis): Promise<Diagnosis | null> {
+    try{
+
+      const result = await this.db.query(
+        `
+          UPDATE diagnosticos SET descripcion = $2, enlaceicono = $3)
+          where id = $1
+          RETURNING id, descripcion, enlaceicono
+        `, [
+          diagnosis.iddiagnostico,
+          diagnosis.descripcion,
+          diagnosis.enlaceicono
+          ]
+      );
+      if(result.rows.length === 0) return null;
+  
+      const createdDiagnosis = result.rows[0] as Diagnosis;
+      return createdDiagnosis;
+    }
+    catch (error) {
+      console.error('Error al crear el diagnostico:', error);
+      throw new Error('Error al crear el diagnostico');
+    }
   }
 }

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { IOdontogramrepository } from "@/infrastructure/repositories/OdontogramRepository";
 import  { GetOdontogramsUseCase } from "@/application/usecases/odontogram/getOdontogramsUseCases";
 import { CreateOdontogramUseCase } from "@/application/usecases/odontogram/createOdontogramUseCases";
+import { Odontogram } from "@/domain/entities/Odontogram";
 
 const odontogramRepository = new IOdontogramrepository();
 const getOdontogramsUseCases = new GetOdontogramsUseCase(odontogramRepository);
@@ -26,6 +27,25 @@ export async function GET(request: NextRequest) {
         return NextResponse.json(odontograms);
     } catch (error) {
         console.error("Error fetching odontograms:", error);
+        return NextResponse.json({ error: "Error fetching odontograms" }, { status: 500 });
+    }
+}
+export async function POST(request: NextRequest){
+    try{
+        const data = await request.json();
+        const odontogram: Odontogram ={
+            idodontograma: data.idodontograma,
+            idpaciente: data.idpaciente,
+            idconsulta: data.idconsulta,
+            paciente: '',
+            fechacreacion: data.fechacreacion,
+            observaciones: data.observaciones,
+            descripciones: data.descripciones || []
+        }
+        const createdOdontogram = await createOdontogramUseCases.execute(odontogram);
+        return NextResponse.json(createdOdontogram, {status:200});
+    } catch(error){
+        console.error("Error fetchinf data odontogram", error);
         return NextResponse.json({ error: "Error fetching odontograms" }, { status: 500 });
     }
 }
