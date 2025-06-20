@@ -11,7 +11,6 @@ const createDiagnosisUseCase = new createDiagnosisUseCases(odontogramRepository)
 export async function GET() {
   try {        
       const diagnosis = await getDiagnosisUseCases.execute();
-      console.log(diagnosis);
       return NextResponse.json(diagnosis);
   } catch (error) {
       console.error("Error fetching diagnosis:", error);

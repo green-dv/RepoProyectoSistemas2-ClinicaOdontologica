@@ -2,7 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { Box, Paper, Typography, Tooltip } from '@mui/material';
 import { Diagnosis } from '@/domain/entities/Diagnosis';
 import { OdontogramDescription } from '@/domain/entities/OdontogramDescription';
-import { Cara } from '@/presentation/config/odontogrmaConfig';
+import { Cara, piezaMap } from '@/presentation/config/odontogrmaConfig';
 
 interface PiezaDentalSVGProps {
   numero: number;
@@ -12,7 +12,7 @@ interface PiezaDentalSVGProps {
   odontogramDescriptions: OdontogramDescription[] | null;
   createdOdontogramDescriptions: OdontogramDescription[] | null;
   isCreating: boolean;
-  onClickFace: (numero: number, cara: string, idcara: number, iddiagnostico: number) => void;
+  onClickFace: (numero: number, cara: string, idcara: number, iddiagnostico: number, idpieza: number) => void;
   handleSelectTooth: (numerofdi: number, nombre: string, cuadrante: number, caras: Cara[]) => void;
 }
 
@@ -36,7 +36,7 @@ const PiezaDentalSVG: React.FC<PiezaDentalSVGProps> = ({
     { id: 2, name: 'Mesial', start: 45, end: 135 },
     { id: 3, name: 'Distal', start: 225, end: 315 },
     { id: 4, name: 'Lingual', start: 135, end: 225 },
-    { id: 5, name: 'Oclusal', isCircle: true },
+    { id: 5, name: 'Oclusal/Incisal', isCircle: true },
   ];
 
   // 1. Filtrar descripciones del diente
@@ -72,26 +72,23 @@ const PiezaDentalSVG: React.FC<PiezaDentalSVGProps> = ({
       if (desc) {
         return mapToCara(desc);
       } else {
-        // Si no hay descripción previa, devolvemos un objeto Cara con idcara conocido y valores por defecto
         return {
           idcara: f.id,
           nombrecara: f.name,
           iddiagnostico: 0,
-          descripciondiagnostico: 'Sin diagnóstico',
+          descripciondiagnostico: 'Sano',
           colorDiagnostico: '#FFFFFF'
         };
       }
     });
   }, [descripcionesParaDiente, diagnosticos]);
 
-  // 5. Obtener color de relleno para SVG: preferimos data real de Cara[], si no existe, blanco
   const getFaceColor = (caraName: string): string => {
     const desc = getDescripcionCara(caraName);
     if (desc) return desc.enlaceicono;
     return '#FFFFFF';
   };
 
-  // Resto de tu lógica SVG...
   const center = 50;
   const outerRadius = 35;
   const innerRadius = 15;
@@ -151,22 +148,22 @@ const PiezaDentalSVG: React.FC<PiezaDentalSVGProps> = ({
         <svg width="100" height="100" viewBox="0 0 100 100">
           {facesConfig.map((face) =>
             face.isCircle ? (
-              <Tooltip key={face.name || 'Oclusal'} title={face.name || 'Oclusal'}>
+              <Tooltip key={face.name || 'Oclusal/Incisal'} title={face.name || 'Oclusal/Incisal'}>
                 <circle
                   cx={center}
                   cy={center}
                   r={innerRadius}
                   onClick={() => {
-                    const desc = getDescripcionCara('Oclusal');
-                    onClickFace(numero, 'Oclusal', face.id, desc ? desc.iddiagnostico : 1);
+                    const desc = getDescripcionCara('Oclusal/Incisal');
+                    onClickFace(numero, 'Oclusal/Incisal', face.id, desc ? desc.iddiagnostico : 1, piezaMap[numero].idpieza);
                   }}
-                  fill={getFaceColor('Oclusal')}
-                  stroke={hoveredFace === 'Oclusal' ? '#000' : '#666'}
-                  strokeWidth={hoveredFace === 'Oclusal' ? 2 : 1}
-                  onMouseEnter={() => setHoveredFace('Oclusal')}
+                  fill={getFaceColor('Oclusal/Incisal')}
+                  stroke={hoveredFace === 'Oclusal/Incisal' ? '#000' : '#666'}
+                  strokeWidth={hoveredFace === 'Oclusal/Incisal' ? 2 : 1}
+                  onMouseEnter={() => setHoveredFace('Oclusal/Incisal')}
                   onMouseLeave={() => setHoveredFace(null)}
                   style={{
-                    opacity: hoveredFace === 'Oclusal' ? 0.8 : 1,
+                    opacity: hoveredFace === 'Oclusal/Incisal' ? 0.8 : 1,
                     transition: 'all 0.2s ease'
                   }}
                 />
@@ -178,7 +175,7 @@ const PiezaDentalSVG: React.FC<PiezaDentalSVGProps> = ({
                   fill={getFaceColor(face.name)}
                   onClick={() => {
                     const desc = getDescripcionCara(face.name);
-                    onClickFace(numero, face.name, face.id, (desc) ? desc.iddiagnostico : 1);
+                    onClickFace(numero, face.name, face.id, (desc) ? desc.iddiagnostico : 1, piezaMap[numero].idpieza);
                   }}
                   stroke={hoveredFace === face.name ? '#000' : '#666'}
                   strokeWidth={hoveredFace === face.name ? 2 : 1}

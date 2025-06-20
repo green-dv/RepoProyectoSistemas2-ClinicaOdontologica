@@ -121,11 +121,9 @@ export default function useDatesHandlers(state: DatesState){
     setDebouncedSearchQuery,
     setPatients,
     setSelectedPatient,
-    setLoading,
     setSearchLoading,
     setError,
     shouldSearch,
-    setShouldSearch,
 
     searchQueryDialog,
     debouncedSearchQueryDialog,
@@ -144,7 +142,6 @@ export default function useDatesHandlers(state: DatesState){
     shouldSearchDialog,
     setShouldSearchDialog,
     setPacienteIdDialog,
-    pacienteIDDialog,
   } = state;
 
 

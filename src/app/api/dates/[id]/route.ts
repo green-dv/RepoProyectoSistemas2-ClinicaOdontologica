@@ -5,9 +5,8 @@ export async function GET(request: NextRequest, {params}: {params: { id : string
     try{
         const connection = await getConnection();
         const id = parseInt(params.id);
-        const url = new URL(request.url);
 
-        let query = 'SELECT * FROM fGetDateByID($1);';
+        const query = 'SELECT * FROM fGetDateByID($1);';
 
         const result = await connection.query(query, [id]);
         

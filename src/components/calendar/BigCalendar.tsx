@@ -2,24 +2,19 @@
 import {
     Calendar as BigCalendar,
     CalendarProps,
-    momentLocalizer,
     Views,
     dateFnsLocalizer,
+    SlotInfo,
 } from 'react-big-calendar';
 import 'moment/locale/es';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
-import moment from 'moment';
 import { format, parse, startOfWeek, getDay } from 'date-fns';
-import {Date as DateObj} from "@/domain/entities/Dates";
 import React, { useState } from 'react';
-import { Popover, Typography, Button, Box } from '@mui/material';
-import IconButton, { IconButtonProps } from '@mui/material/IconButton';
-import WatchLaterIcon from '@mui/icons-material/WatchLater';
-import PersonIcon from '@mui/icons-material/Person';
+import { Popover, Typography, Box } from '@mui/material';
+import IconButton from '@mui/material/IconButton';
 import TodayIcon from '@mui/icons-material/Today';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
-import { Edit, Delete, Restore, DeleteForever } from '@mui/icons-material';
-import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
+import { Edit, Delete } from '@mui/icons-material';
 import CalendarToolbar from './CalendarToolbar';
 import { es } from 'date-fns/locale';
 
@@ -37,23 +32,23 @@ const localizer = dateFnsLocalizer({
 });
 
 
-interface IEventoCalendario {
+export interface IEventoCalendario {
     id: number;
     title: string;
     start: globalThis.Date;
     end: globalThis.Date;
   }
 
-interface CalendarComponentProps extends Omit<CalendarProps, 'localizer'> {
-    onSelectSlot?: (slotInfo: any) => void;
-    onSelectEvent?: (event: any) => void;
-    onContextMenu?: (event: React.MouseEvent, calendarEvent: any) => void;
+interface CalendarComponentProps extends Omit<CalendarProps<IEventoCalendario>, 'localizer'> {
+    onSelectSlot?: (slotInfo: SlotInfo) => void;
+    onSelectEvent?: (event: IEventoCalendario) => void;
+    onContextMenu?: (event: React.MouseEvent, calendarEvent: IEventoCalendario) => void;
     onEdit: (id: number) => void;
     onDelete: (id: number) => void;
     onUpdate: () => void;
 }
 export function Calendar(props: CalendarComponentProps) {
-    const { onSelectEvent, events, onEdit, onDelete } = props; // Asegúrate de que onSelectEvent, onEdit y onDelete estén siendo pasados como props
+    const { onEdit, onDelete } = props; // Asegúrate de que onSelectEvent, onEdit y onDelete estén siendo pasados como props
     const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
     const [eventInfo, setEventInfo] = useState<IEventoCalendario | null>(null);
 
@@ -76,7 +71,7 @@ export function Calendar(props: CalendarComponentProps) {
             onSelectEvent={(event, e) => handleEventClick(event as IEventoCalendario, e)}
             components={{
                 toolbar: CalendarToolbar,
-                event: (eventProps) => (
+                event: (eventProps: { event: IEventoCalendario; title: string }) => (
                   <div
                     onClick={(e) => handleEventClick(eventProps.event as IEventoCalendario, e)}
                   >

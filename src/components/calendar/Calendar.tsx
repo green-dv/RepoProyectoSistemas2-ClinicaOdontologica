@@ -8,6 +8,10 @@ import useCalendar from "@/presentation/hooks/useCalendar";
 import useCalendarHandler from "@/presentation/handlers/useCalendarHandler";
 import useDates from '@/presentation/hooks/useDate';
 import useDatesHandlers from '@/presentation/handlers/useDateHandler';
+import { SlotInfo } from 'react-big-calendar';
+import type { IEventoCalendario } from './BigCalendar';
+
+
 
 export function CalendarComponent({ initialDate }: { initialDate: string }) {
   const calendarState = useCalendar();
@@ -81,7 +85,7 @@ export function CalendarComponent({ initialDate }: { initialDate: string }) {
     }
   };
 
-  const handleSelectSlot = (slotInfo: any) => {
+  const handleSelectSlot = (slotInfo: SlotInfo) => {
     const start = moment(slotInfo.start);
 
     setNewDate({
@@ -96,7 +100,7 @@ export function CalendarComponent({ initialDate }: { initialDate: string }) {
     setOpen(true);
   };
 
-  const handleContextMenu = (event: React.MouseEvent, calendarEvent: any) => {
+  const handleContextMenu = (event: React.MouseEvent, calendarEvent: IEventoCalendario) => {
     event.preventDefault();
     console.log('Menu contextual para evento:', calendarEvent);
   };
@@ -107,7 +111,7 @@ export function CalendarComponent({ initialDate }: { initialDate: string }) {
         events={events}
         date={currentDate}
         onDelete={handleDelete}
-        onSelectEvent={handleEdit}
+        onSelectEvent={() => handleEdit}
         onContextMenu={handleContextMenu}
         onEdit={handleEdit}
         onUpdate={() => handleFetchDates}

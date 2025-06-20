@@ -14,6 +14,8 @@ export interface SnackbarMessage {
 export interface OdontogramState{
   odontograms: Odontogram[] | null;
   odontogram: Odontogram | null;
+  observation: string;
+  observationError: boolean;
   
   descriptions: OdontogramDescription[] | null;
   
@@ -21,6 +23,9 @@ export interface OdontogramState{
 
   createDescription: OdontogramDescriptionDTO | null;
   createdDescriptions: OdontogramDescription[] | null;
+
+  patientId: number;
+  consultationId: number | null;
 
   diagnosis: Diagnosis[] | null ;
   selectedDiagnosis: Diagnosis | null;
@@ -51,10 +56,15 @@ export interface OdontogramState{
   setDescriptions: React.Dispatch<React.SetStateAction<OdontogramDescription[] | null>>;
   setDiagnosis: React.Dispatch<React.SetStateAction<Diagnosis[] | null>>;
   setSelectedDiagnosis: React.Dispatch<React.SetStateAction<Diagnosis | null>>;
+  setObservation: React.Dispatch<React.SetStateAction<string>>;
+  setObservationError: React.Dispatch<React.SetStateAction<boolean>>;
 
   //Dientes
   setSelectedTooth: React.Dispatch<React.SetStateAction<DentalPiece | null>>;
   setSelectedFace: React.Dispatch<React.SetStateAction<number | null>>;
+
+  setPatientId: React.Dispatch<React.SetStateAction<number>>;
+  setConsultationId: React.Dispatch<React.SetStateAction<number | null>>;
 
   setPage: React.Dispatch<React.SetStateAction<number>>;
   setRowsPerPage: React.Dispatch<React.SetStateAction<number>>;
@@ -81,6 +91,8 @@ export default function useOdontogram(): OdontogramState {
   const[createdDescriptions, setCreatedDestiptions] = useState<OdontogramDescription[] | null>(null);
   const[diagnosis, setDiagnosis] = useState<Diagnosis[] | null>(null);
   const[selectedDiagnosis, setSelectedDiagnosis] = useState<Diagnosis | null>(null);
+  const[observation, setObservation] = useState<string>('');
+  const[observationError, setObservationError] = useState<boolean>(false);
 
   //Dientes
   const[selectedTooth, setSelectedTooth] = useState<DentalPiece | null>(null); 
@@ -90,6 +102,9 @@ export default function useOdontogram(): OdontogramState {
   const[open, setOpen] = useState<boolean>(false);
   const[isLoading, setIsLoanding] = useState<boolean>(false);
   const[snackbar, setSnackbar] = useState<SnackbarMessage | null>(null);
+
+  const[patientId, setPatientId] = useState<number>(0);
+  const[consultationId, setConsultationId] = useState<number | null>(null)
 
   const[page, setPage] = useState<number>(0);
   const[rowsperpage, setRowsPerPage] = useState<number>(0);
@@ -113,9 +128,14 @@ export default function useOdontogram(): OdontogramState {
     createdDescriptions,
     diagnosis,
     selectedDiagnosis,
+    observation,
+    observationError,
 
     selectedTooth,
     selectedFace,
+
+    patientId,
+    consultationId,
 
     isCreating,
     open,
@@ -140,9 +160,14 @@ export default function useOdontogram(): OdontogramState {
     setDescriptions,
     setDiagnosis,
     setSelectedDiagnosis,
+    setObservation,
+    setObservationError,
 
     setSelectedTooth,
     setSelectedFace,
+
+    setPatientId,
+    setConsultationId,
 
     setIsCreating,
     

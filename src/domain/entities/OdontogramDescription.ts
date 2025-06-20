@@ -5,6 +5,7 @@ export interface OdontogramDescription{
   codigofdi: number;
   nombrepieza: string;
   iddiagnostico: number;
+  diagnostico: string;
   enlaceicono: string;
   idodontograma: number;
 }

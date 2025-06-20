@@ -3,7 +3,7 @@ export interface Odontogram{
   idodontograma: number;
   idpaciente: number;
   paciente: string;
-  idconsulta?: number;
+  idconsulta: number | null;
   fechacreacion: Date;
   observaciones?: string;
   descripciones: OdontogramDescription[];
@@ -11,7 +11,7 @@ export interface Odontogram{
 
 export interface CreateOdontogram{
   idpaciente: number;
-  idconsulta?: number;
+  idconsulta: number | null;
   fechacreacion?: Date;
   observaciones?: string;
 }

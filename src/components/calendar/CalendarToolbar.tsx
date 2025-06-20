@@ -13,8 +13,14 @@ import ToggleButtonGroupComponent from '@/components/calendar/ToggleButtonGroup'
 
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
+import type {IEventoCalendario} from './BigCalendar';
 
-const CalendarToolBar = ({ label, onNavigate, onView, view }: ToolbarProps)=>{
+const CalendarToolBar = ({
+  label,
+  onNavigate,
+  onView,
+  view,
+}: ToolbarProps<IEventoCalendario, object>) => {
   return(
     <Box 
       display="flex" 

@@ -2,6 +2,7 @@ import { useCallback } from "react";
 import debounce from "lodash/debounce";
 import moment from "moment";
 import { Date as DateObj, DateDTO } from "@/domain/entities/Dates";
+import { IEventoCalendario } from "@/components/calendar/BigCalendar";
 import {
   fetchDates,
   createDate,
@@ -9,11 +10,7 @@ import {
   deleteDate,
 } from "@/application/usecases/dates";
 import { AlertColor } from "@mui/material";
-interface IEventoCalendario {
-  title: string;
-  start: globalThis.Date;
-  end: globalThis.Date;
-}
+
 interface CalendarState {
   dates: DateObj[];
   events: IEventoCalendario[];

@@ -33,6 +33,8 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest){
     try{
         const data = await request.json();
+        console.log('datos insertados');
+        console.log(data);
         const odontogram: Odontogram ={
             idodontograma: data.idodontograma,
             idpaciente: data.idpaciente,
@@ -42,6 +44,8 @@ export async function POST(request: NextRequest){
             observaciones: data.observaciones,
             descripciones: data.descripciones || []
         }
+        console.log('Imprimiendo Data desde la api');
+        console.log(data);
         const createdOdontogram = await createOdontogramUseCases.execute(odontogram);
         return NextResponse.json(createdOdontogram, {status:200});
     } catch(error){

@@ -9,11 +9,11 @@ export async function GET(
     request: NextRequest,
     { params }: { params: { id: string } }
   ) {
-    const id = Number(params.id); 
-    if (isNaN(id)) {
+    const consultationId = Number(params.id); 
+    if (isNaN(consultationId)) {
       return NextResponse.json({ error: "Id de consulta invalida" }, { status: 400 });
     }
-    const result = await getOdontogramsUseCases.execute(id);
+    const result = await getOdontogramsUseCases.execute(consultationId);
     if (!result) {
       return NextResponse.json({ message: "Odontograma no encontrado" }, { status: 404 });
     }

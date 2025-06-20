@@ -33,7 +33,6 @@ export function DatesTable({
   onUpdate
 }: DatesProps) {
   const [status, setStatus] = React.useState<Status[]>([]);
-  const [updatingId, setUpdatingId] = React.useState<number | null>(null);
 
   useEffect(() => {
     const fetchStatuses = async () => {
@@ -44,16 +43,17 @@ export function DatesTable({
     fetchStatuses();
   }, []);
 
-  const handleStatusChange = async (idcita: number, newStatus: number) => {
-    setUpdatingId(idcita);
+  const handleStatusChange = async (idcita: number | null, newStatus: number) => {
+    if (idcita === null) {
+      console.error('idcita is null, cannot update status');
+      return;
+    }
     try {
       await updateDateStatus(idcita, newStatus);
       onUpdate();
     } catch (error) {
       console.error('Error actualizando estado:', error);
-    } finally {
-      setUpdatingId(null);
-    }
+    } 
   };
 
   if (isLoading) {
@@ -109,9 +109,8 @@ export function DatesTable({
               <TableCell>
                 <StatusDropDown
                   idcita={date.idcita}
-                  idstatus={date.idestado}
-                  isDropDownLoading={isLoading}
                   status={status}
+                  isDropDownLoading={isLoading}
                   selectedStatus={date.idestado}
                   onChange={handleStatusChange}
                 />

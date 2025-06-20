@@ -1,19 +1,28 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { Grid, Box, Typography, Divider } from '@mui/material';
+import React, { useEffect } from 'react';
+import { Grid, Box, Typography, Divider, Button, List, Chip } from '@mui/material';
 import PiezaDentalSVG from './PIezaDental';
 import DetalleDental from './DetalleDental';
-import { Diagnosis } from '@/domain/entities/Diagnosis';
 import useOdontogramHandlers from '@/presentation/handlers/useOdontogramaHandler';
+import "@/app/styles/odontogram-print.css";
+import SnackbarAlert from '@/components/SnackbarAlert';
+import LocalPrintshopIcon from '@mui/icons-material/LocalPrintshop';
 
+interface OdontogramaGridProps {
+  creating: boolean;
+  idpaciente: number;
+  idconsulta: number | null;
+}
 
-
-const OdontogramaGrid: React.FC = () => {
+const OdontogramaGrid: React.FC<OdontogramaGridProps> = ({
+  creating,
+  idpaciente,
+  idconsulta
+}) => {
   const{
     diagnosis,
     handleFetchDiagnosis,
-    handleFetchLastOdontogram,
     odontogram,
     isCreating,
     handleFaceClick,
@@ -21,6 +30,13 @@ const OdontogramaGrid: React.FC = () => {
     handleFaceStateChange,
     selectedTooth,
     handleSelectTooth,
+    handlePostOdontogram,
+    handleChange,
+    observation,
+    observationError,
+    handleOdontogramConfiguration,
+    handleSnackbarClose,
+    snackbar
   } = useOdontogramHandlers();
   
  
@@ -33,25 +49,63 @@ const OdontogramaGrid: React.FC = () => {
 
 
   useEffect(() => {
+    console.log('idPaciente: ' + idpaciente);
+    handleOdontogramConfiguration(creating, idpaciente, idconsulta);
     handleFetchDiagnosis();
-    handleFetchLastOdontogram();
   }, []);
-  useEffect(() => {
-    console.log(odontogram);
-  }, [odontogram]);
+
+  
 
   return (
-    <Box>
+    <Box className="odontogram-page">
+      <Box
+        display="flex"
+        justifyContent="space-between"
+        alignItems="center"
+        mb={2}
+        px={2}
+        py={1}
+        sx={{
+          backgroundColor: '#f5f5f5',
+          borderRadius: '8px',
+          border: '1px solid #ccc',
+        }}
+      >
+        <Typography variant="h6" color="primary">
+          Paciente: {odontogram?.paciente ?? 'No encontrado'}
+        </Typography>
+        <Typography variant="body1" color="text.secondary">
+          Fecha: {odontogram?.fechacreacion
+            ? new Date(odontogram.fechacreacion).toISOString().slice(0, 10)
+            : 'No especificado'}
+        </Typography>
+      </Box>
       <Grid container spacing={4}>
         {/* Odontograma Principal */}
         <Grid item xs={12} lg={8}>
           <Box>
             {/* Maxilar Superior */}
-            <Typography variant="h6" gutterBottom textAlign="center" color="primary">
+            <Typography variant="h6" gutterBottom textAlign="center">
               Maxilar Superior
             </Typography>
-            <Grid container spacing={1} justifyContent="center" mb={4}>
+            <Grid container spacing={1} justifyContent="center" mb={1}>
               {maxilarSuperior.map((numero) => (
+                <Grid item key={numero}>
+                  <PiezaDentalSVG
+                    numero={numero}
+                    diagnosticos={diagnosis}
+                    odontogramDescriptions={odontogram?.descripciones ?? null}
+                    isCreating={isCreating}
+                    onClickFace={handleFaceClick}
+                    createdOdontogramDescriptions={createdDescriptions}
+                    handleSelectTooth={handleSelectTooth}
+                  />
+                </Grid>
+              ))}
+            </Grid>
+
+            <Grid container spacing={1} justifyContent="center" mb={1}>
+              {dientesLecheSuperior.map((numero) => (
                 <Grid item key={numero}>
                   <PiezaDentalSVG
                     numero={numero}
@@ -75,6 +129,22 @@ const OdontogramaGrid: React.FC = () => {
             <Typography variant="h6" gutterBottom textAlign="center" color="primary">
               Maxilar Inferior
             </Typography>
+
+            <Grid container spacing={1} justifyContent="center" mb={1}>
+              {dientesLecheInferior.map((numero) => (
+                <Grid item key={numero}>
+                  <PiezaDentalSVG
+                    numero={numero}
+                    diagnosticos={diagnosis}
+                    odontogramDescriptions={odontogram?.descripciones ?? null}
+                    isCreating={isCreating}
+                    onClickFace={handleFaceClick}
+                    createdOdontogramDescriptions={createdDescriptions}
+                    handleSelectTooth={handleSelectTooth}
+                  />
+                </Grid>
+              ))}
+            </Grid>
             <Grid container spacing={1} justifyContent="center">
               {maxilarInferior.map((numero) => (
                 <Grid item key={numero}>
@@ -93,17 +163,78 @@ const OdontogramaGrid: React.FC = () => {
           </Box>
         </Grid>
 
-        <Grid item xs={12} lg={4}>
+        <Grid item xs={12} lg={4} sx={{ '@media print': { display: 'none' } }} >
         {
           <DetalleDental
             diente={selectedTooth}
+            handleChange={handleChange}
             onFaceStateChange={handleFaceStateChange}
+            isCreating={isCreating}
             diagnosis={diagnosis}
+            observation={observation}
+            observationError={observationError}
+            handleSubmit={handlePostOdontogram}
+            odontogramDescriptions={createdDescriptions}
           />
         }
         </Grid>
+        <Grid
+          item
+          xs={12}
+          lg={4}
+          sx={{
+            display: 'none',
+            '@media print': {
+              display: 'block',
+            },
+          }}
+        >
+          <List dense disablePadding>
+            {diagnosis?.map((diag) => (
+              <Box
+                key={diag.iddiagnostico}
+                display="flex"
+                alignItems="center"
+                mb={0.5}
+                gap={1}
+              >
+                <Chip
+                  label=""
+                  size="small"
+                  className="color-chip"
+                  sx={{
+                    backgroundColor: diag.enlaceicono,
+                    width: 16,
+                    height: 16,
+                    borderRadius: '50%',
+                  }}
+                />
+                <Typography variant="body2">{diag.descripcion}</Typography>
+              </Box>
+            ))}
+          </List>
+        </Grid>
       </Grid>
+      {
+        !creating ? (
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={() => window.print()}
+            startIcon={<LocalPrintshopIcon />}
+            sx={{'@media print': {display: 'none'}}}
+          >
+            Imprimir
+          </Button>
+        ) : null
+      }
+      
+      <SnackbarAlert
+        snackbar={snackbar}
+        onClose={handleSnackbarClose}
+      />
     </Box>
+    
   );
 };
 

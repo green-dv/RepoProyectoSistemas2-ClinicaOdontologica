@@ -67,8 +67,10 @@ export class IOdontogramrepository implements OdontogramaRepository {
         o.observaciones
       FROM pacientes p 
       JOIN odontogramas o ON p.idpaciente = o.idpaciente
+      JOIN consultas c ON c.idconsulta = o.idconsulta
       ${whereClause}
-      ORDER BY o.fechacreacion DESC
+      ORDER BY o.idodontograma DESC
+      LIMIT 1;
     `;
 
     const result = await this.db.query(odontogramQuery, values);
@@ -90,6 +92,7 @@ export class IOdontogramrepository implements OdontogramaRepository {
         np.codigofdi,
         np.nombre as nombrepieza,
         descod.iddiagnostico,
+        d.descripcion as diagnostico,
         d.enlaceicono as enlaceicono,
         descod.idodontograma
       FROM descripcionodontogramas descod
@@ -130,17 +133,17 @@ export class IOdontogramrepository implements OdontogramaRepository {
 
   async addDescription(descripcion: OdontogramDescriptionDTO): Promise<OdontogramDescriptionDTO | null>{
     try{
-
+      console.log('imprimiendo la descripcion desde el repository');
+      console.log(descripcion);
       const result = await this.db.query(
         `
           INSERT INTO descripcionodontogramas (idcara, idpieza, iddiagnostico, idodontograma)
-          VALUES($1, $2, $3, $4)
+          VALUES($1, $2, $3, (select MAX(idodontograma) from odontogramas))
           RETURNING idcara, idpieza, iddiagnostico, idodontograma
         `, [
           descripcion.idcara,
           descripcion.idpieza,
-          descripcion.iddiagnostico,
-          descripcion.idodontograma
+          descripcion.iddiagnostico
           ]
       );
       if(result.rows.length === 0) return null;
@@ -171,7 +174,7 @@ export class IOdontogramrepository implements OdontogramaRepository {
       FROM pacientes p 
       JOIN odontogramas o ON p.idpaciente = o.idpaciente
       ${whereClause}
-      ORDER BY o.fechacreacion DESC
+      ORDER BY o.idodontograma DESC
       LIMIT 1;
     `;
 

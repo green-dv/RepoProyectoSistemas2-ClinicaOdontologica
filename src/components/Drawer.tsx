@@ -216,7 +216,7 @@ export default function MiniDrawer({ children }: MiniDrawerProps) {
   return (
     <Box sx={{ display: 'flex' }}>
       <CssBaseline />
-      <AppBar position="fixed" open={open}>
+      <AppBar position="fixed" open={open} sx={{'@media print': { display: 'none'}}} >
         <StyledToolbar>
           <AnimationContainer ref={dotsRef}>
             {Array.from({ length: 320 }, (_, index) => (
@@ -242,7 +242,7 @@ export default function MiniDrawer({ children }: MiniDrawerProps) {
           </Typography>
         </StyledToolbar>
       </AppBar>
-      <Drawer variant="permanent" open={open}>
+      <Drawer variant="permanent" open={open} sx={{'@media print': { display: 'none'}}} >
         <DrawerHeader>
           <IconButton onClick={handleDrawerClose}>
             {theme.direction === 'rtl' ? <ChevronRightIcon /> : <ChevronLeftIcon />}
@@ -250,7 +250,7 @@ export default function MiniDrawer({ children }: MiniDrawerProps) {
         </DrawerHeader>
         <Divider />
         <List>
-          {menuItems.map(({ text, path }, index) =>  (
+          {menuItems.map(({ text, path }) =>  (
             <ListItem key={text} disablePadding sx={{ display: 'block' }} onClick={() => router.push(path)}>
               <ListItemButton
                 sx={[
