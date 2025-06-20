@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { SelectChangeEvent } from '@mui/material/Select';
 import {
   Box,
   Typography,
@@ -118,7 +119,7 @@ export const PatientList: React.FC<PatientListProps> = ({
     onPageChange(newPage - 1); 
   };
 
-  const handleChangeRowsPerPage = (event: React.ChangeEvent<{ value: unknown }>) => {
+  const handleChangeRowsPerPage = (event: SelectChangeEvent<number>) => {
     onRowsPerPageChange(Number(event.target.value));
   };
 
