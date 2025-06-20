@@ -13,10 +13,11 @@ const getEnfermedadesByAntecedenteIdUseCase = new GetEnfermedadesByAntecedenteId
 
 export async function GET(
     request: NextRequest,
-   { params }: { params: { id: string } }
+   { params }: { params: Promise<{ id: string }> }
   ) {
     try {
-        const antecedenteId = parseInt(params.id);
+        const resolvedParams = await params;
+        const antecedenteId = parseInt(resolvedParams.id);
         
         if (isNaN(antecedenteId)) {
             return NextResponse.json(
@@ -42,10 +43,11 @@ export async function GET(
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
     try {
-        const antecedenteId = parseInt(params.id);
+        const resolvedParams = await params;
+        const antecedenteId = parseInt(resolvedParams.id);
         
         if (isNaN(antecedenteId)) {
         return NextResponse.json(
@@ -87,10 +89,11 @@ export async function POST(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
     try {
-        const antecedenteId = parseInt(params.id);
+        const resolvedParams = await params;
+        const antecedenteId = parseInt(resolvedParams.id);
         
         if (isNaN(antecedenteId)) {
         return NextResponse.json(
