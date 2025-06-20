@@ -9,15 +9,11 @@ const addEnfermedadUseCase = new AddEnfermedadUseCase(antecedenteRepository);
 const removeEnfermedadUseCase = new RemoveEnfermedadUseCase(antecedenteRepository);
 const getEnfermedadesByAntecedenteIdUseCase = new GetEnfermedadesByAntecedenteIdUseCase(antecedenteRepository);
 
-interface RouteParams {
-    params: {
-        id: string;
-    };
-}
+
 
 export async function GET(
     request: NextRequest,
-    { params }: RouteParams
+   { params }: { params: { id: string } }
   ) {
     try {
         const antecedenteId = parseInt(params.id);
@@ -46,7 +42,7 @@ export async function GET(
 
 export async function POST(
   request: NextRequest,
-  { params }: RouteParams
+  { params }: { params: { id: string } }
 ) {
     try {
         const antecedenteId = parseInt(params.id);
@@ -91,7 +87,7 @@ export async function POST(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: RouteParams
+  { params }: { params: { id: string } }
 ) {
     try {
         const antecedenteId = parseInt(params.id);
