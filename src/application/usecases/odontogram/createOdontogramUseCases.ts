@@ -11,7 +11,10 @@ export class CreateOdontogramUseCase {
         fechacreacion: new Date(),
         observaciones: odontogram.observaciones
       } 
-      const newOdontogram = this.odontogramRepository.createOdontogram(createOdontogram);
+
+      console.log('Imprimiendo odontograma desde los use cases');
+      console.log(createOdontogram);
+      const newOdontogram = await this.odontogramRepository.createOdontogram(createOdontogram);
 
       odontogram.descripciones.forEach(descripcion => {
         const description: OdontogramDescriptionDTO = {
@@ -20,9 +23,11 @@ export class CreateOdontogramUseCase {
           iddiagnostico: descripcion.iddiagnostico,
           idcara: descripcion.idcara
         };
+        console.log('Imprimiendo descripciones desde los use cases');
+        console.log(descripcion);
         this.odontogramRepository.addDescription(description);
       });
-
+      
       return newOdontogram;
     }
 }

@@ -4,10 +4,8 @@ import { getConnection } from "@/infrastructure/db/db";
 export async function GET(request: NextRequest) {
     try{
         const connection = await getConnection();
-        const url = new URL(request.url);
 
-        const searchTerm = url.searchParams.get('q') || '';
-        let query = 'SELECT * FROM fGetDisabledDates();';
+        const query = 'SELECT * FROM fGetDisabledDates();';
 
         /*
         const values = [];

@@ -35,7 +35,7 @@ export interface PaymentPlansState {
   searchQuery: string | '';
   debouncedSearchQuery: string | '';
   patients: Patient[] | [];
-  selectedPatient: Patient | null;
+  selectedPatient: number | null;
   loading: boolean | false;
   searchLoading: boolean | false;
   error: string | null;
@@ -66,7 +66,7 @@ export interface PaymentPlansState {
   setSearchQuery: React.Dispatch<React.SetStateAction<string>>;
   setDebouncedSearchQuery: React.Dispatch<React.SetStateAction<string>>;
   setPatients: React.Dispatch<React.SetStateAction<Patient[]>>;
-  setSelectedPatient: React.Dispatch<React.SetStateAction<Patient | null>>;
+  setSelectedPatient: React.Dispatch<React.SetStateAction<number | null>>;
   setLoading: React.Dispatch<React.SetStateAction<boolean>>;
   setSearchLoading: React.Dispatch<React.SetStateAction<boolean>>;
   setError: React.Dispatch<React.SetStateAction<string | null>>;
@@ -114,7 +114,7 @@ export default function usePaymentPlans(): PaymentPlansState {
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('');
   const [patients, setPatients] = useState<Patient[]>([]);
-  const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
+  const [selectedPatient, setSelectedPatient] = useState<number | null>(0);
   const [loading, setLoading] = useState(false);
   const [searchLoading, setSearchLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);

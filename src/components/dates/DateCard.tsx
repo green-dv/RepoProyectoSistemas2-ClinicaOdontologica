@@ -88,7 +88,6 @@ export function DateCard({
   onUpdate
 }: DatesProps) {
   const [status, setStatus] = React.useState<Status[]>([]);
-  const [updatingId, setUpdatingId] = React.useState<number | null>(null);
   const [expandedCardId, setExpandedCardId] = React.useState<number | null>(null);
 
   const router = useRouter();
@@ -106,15 +105,12 @@ export function DateCard({
   }, []);
   
   const handleStatusChange = async (idcita: number, newStatus: number) => {
-    setUpdatingId(idcita);
     try {
       await updateDateStatus(idcita, newStatus);
       onUpdate();
     } catch (error) {
       console.error('Error actualizando estado:', error);
-    } finally {
-      setUpdatingId(null);
-    }
+    } 
   };
 
   const handleCalendarClick = (fechacita: DateTime) =>{

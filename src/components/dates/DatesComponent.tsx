@@ -25,9 +25,7 @@ import DatesDialog from './DatesDialog';
 import useDates from '@/presentation/hooks/useDate';
 import useDatesHandlers from '@/presentation/handlers/useDateHandler';
 import StatusDropDown from './StatusDropDown';
-import { Patient } from '@/domain/entities/Patient';
-import { fetchStatus } from '@/application/usecases/status'
-import { createPatientFetcher } from '@/presentation/handlers/patientsUtil';
+import { fetchStatus } from '@/application/usecases/status';
 export function DatesComponent() {
   const [filter, setFilter] = useState<string>('todas');
   
@@ -54,7 +52,6 @@ export function DatesComponent() {
     handlePatientSelect,
     handleClearSearch, 
     handlePatientSelectDialog,
-    handleClearSearchDialog,
   } = useDatesHandlers(datesState);
 
   const {
@@ -104,42 +101,6 @@ export function DatesComponent() {
     };
     fetchStatuses();
   }, []);
-  
-
-  const today = moment().startOf('day');
-  const in7Days = moment().add(7, 'days').endOf('day');
-
-  const citasProximas = filteredDates.filter(date =>
-    moment(date.fechacita).isBetween(today, in7Days, undefined, '[]')
-  );
-
-  const citasFuturas = filteredDates.filter(date =>
-    moment(date.fechacita).isAfter(in7Days)
-  );
-
-  const citasPasadas = filteredDates.filter(date =>
-    moment(date.fechacita).isBefore(today)
-  );
-  const secciones = [
-    {
-      id: 'proximas',
-      title: 'Citas en los próximos 7 días',
-      dates: citasProximas,
-      show: filter === 'todas' || filter === 'proximas'
-    },
-    {
-      id: 'futuras',
-      title: 'Citas posteriores',
-      dates: citasFuturas,
-      show: filter === 'todas' || filter === 'futuras'
-    },
-    {
-      id: 'pasadas',
-      title: 'Citas pasadas',
-      dates: citasPasadas,
-      show: filter === 'todas' || filter === 'pasadas'
-    }
-  ];
 
   return (
     <Box sx={{ flexGrow: 1 }}>
@@ -291,7 +252,7 @@ export function DatesComponent() {
             <Paper elevation={24} sx={{ mb: 3, p: 2 }}>
               
               <DateCard
-                dates={dates}
+                dates={filteredDates ?? dates}
                 isLoading={isLoading}
                 showDisabled={showDisabled}
                 onEdit={handleEdit}
@@ -307,9 +268,7 @@ export function DatesComponent() {
         patients={patientsDialog}
         searchQueryDialog={searchQueryDialog}
         setSearchQueryDialog={setSearchQueryDialog}
-        selectedPatientDialog={selectedPatientDialog}
         searchLoadingDialog={searchLoadingDialog}
-        handlePatientSelectDialog={handlePatientSelectDialog}
         open={open}
         onClose={handleClose}
         onSubmit={handleSubmit}

@@ -33,10 +33,8 @@ interface DateDialogProps {
   patients: Patient[];
   searchQueryDialog: string;
   setSearchQueryDialog: (q: string) => void;
-  selectedPatientDialog: Patient | null;
   searchLoadingDialog: boolean;
   setSelectedPatientDialog: (p: Patient | null) => void;
-  handlePatientSelectDialog: (p: Patient) => void;
 }
 
 export default function DatesDialog({
