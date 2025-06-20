@@ -5,6 +5,6 @@ export class RemoveDescriptionUseCase {
     constructor(private odontogramRepository: OdontogramaRepository) {}
 
     async execute(idOdontograma: number,idCara: number, idPieza: number,  iddiagnostico: number): Promise<OdontogramDescription | null> {
-        return await this.odontogramRepository.removeDescription(patientId);
+        return await this.odontogramRepository.removeDescription(idOdontograma, idCara, idPieza, iddiagnostico);
     }
 }
