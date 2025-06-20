@@ -7,9 +7,10 @@ const getOdontogramsUseCases = new GetOdontogramByConsultationIdUseCase(odontogr
 
 export async function GET(
     request: NextRequest,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
   ) {
-    const consultationId = Number(params.id); 
+    const resolvedParams = await params;
+    const consultationId = parseInt(resolvedParams.id); 
     if (isNaN(consultationId)) {
       return NextResponse.json({ error: "Id de consulta invalida" }, { status: 400 });
     }
