@@ -8,18 +8,14 @@ const addMedicalAttentionUseCase = new AddAtencionMedicaUseCase(antecedenteRepos
 const removeMedicalAttentionUseCase = new RemoveAtencionMedicaUseCase(antecedenteRepository);
 const getAtencionMedicasByAntecedenteId = new GetAtencionesMedicasByAntecedenteIdUseCase(antecedenteRepository);
 
-interface RouteParams {
-    params: {
-        id: string;
-    };
-}
 
 export async function GET(
     request: NextRequest,
-    { params }: RouteParams
+    { params }: { params: Promise<{ id: string }> }
   ) {
     try {
-        const antecedenteId = parseInt(params.id);
+        const resolvedParams = await params;
+        const antecedenteId = parseInt(resolvedParams.id); 
         
         if (isNaN(antecedenteId)) {
             return NextResponse.json(
@@ -45,10 +41,11 @@ export async function GET(
 
 export async function POST(
   request: NextRequest,
-  { params }: RouteParams
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const antecedenteId = parseInt(params.id);
+    const resolvedParams = await params;
+    const antecedenteId = parseInt(resolvedParams.id); 
     
     if (isNaN(antecedenteId)) {
       return NextResponse.json(
@@ -91,10 +88,11 @@ export async function POST(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: RouteParams
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const antecedenteId = parseInt(params.id);
+    const resolvedParams = await params;
+    const antecedenteId = parseInt(resolvedParams.id); 
     
     if (isNaN(antecedenteId)) {
       return NextResponse.json(
