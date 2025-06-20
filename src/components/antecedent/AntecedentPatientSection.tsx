@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -322,7 +323,6 @@ export default function AntecedenteDialog({
                     renderTags={(value, getTagProps) =>
                       value.map((option, index) => (
                         <Chip
-                          key={option.id}
                           label={option.label}
                           {...getTagProps({ index })}
                           color="primary"
@@ -369,7 +369,6 @@ export default function AntecedenteDialog({
                     renderTags={(value, getTagProps) =>
                       value.map((option, index) => (
                         <Chip
-                          key={option.id}
                           label={option.label}
                           {...getTagProps({ index })}
                           color="secondary"
@@ -416,7 +415,6 @@ export default function AntecedenteDialog({
                     renderTags={(value, getTagProps) =>
                       value.map((option, index) => (
                         <Chip
-                          key={option.id}
                           label={option.label}
                           {...getTagProps({ index })}
                           color="info"
@@ -463,7 +461,6 @@ export default function AntecedenteDialog({
                     renderTags={(value, getTagProps) =>
                       value.map((option, index) => (
                         <Chip
-                          key={option.id}
                           label={option.label}
                           {...getTagProps({ index })}
                           color="warning"
