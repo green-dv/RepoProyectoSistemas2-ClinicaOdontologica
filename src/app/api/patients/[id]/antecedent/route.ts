@@ -8,18 +8,13 @@ const antecedenteRepository = new IAntecedenteRepository();
 const getAntecedentesByPatientIdUseCase = new GetAntecedentesByPatientIdUseCase(antecedenteRepository);
 const createAntecedenteUseCase = new CreateAntecedenteUseCase(antecedenteRepository);
 
-interface PatientRouteParams {
-    params: {
-        id: string;
-    };
-    }
-
 export async function GET(
   request: NextRequest,
-  { params }: PatientRouteParams
+  { params }: { params: Promise<{ id: string }> }
 ) {
     try {
-        const patientId = parseInt(params.id);
+        const resolvedParams = await params;
+        const patientId = parseInt(resolvedParams.id); 
         
         if (isNaN(patientId)) {
         return NextResponse.json(
@@ -38,9 +33,10 @@ export async function GET(
         );
     }
 }
-export async function POST(request: NextRequest,{ params }: PatientRouteParams) {
+export async function POST(request: NextRequest,{ params }: { params: Promise<{ id: string }> }) {
     try {
-        const patientId = parseInt(params.id);
+        const resolvedParams = await params;
+        const patientId = parseInt(resolvedParams.id); 
     
         if (isNaN(patientId)) {
             return NextResponse.json(

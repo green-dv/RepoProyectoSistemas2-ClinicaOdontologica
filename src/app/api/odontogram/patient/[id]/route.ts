@@ -7,9 +7,10 @@ const getOdontogramsUseCases = new GetLastOdontogramUseCase(odontogramRepository
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const idpaciente = Number(await params.id);
+  const resolvedParams = await params;
+  const idpaciente = parseInt(resolvedParams.id); 
 
   if (isNaN(idpaciente)) {
     return NextResponse.json({ error: "Id de paciente invalida" }, { status: 400 });
