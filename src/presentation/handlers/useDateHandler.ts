@@ -83,6 +83,18 @@ interface DatesState{
   setShouldSearchDialog: React.Dispatch<React.SetStateAction<boolean>>;
   setPacienteIdDialog: React.Dispatch<React.SetStateAction<number | null>>;
 
+  timeError: boolean,
+  patientError: boolean,
+  descriptionError: boolean,
+  accordedTimeError: boolean,
+  aproximateTimeError: boolean,
+
+  setAproximateTimeError: React.Dispatch<React.SetStateAction<boolean>>;
+  setAccordedTimeError: React.Dispatch<React.SetStateAction<boolean>>;
+  setDescriptionError: React.Dispatch<React.SetStateAction<boolean>>;
+  setPatientError: React.Dispatch<React.SetStateAction<boolean>>;
+  setTimeError: React.Dispatch<React.SetStateAction<boolean>>;
+
   resetForm: () => void;
   showMessage: (message: string, severity: AlertColor) => void;
 
@@ -142,6 +154,12 @@ export default function useDatesHandlers(state: DatesState){
     shouldSearchDialog,
     setShouldSearchDialog,
     setPacienteIdDialog,
+
+    timeError, setTimeError,
+    patientError, setPatientError,
+    descriptionError, setDescriptionError,
+    accordedTimeError, setAccordedTimeError,
+    aproximateTimeError, setAproximateTimeError,
   } = state;
 
 
@@ -174,12 +192,19 @@ export default function useDatesHandlers(state: DatesState){
   );
 
   const handleOpen = () => {
+    
     setSelectedDate(null);
     setOpen(true);
   };
 
   const handleClose = () => {
+    setTimeError(false);
+    setPatientError(false);
+    setDescriptionError(false);
+    setAccordedTimeError(false);
+    setAproximateTimeError(false);
     setOpen(false);
+    setSearchQueryDialog('');
     resetForm();
   };
 
@@ -197,10 +222,11 @@ export default function useDatesHandlers(state: DatesState){
     // Buscar paciente actual para mostrarlo en el input (opcional)
     const paciente = patients.find(p => p.idpaciente === date.idpaciente);
     if (paciente) {
-      setSearchQuery(`${paciente.nombres} ${paciente.apellidos}`);
+      setSearchQueryDialog(`${paciente.nombres} ${paciente.apellidos}`);
       setSelectedPatient(paciente);
     }
-
+    setSearchQueryDialog(date.paciente);
+    console.log(date.paciente);
     setSelectedDate(date);
     setOpen(true);
   };
@@ -237,29 +263,50 @@ export default function useDatesHandlers(state: DatesState){
   };
 
   const handleSubmit = async () => { 
+    setTimeError(false);
+    setAccordedTimeError(false);
+    setPatientError(false);
+    setDescriptionError(false);
+    setAproximateTimeError(false);
     try {
-        const adjustedFecha = moment(newDate.fecha).subtract(4, 'hours').toISOString();
-        const adjustedFechacita = moment(newDate.fechacita).subtract(4, 'hours').toISOString();
-        const adjustedNewDate = {
-            ...newDate,
-            fecha: adjustedFecha,
-            fechacita: adjustedFechacita
-        };
+      const adjustedFecha = moment(newDate.fecha).subtract(4, 'hours').toISOString();
+      const adjustedFechacita = moment(newDate.fechacita).subtract(4, 'hours').toISOString();
+      const adjustedNewDate = {
+          ...newDate,
+          fecha: adjustedFecha,
+          fechacita: adjustedFechacita
+      };
+
+      const start = moment(newDate.fechacita);
+      const end = start.clone().add(newDate.duracionaprox * 60, 'minutes');
+
+      const appointmentHour = start.hour();
+      const isOutOfHours = appointmentHour < 7 || appointmentHour >= 22;
+      const nextDay = end.hour() >= 22;
+
       const isRegisteredDateDuplicated = dates.some(
         date => 
           date.fechacita === newDate.fechacita
       );
+      if(newDate.descripcion.length > 100){
+        showMessage('La descripcion no puede tener mas de 100 caracteres', 'error');
+        setDescriptionError(true);
+        return;
+      }
       const isRegisteredAppointmentDuplicated = dates.some(
         date => 
           Number(date.idconsulta) === Number(newDate.idconsulta) && Number(newDate.idconsulta!= null) && Number(newDate.idconsulta != 0)
       );
-      const isOverlapping = dates.some(date => {
-        if(newDate.fecha === date.fecha && selectedDate) return false;
+      const citasParaComparar = selectedDate
+        ? dates.filter(date => date.idcita !== selectedDate.idcita)
+        : dates;
+
+      const isOverlapping = citasParaComparar.some(date => {
         const start = moment(date.fechacita);
         const end = moment(date.fechacita).add(date.duracionaprox * 60, 'minutes');
         const newStart = moment(newDate.fechacita);
         const newEnd = moment(newDate.fechacita).add(newDate.duracionaprox * 60, 'minutes');
-      
+
         return newStart.isBefore(end) && start.isBefore(newEnd);
       });
 
@@ -267,35 +314,59 @@ export default function useDatesHandlers(state: DatesState){
       
       if(newDate.duracionaprox > 5){
         showMessage('La duración aproximada no puede ser mayor a 5 horas', 'error');
+        setAproximateTimeError(true);
+        return;
+      }
+      if(nextDay){
+        showMessage('No se puede trabajar hasta luego de las 10pm', 'error');
+        setAccordedTimeError(true);
+        return;
+      }
+      if(newDate.duracionaprox < 0.25){
+        showMessage('La duración aproximada no puede ser menor a 15 minutos', 'error');
+        setAproximateTimeError(true);
+        return;
+      }
+      if(isOutOfHours){
+        showMessage('La hora ingresada no puede ser antes de las 7 am ni despues de las 10 pm', 'error');
+        setAccordedTimeError(true);
         return;
       }
       if (isOverlapping) {
         showMessage('Ya hay una cita registrada durante esta hora', 'error');
+        setAccordedTimeError(true);
         return;
       }
       if(isRegisteredDateDuplicated){
-
+        setTimeError(true);
+        setAccordedTimeError(true);
         showMessage('Ya hay una cita registrada para esta fecha', 'error');
         return;
       }
       if(!isRegisterDateValid){
+        setTimeError(true);
         showMessage('La fecha ingresada es muy antigua', 'error');
         return;
       }
       if(isRegisteredAppointmentDuplicated){
+        setAccordedTimeError(true);
         showMessage('Ya hay una cita registrada para esta consulta', 'error');
         return;
       }
       if(newDate.duracionaprox <= 0){
+        setAproximateTimeError(true);
         showMessage('Ingrese una duración aproximada correcta', 'error');
         return;
       }
       if(!selectedDate){
         if(moment(newDate.fechacita).toDate() < moment(Date.now()).toDate()){
+          setAccordedTimeError(true);
           showMessage('No se puede ingresar una fecha anterior a la actual', 'error');
           return;
         }
         if(moment(newDate.fechacita).toDate() < moment(newDate.fecha).toDate()){
+          setTimeError(true);
+          setAccordedTimeError(true);
           showMessage('La fecha de registro no puede ser anterior a la fecha acordada', 'error');
           return;
         }

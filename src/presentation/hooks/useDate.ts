@@ -32,6 +32,18 @@ export interface DatesState{
   error: string | null;
   shouldSearch: boolean;
 
+  timeError: boolean,
+  patientError: boolean,
+  descriptionError: boolean,
+  accordedTimeError: boolean,
+  aproximateTimeError: boolean,
+
+  setAproximateTimeError: React.Dispatch<React.SetStateAction<boolean>>;
+  setAccordedTimeError: React.Dispatch<React.SetStateAction<boolean>>;
+  setDescriptionError: React.Dispatch<React.SetStateAction<boolean>>;
+  setPatientError: React.Dispatch<React.SetStateAction<boolean>>;
+  setTimeError: React.Dispatch<React.SetStateAction<boolean>>;
+
   //INSERCION/EDICION PACIENTES
   searchQueryDialog: string | '';
   debouncedSearchQueryDialog: string | '';
@@ -82,6 +94,12 @@ export interface DatesState{
 }
 
 export default function useDates(): DatesState{
+  const [timeError, setTimeError] = useState<boolean>(false);
+  const [patientError, setPatientError] = useState<boolean>(false);
+  const [descriptionError, setDescriptionError] = useState<boolean>(false);
+  const [accordedTimeError, setAccordedTimeError] = useState<boolean>(false);
+  const [aproximateTimeError, setAproximateTimeError] = useState<boolean>(false);
+
   const [dates, setDates] = useState<DateObj[]>([]);
   const [open, setOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState<string>('');
@@ -208,5 +226,11 @@ export default function useDates(): DatesState{
 
     resetForm,
     showMessage,
+
+    timeError, setTimeError,
+    patientError, setPatientError,
+    descriptionError, setDescriptionError,
+    accordedTimeError, setAccordedTimeError,
+    aproximateTimeError, setAproximateTimeError,
   }
 }

@@ -35,6 +35,11 @@ interface DateDialogProps {
   setSearchQueryDialog: (q: string) => void;
   searchLoadingDialog: boolean;
   setSelectedPatientDialog: (p: Patient | null) => void;
+  timeError: boolean;
+  patientError: boolean;
+  descriptionError: boolean;
+  accordedTimeError: boolean;
+  aproximateTimeError: boolean;
 }
 
 export default function DatesDialog({
@@ -48,7 +53,12 @@ export default function DatesDialog({
   searchQueryDialog,
   setSearchQueryDialog,
   searchLoadingDialog,
-  setSelectedPatientDialog
+  setSelectedPatientDialog,
+  timeError,
+  patientError,
+  descriptionError,
+  accordedTimeError,
+  aproximateTimeError,
 }: DateDialogProps) {
   const [hours, setHours] = useState(0);
   const [minutes, setMinutes] = useState(0);
@@ -99,6 +109,8 @@ export default function DatesDialog({
       <DialogContent>
         <LocalizationProvider dateAdapter={AdapterDateFns}>
           <DateTimePicker
+            // DateTimePicker does NOT have a direct 'id' or 'error' prop that affects the root element.
+            // The 'id' and 'error' props are passed to the underlying TextField via slotProps.
             label="Fecha Registrada"
             value={date.fecha ? new Date(date.fecha) : null}
             onChange={(newValue) =>
@@ -109,6 +121,8 @@ export default function DatesDialog({
             slots={{ textField: TextField }}
             slotProps={{
               textField: {
+                id: timeError ? 'outlined-error-helper-text' : 'time',
+                error: timeError,
                 fullWidth: true,
                 margin: 'dense',
                 required: true,
@@ -121,6 +135,8 @@ export default function DatesDialog({
         <Box sx={{ position: 'relative' }}>
           <TextField
             fullWidth
+            id={patientError ? 'outlined-error-helper-text' : 'patient'}
+            error={patientError}
             placeholder="Buscar paciente por nombre, apellido o ID..."
             value={searchQueryDialog}
             onChange={(e) => {
@@ -208,6 +224,8 @@ export default function DatesDialog({
         <TextField
           label="Descripción"
           name="descripcion"
+          id={descriptionError ? 'outlined-error-helper-text' : 'description'}
+          error={descriptionError}
           type="text"
           fullWidth
           margin="dense"
@@ -227,6 +245,8 @@ export default function DatesDialog({
             slots={{ textField: TextField }}
             slotProps={{
               textField: {
+                id: accordedTimeError ? 'outlined-error-helper-text' : 'accordedTime',
+                error: accordedTimeError,
                 fullWidth: true,
                 margin: 'dense',
                 required: true,
@@ -239,6 +259,8 @@ export default function DatesDialog({
         <Box display="flex" justifyContent="center" alignItems="center" gap={2} mt={2}>
           <Typography>Tiempo de consulta estimado:</Typography>
           <TextField
+            id={aproximateTimeError ? 'outlined-error-helper-text' : 'horas'}
+            error={aproximateTimeError}
             label="Horas"
             type="number"
             inputProps={{ min: 0 }}
@@ -254,6 +276,8 @@ export default function DatesDialog({
           <TextField
             label="Minutos"
             type="number"
+            id={aproximateTimeError ? 'outlined-error-helper-text' : 'minutos'}
+            error={aproximateTimeError}
             inputProps={{ min: 0, max: 59 }}
             value={minutes || ''}
             onChange={e => {

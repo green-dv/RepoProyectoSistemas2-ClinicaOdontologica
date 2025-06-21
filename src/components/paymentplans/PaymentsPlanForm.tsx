@@ -71,6 +71,13 @@ interface PaymentPlanDialogProps {
   setPayments: React.Dispatch<React.SetStateAction<Payment[]>>;
   setShouldSearch: React.Dispatch<React.SetStateAction<boolean>>;
 
+  fechaCreacionError: boolean;
+  fechaLimiteError: boolean;
+  montoError: boolean;
+  descripcionError: boolean;
+  pacienteError: boolean;
+  cuotasError: boolean;
+
   setSearchQuery: React.Dispatch<React.SetStateAction<string>>;
 }
 
@@ -101,6 +108,13 @@ export default function PaymentsPlanDialog({
   handlePatientSelect,
   setSearchQuery,
   setShouldSearch,
+
+  fechaCreacionError,
+  fechaLimiteError,
+  montoError,
+  descripcionError,
+  pacienteError,
+  cuotasError,
 }: Readonly<PaymentPlanDialogProps>) {
 
 
@@ -121,6 +135,8 @@ export default function PaymentsPlanDialog({
             slots={{ textField: TextField }}
             slotProps={{
               textField: {
+                id:fechaCreacionError ? 'outlined-error-helper-text' : 'fechaCreacion',
+                error:fechaCreacionError,
                 fullWidth: true,
                 margin: 'dense',
                 required: true,
@@ -143,6 +159,8 @@ export default function PaymentsPlanDialog({
             slots={{ textField: TextField }}
             slotProps={{
               textField: {
+                id:fechaLimiteError ? 'outlined-error-helper-text' : 'fechaLimite',
+                error:fechaLimiteError,
                 fullWidth: true,
                 margin: 'dense',
                 required: true,
@@ -154,6 +172,8 @@ export default function PaymentsPlanDialog({
 
         <TextField
           label="Monto Total"
+          id={montoError ? 'outlined-error-helper-text' : 'monto'}
+          error={montoError}
           name="montotal"
           inputMode="numeric"
           type="text"
@@ -164,6 +184,8 @@ export default function PaymentsPlanDialog({
         />
 
         <TextField
+          id={descripcionError ? 'outlined-error-helper-text' : 'descripcion'}
+          error={descripcionError}
           label="Descripción"
           name="descripcion"
           type="text"
@@ -175,6 +197,8 @@ export default function PaymentsPlanDialog({
 
         <Box className="no-print" position="relative">
           <TextField
+            id={pacienteError ? 'outlined-error-helper-text' : 'paciente'}
+            error={pacienteError}
             fullWidth
             placeholder="Buscar paciente por nombre, apellido o id..."
             value={searchQuery}
@@ -259,6 +283,8 @@ export default function PaymentsPlanDialog({
         </FormControl>
 
         <TextField
+          id={cuotasError ? 'outlined-error-helper-text' : 'cuotas'}
+          error={cuotasError}
           label="Número de Cuotas"
           name="cuotas"
           type="text"

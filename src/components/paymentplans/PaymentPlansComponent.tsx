@@ -60,6 +60,12 @@ export default function PaymentPlansComponent(){
     setSearchQuery,
     setShouldSearch,
     shouldSearch,
+    fechaCreacionError,
+    fechaLimiteError,
+    montoError,
+    descripcionError,
+    pacienteError,
+    cuotasError,
   } = usePaymentPlanHandlers();
 
   const{
@@ -141,6 +147,12 @@ export default function PaymentPlansComponent(){
         setSearchQuery={setSearchQuery}
         setShouldSearch={setShouldSearch}
         shouldSearch={shouldSearch}
+        fechaCreacionError={fechaCreacionError}
+        fechaLimiteError={fechaLimiteError}
+        montoError={montoError}
+        descripcionError={descripcionError}
+        pacienteError={pacienteError}
+        cuotasError={cuotasError}
       />
 
       <SnackbarAlert
