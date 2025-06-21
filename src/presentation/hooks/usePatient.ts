@@ -5,11 +5,11 @@ import { PatientResponse } from '@/domain/dto/patient';
 export interface NotificationType {
   open: boolean;
   message: string;
-  type: 'success' | 'error';
+  type: 'success' | 'error' | 'warning' | 'info';
 }
 
 export const usePatientsPage = () => {
-  const [patients, setPatients] = useState<Patient[]>([]);
+ const [patients, setPatients] = useState<Patient[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [totalPatients, setTotalPatients] = useState<number>(0);
@@ -17,17 +17,23 @@ export const usePatientsPage = () => {
   const [rowsPerPage, setRowsPerPage] = useState<number>(10);
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState<string>(searchQuery);
+  const [showDisabled, setShowDisabled] = useState<boolean>(false);
     
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
   const [viewDialogOpen, setViewDialogOpen] = useState<boolean>(false);
   const [formDialogOpen, setFormDialogOpen] = useState<boolean>(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState<boolean>(false);
-  
+
+  const [restoreDialogOpen, setRestoreDialogOpen] = useState<boolean>(false);
+  const [deletePermanentlyDialogOpen, setDeletePermanentlyDialogOpen] = useState<boolean>(false);
+  const [actionLoading, setActionLoading] = useState<boolean>(false);
   const [notification, setNotification] = useState<NotificationType>({
-    open: false,
-    message: '',
-    type: 'success'
+      open: false,
+      message: '',
+       type: 'info',
   });
+
+  
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -38,6 +44,10 @@ export const usePatientsPage = () => {
       clearTimeout(timer);
     };
   }, [searchQuery]);
+
+  useEffect(() => {
+    setPage(0);
+  }, [showDisabled, debouncedSearchQuery]);
 
   const fetchPatients = useCallback(async () => {
     try {
@@ -53,7 +63,12 @@ export const usePatientsPage = () => {
         queryParams.append('search', debouncedSearchQuery);
       }
 
-      const response = await fetch(`/api/patients?${queryParams}`);
+      // Choose endpoint based on showDisabled state
+      const endpoint = showDisabled 
+        ? `/api/patients/disable?${queryParams}`
+        : `/api/patients?${queryParams}`;
+
+      const response = await fetch(endpoint);
       
       if (!response.ok) {
         throw new Error('Error al cargar los pacientes');
@@ -69,7 +84,7 @@ export const usePatientsPage = () => {
     } finally {
       setLoading(false);
     }
-  }, [page, rowsPerPage, debouncedSearchQuery]);
+  }, [page, rowsPerPage, debouncedSearchQuery, showDisabled]);
 
   useEffect(() => {
     fetchPatients();
@@ -96,6 +111,16 @@ export const usePatientsPage = () => {
     setDeleteDialogOpen(true);
   };
 
+  const handleRestorePatient = (patient: Patient) => {
+    setSelectedPatient(patient);
+    setRestoreDialogOpen(true);
+  };
+
+  const handleDeletePermanently = (patient: Patient) => {
+    setSelectedPatient(patient);
+    setDeletePermanentlyDialogOpen(true);
+  };
+
   const handleConfirmDelete = async (id: number): Promise<boolean> => {
     try {
       const response = await fetch(`/api/patients/${id}`, {
@@ -108,9 +133,15 @@ export const usePatientsPage = () => {
       
       await fetchPatients();
       
+      const patientName = selectedPatient 
+        ? `${selectedPatient.nombres} ${selectedPatient.apellidos}` 
+        : 'Paciente';
+      
       setNotification({
         open: true,
-        message: 'Paciente eliminado con éxito',
+        message: showDisabled 
+          ? `${patientName} habilitado con éxito`
+          : `${patientName} deshabilitado con éxito`,
         type: 'success'
       });
       
@@ -118,16 +149,109 @@ export const usePatientsPage = () => {
     } catch (error) {
       console.error('Error deleting patient:', error);
       
-      // Show error notification
       setNotification({
         open: true,
-        message: 'Error al eliminar el paciente',
+        message: showDisabled 
+          ? 'Error al habilitar el paciente'
+          : 'Error al deshabilitar el paciente',
         type: 'error'
       });
       
       return false;
     }
   };
+
+   const handleConfirmRestore = async (): Promise<boolean> => {
+    if (!selectedPatient) return false;
+    
+    try {
+      setActionLoading(true);
+      const response = await fetch(`/api/patients/${selectedPatient.idpaciente}/restore`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to restore patient');
+      }
+      
+      await fetchPatients();
+      
+      const patientName = `${selectedPatient.nombres} ${selectedPatient.apellidos}`;
+      
+      setNotification({
+        open: true,
+        message: `${patientName} restaurado con éxito`,
+        type: 'success'
+      });
+      
+      setRestoreDialogOpen(false);
+      setSelectedPatient(null);
+      
+      return true;
+    } catch (error) {
+      console.error('Error restoring patient:', error);
+      
+      setNotification({
+        open: true,
+        message: 'Error al restaurar el paciente',
+        type: 'error'
+      });
+      
+      return false;
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  // Nuevo handler para confirmar eliminación permanente
+  const handleConfirmDeletePermanently = async (): Promise<boolean> => {
+    if (!selectedPatient) return false;
+    
+    try {
+      setActionLoading(true);
+      const response = await fetch(`/api/patients/${selectedPatient.idpaciente}?permanent=true`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to delete patient permanently');
+      }
+      
+      await fetchPatients();
+      
+      const patientName = `${selectedPatient.nombres} ${selectedPatient.apellidos}`;
+      
+      setNotification({
+        open: true,
+        message: `${patientName} eliminado permanentemente`,
+        type: 'success'
+      });
+      
+      setDeletePermanentlyDialogOpen(false);
+      setSelectedPatient(null);
+      
+      return true;
+    } catch (error) {
+      console.error('Error deleting patient permanently:', error);
+      
+      setNotification({
+        open: true,
+        message: 'Error al eliminar el paciente permanentemente',
+        type: 'error'
+      });
+      
+      return false;
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
 
   const handleCloseViewDialog = () => {
     setViewDialogOpen(false);
@@ -140,6 +264,16 @@ export const usePatientsPage = () => {
 
   const handleCloseDeleteDialog = () => {
     setDeleteDialogOpen(false);
+    setSelectedPatient(null);
+  };
+
+  const handleCloseRestoreDialog = () => {
+    setRestoreDialogOpen(false);
+    setSelectedPatient(null);
+  };
+
+  const handleCloseDeletePermanentlyDialog = () => {
+    setDeletePermanentlyDialogOpen(false);
     setSelectedPatient(null);
   };
 
@@ -161,7 +295,6 @@ export const usePatientsPage = () => {
 
   const handleSearchChange = (query: string) => {
     setSearchQuery(query);
-    setPage(0); 
   };
 
   const handlePageChange = (newPage: number) => {
@@ -182,6 +315,10 @@ export const usePatientsPage = () => {
     fetchPatients();
   };
 
+  const handleToggleDisabled = (disabled: boolean) => {
+    setShowDisabled(disabled);
+  };
+
   return {
     // States
     patients,
@@ -191,10 +328,14 @@ export const usePatientsPage = () => {
     page,
     rowsPerPage,
     searchQuery,
+    showDisabled,
     selectedPatient,
     viewDialogOpen,
     formDialogOpen,
     deleteDialogOpen,
+    restoreDialogOpen,
+    deletePermanentlyDialogOpen,
+    actionLoading,
     notification,
     
     // Handlers
@@ -202,10 +343,16 @@ export const usePatientsPage = () => {
     handleEditPatient,
     handleNewPatient,
     handleDeletePatient,
+    handleRestorePatient,
+    handleDeletePermanently,
     handleConfirmDelete,
+    handleConfirmRestore,
+    handleConfirmDeletePermanently,
     handleCloseViewDialog,
     handleCloseFormDialog,
     handleCloseDeleteDialog,
+    handleCloseRestoreDialog,
+    handleCloseDeletePermanentlyDialog,
     handleFormSuccess,
     handleCloseNotification,
     handleSearchChange,
@@ -213,6 +360,7 @@ export const usePatientsPage = () => {
     handleRowsPerPageChange,
     handleEditFromView,
     handleRefresh,
+    handleToggleDisabled,
     fetchPatients
   };
 };

@@ -7,7 +7,6 @@ const getPatientsDisabledUseCase = new GetPatientsDisabledUseCase(patientReposit
 
 export async function GET(request: NextRequest) {
     try {
-        // Extract pagination parameters from query string
         const searchParams = request.nextUrl.searchParams;
         const page = parseInt(searchParams.get('page') || '1');
         const limit = parseInt(searchParams.get('limit') || '10');

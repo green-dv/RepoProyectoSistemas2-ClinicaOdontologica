@@ -18,6 +18,7 @@ export interface User {
     apellido: string;
     email: string;
     password: string;
+    fecharegistro: Date;
     cambiopassword: boolean;
     habilitado: boolean;
 }

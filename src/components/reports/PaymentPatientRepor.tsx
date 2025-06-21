@@ -416,7 +416,7 @@ const PaymentReportsPage: React.FC = () => {
                       {patient.nombres} {patient.apellidos}
                     </Typography>
                     <Typography variant="body2" color="text.secondary">
-                      ID: {patient.idpaciente} | Sexo: {patient.sexo} | Teléfono: {patient.telefonopersonal}
+                      ID: {patient.idpaciente} | Teléfono: {patient.telefonopersonal}
                     </Typography>
                   </Box>
                 ))}

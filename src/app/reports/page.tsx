@@ -72,15 +72,15 @@ const reportsData: ReportItem[] = [
     category: 'programacion',
     isActive: false
   },
-//   {
-//     id: 'ocupacion-agenda',
-//     title: 'Ocupación de Agenda',
-//     description: 'Análisis de utilización de horarios y disponibilidad',
-//     icon: <ScheduleIcon />,
-//     path: '/reportes/ocupacion-agenda',
-//     category: 'operacional',
-//     isActive: false
-//   },
+  // {
+  //   id: 'ocupacion-agenda',
+  //   title: 'Ocupación de Agenda',
+  //   description: 'Análisis de utilización de horarios y disponibilidad',
+  //   icon: <ScheduleIcon />,
+  //   path: '/reportes/ocupacion-agenda',
+  //   category: 'operacional',
+  //   isActive: false
+  // },
 //   {
 //     id: 'facturas-pendientes',
 //     title: 'Facturas Pendientes',
@@ -232,7 +232,7 @@ export default function ReportsMenu() {
                         })
                       }}
                     >
-                      {report.isActive ? 'Ver Reporte' : 'Todavia no Implementado KISS A PABLA O NO HAGO NADA'}
+                      {report.isActive ? 'Ver Reporte' : 'Todavia no esta implementado'}
                     </Button>
                   </CardActions>
                 </Card>

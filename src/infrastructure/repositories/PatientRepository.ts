@@ -1,4 +1,5 @@
 import { Patient } from '@/domain/entities/Patient';
+import { PatientClinicalRecord, ClinicalAntecedent, PatientClinicalRecordRow } from '@/domain/entities/Patient';
 import {PatientResponse} from '@/domain/dto/patient';
 import { PatientRepository } from '@/domain/repositories/PatientRepository';
 import { getConnection } from '../db/db';
@@ -168,10 +169,82 @@ export class IPatientRepository implements PatientRepository {
 
     async deletePatient(id: number): Promise<boolean> {
         const result = await this.db.query(
-        'UPDATE pacientes SET habilitado = false WHERE idpaciente = $1 AND habilitado = true',
-        [id]
+            'UPDATE pacientes SET habilitado = false WHERE idpaciente = $1 AND habilitado = true',
+            [id]
         );
         
         return result.rowCount !== null && result.rowCount > 0;
+    }
+
+    async restorePatient(id: number): Promise<boolean> {
+        const result = await this.db.query(
+            'UPDATE pacientes SET habilitado = true WHERE idpaciente = $1 AND habilitado = false',
+            [id]
+        );
+        return result.rowCount !== null && result.rowCount > 0;
+    }
+
+    async deletePatientPermanently(id: number): Promise<boolean> {
+        try {
+            const result = await this.db.query(
+                'DELETE FROM pacientes WHERE idpaciente = $1 AND habilitado = false',
+                [id]
+            );
+            return result.rowCount !== null && result.rowCount > 0;
+        } catch (error) {
+            console.error('Error permanently deleting patient:', error);
+            throw error;
+        }
+    }
+    async getPatientByClinicalRecordID(id: number): Promise<PatientClinicalRecord | null> {
+        const result = await this.db.query(
+            'SELECT * FROM get_clinical_record($1) WHERE habilitado = true',
+            [id]
+        );
+        
+        if (result.rows.length === 0) {
+            return null;
+        }
+
+        const rows = result.rows as PatientClinicalRecordRow[];
+
+        // Transformar las filas en el formato deseado
+        return this.transformToClinicalRecord(rows);
+    }
+    
+    private transformToClinicalRecord(rows: PatientClinicalRecordRow[]): PatientClinicalRecord {
+        const firstRow = rows[0];
+        
+        const patientData = {
+            idpaciente: firstRow.idpaciente,
+            nombres: firstRow.nombres,
+            apellidos: firstRow.apellidos,
+            direccion: firstRow.direccion,
+            telefonodomicilio: firstRow.telefonodomicilio,
+            telefonopersonal: firstRow.telefonopersonal,
+            lugarnacimiento: firstRow.lugarnacimiento,
+            fechanacimiento: firstRow.fechanacimiento,
+            sexo: firstRow.sexo,
+            estadocivil: firstRow.estadocivil,
+            ocupacion: firstRow.ocupacion,
+            aseguradora: firstRow.aseguradora,
+            habilitado: firstRow.habilitado
+        };
+
+        // Extraer y transformar los antecedentes
+        const antecedentes: ClinicalAntecedent[] = rows.map(row => ({
+            idantecedente: row.idantecedente,
+            tiene_embarazo: row.tiene_embarazo,
+            fecha_antecedente: row.fecha_antecedente,
+            enfermedades: row.enfermedades || '',
+            atenciones_medicas: row.atenciones_medicas || '',
+            medicaciones: row.medicaciones || '',
+            habitos: row.habitos || ''
+        }));
+
+        return {
+            ...patientData,
+            antecedentes
+        };
     }
 }

@@ -311,7 +311,7 @@ export const PaymentReportsPDF: React.FC<PaymentReportsPDFProps> = ({
         </TableContainer>
       </Box>
 
-      {/* Notas adicionales */}
+      {/* Notas adicionales
       {payments.length > 0 && (
         <Box mt={3} p={2} sx={{ backgroundColor: '#f8f9fa', border: '1px solid #dee2e6', borderRadius: '4px' }}>
           <Typography variant="body2" sx={{ fontSize: '10px', fontWeight: 'bold', mb: 1 }}>
@@ -327,7 +327,7 @@ export const PaymentReportsPDF: React.FC<PaymentReportsPDFProps> = ({
             • Estados: Completado (100% pagado), En Progreso (parcialmente pagado), Pendiente (sin pagos)
           </Typography>
         </Box>
-      )}
+      )} */}
 
       {/* Footer */}
       <Box mt={4} pt={2} sx={{ borderTop: '1px solid #ddd', textAlign: 'center' }}>
