@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getConnection } from "@/infrastructure/db/db";
 
-export async function GET(req: NextRequest, {params} : {params : { id: string }}){
+export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }){
   try{
     const connection = getConnection();
-    const { id } = params;
+    const resolvedParams = await params;
+    const id = parseInt(resolvedParams.id);
     const query = `SELECT * FROM fGetMedicationById($1)`;
 
     const result = await connection.query(query, [id]);
@@ -30,10 +31,13 @@ export async function GET(req: NextRequest, {params} : {params : { id: string }}
 
 
 
-export async function PUT(req: NextRequest, { params }: { params: { id: string } }){
+export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string }> }){
   try{
     const connection = getConnection();
     const body = await req.json();
+
+    const resolvedParams = await params;
+    const id = parseInt(resolvedParams.id);
     
     const { medicacion } = body;
 
@@ -44,7 +48,7 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
       );
     }
     const query = `SELECT * FROM fUpdateMedication($1, $2)`;
-    const values = [params.id, medicacion];
+    const values = [id, medicacion];
     const result = await connection.query(query, values);
 
     if(result.rows.length === 0){
@@ -61,10 +65,11 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
   }
 }
 
-export async function DELETE(req: NextRequest, { params }: {params: {id: string}}){
+export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }){
   try{
     const connection = getConnection();
-    const { id } = await params;
+    const resolvedParams = await params;
+    const id = parseInt(resolvedParams.id);
 
     const url = new URL(req.url);
 

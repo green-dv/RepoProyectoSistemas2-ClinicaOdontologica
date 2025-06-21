@@ -1,13 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getConnection } from "@/infrastructure/db/db";
 
-export async function GET(request: NextRequest, {params}: {params: { id : string } }) {
+export async function GET(request: NextRequest,  { params }: { params: Promise<{ id: string }> }) {
     try{
         const connection = await getConnection();
-        const id = parseInt(params.id);
-        const url = new URL(request.url);
+        const resolvedParams = await params;
+        const id = parseInt(resolvedParams.id);
 
-        let query = 'SELECT * FROM fGetDateByID($1);';
+        const query = 'SELECT * FROM fGetDateByID($1);';
 
         const result = await connection.query(query, [id]);
         
@@ -39,11 +39,12 @@ export async function GET(request: NextRequest, {params}: {params: { id : string
 }
 
 
-export async function PUT(req: NextRequest, { params }: { params: { id: string } }) {
+export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const body = await req.json();
     const connection = await getConnection();
-    const idcita = parseInt(params.id);
+    const resolvedParams = await params;
+    const idcita = parseInt(resolvedParams.id);
     const { type } = body;
 
     if (type === 'full') {
@@ -114,10 +115,11 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
 
 
 
-export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const connection = await getConnection();
-    const id = parseInt(await params.id);
+    const resolvedParams = await params;
+    const id = parseInt(resolvedParams.id);
     
     let body = {} as { type?: string };
     try {

@@ -69,7 +69,7 @@ export default function usePaymentPlanHandlers(){
   } = usePaymentPlans();
   const [montotal, setMontotal] = useState('');
   // USE EFFECTS
-
+  let pacienteIdAux = 2;
   useEffect(() => {
     console.log(page, rowsPerPage);
     handleFetchPaymentPlans();
@@ -135,6 +135,10 @@ export default function usePaymentPlanHandlers(){
       showMessage('Debe ingresar un monto mayor a 20', 'error');
       return false;
     }
+    if(newPaymentPlan.idpaciente === null || newPaymentPlan.idpaciente === undefined){
+      showMessage('Debe ingresar un paciente', 'error');
+      return false;
+    }
     const now = new Date();
     const oneYearAgo = new Date();
     oneYearAgo.setFullYear(now.getFullYear() - 1);
@@ -174,7 +178,9 @@ export default function usePaymentPlanHandlers(){
   }
 
   const handleSubmit = async () => {
+    const updatedPlan = { ...newPaymentPlan, pagos: payments };
     newPaymentPlan.pagos = payments;
+
     if(selectedPatient){
       newPaymentPlan.idpaciente =  Number(selectedPatient.idpaciente) ?? 2;
       console.log('a'+ Number(selectedPatient?.idpaciente ?? 2));
@@ -182,8 +188,12 @@ export default function usePaymentPlanHandlers(){
     else if(newPaymentPlan.idpaciente){
       newPaymentPlan.idpaciente = Number(newPaymentPlan.idpaciente) ?? 2;
       console.log('b'+ Number(newPaymentPlan?.idpaciente ?? 2));
+
     }
     setNewPaymentPlan(newPaymentPlan)
+    console.log('ID newpaymentplan: '+newPaymentPlan.idpaciente);
+    console.log('ID paciente AUX: '+ pacienteIdAux);
+    console.log('ID paciente seleccionado: '+ selectedPatient);
     
     if(!validations()){
       return;
@@ -191,11 +201,10 @@ export default function usePaymentPlanHandlers(){
     if(!submitValidations()){
       return;
     }
-    //Si es que existe un plan de pagos seleccionado
     if(selectedPaymentPlan){
-      //update
       try {
-        
+        console.log(newPaymentPlan);
+        console.log(selectedPatient);
         const res = await fetch(`/api/paymentsplan/${newPaymentPlan.idplanpago}`, {
           method: 'PUT',
           headers: {
@@ -421,7 +430,7 @@ const recalculatePayments2 = (
           descripcion: rawPlan.descripcion,
           estado: rawPlan.estado,
           idconsulta: rawPlan.idconsulta,
-          idpaciente: rawPlan.idpaciente,
+          idpaciente: parseInt(rawPlan.idpaciente),
           paciente: rawPlan.paciente,
           pagos: rawPlan.pagos?.map((pago: Payment) => ({
             idpago: pago.idpago,
@@ -438,17 +447,24 @@ const recalculatePayments2 = (
         setMontotal(rawPlan.montotal ?? '');
         setPayments(rawPlan.pagos ?? []);
         console.log("paciente:" + rawPlan.idpaciente)
+        pacienteIdAux = rawPlan.idpaciente;
+        console.log('id auxiliar: '+pacienteIdAux);
         if(rawPlan.paciente && rawPlan.idpaciente) {
           setSelectedPatient(rawPlan.idpaciente);
           setSearchQuery(rawPlan.paciente);
+          pacienteIdAux = rawPlan.idpaciente;
+          console.log('si se encontro al paciente');
+          console.log('ID: ' + rawPlan.idpaciente)
+          console.log('Tipo: ' + typeof rawPlan.idpaciente);
         }
-        console.log('paciente '+ rawPlan.paciente);
+        console.log('paciente: '+ rawPlan.paciente);
         setOpen(true);
       } else {
         showMessage('Error al obtener planes', 'error');
       }
-    } catch {
+    } catch(error) {
       showMessage('Error al obtener planes', 'error');
+      console.log(error);
     } finally {
       setPaymentsLoading(false);
     }
@@ -560,8 +576,13 @@ const recalculatePayments2 = (
     fetchPatients();
   }, [fetchPatients]);
 
-   const handlePatientSelect = (patient: Patient) => {
-    setSelectedPatient(patient);
+  const handlePatientSelect = (patient: Patient) => {
+    const updatedPlan = {
+      ...newPaymentPlan,
+      idpaciente: patient.idpaciente ?? null,
+    };
+    setNewPaymentPlan(updatedPlan);
+    setSelectedPatient(patient.idpaciente ?? null);
     setSearchQuery(`${patient.nombres} ${patient.apellidos} ${patient.idpaciente}`);
     setPatients([]);
   };

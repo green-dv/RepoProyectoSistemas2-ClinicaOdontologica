@@ -6,14 +6,11 @@ import { PaymentPlanByPatientReport } from "@/domain/entities/reports/paymentsby
 const reportPaymentPlanByPatientRepository = new ReportPaymentPlanByPatient();
 const getPaymentsByPatientUseCase = new GetPaymentsByPatientsUseCase(reportPaymentPlanByPatientRepository);
 
-interface RouteParams {
-  params: {
-    id: string;
-  };
-}
-export async function GET(request: NextRequest, { params }: RouteParams) {
+
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
     try {
-        const patientId = parseInt(params.id);
+        const resolvedParams = await params;
+        const patientId = parseInt(resolvedParams.id); 
 
         if (isNaN(patientId) || patientId <= 0) {
             return NextResponse.json(

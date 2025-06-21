@@ -1,4 +1,7 @@
-import React from 'react';
+
+import React, { useState } from 'react';
+import { SelectChangeEvent } from '@mui/material/Select';
+
 import {
   Box,
   Paper,
@@ -61,7 +64,7 @@ export const PatientList: React.FC<PatientListProps> = ({
   onCreatePatient,
   onToggleDisabled,
 }) => {
-  // Custom hooks
+
   const {
     totalPages,
     searchPlaceholder,

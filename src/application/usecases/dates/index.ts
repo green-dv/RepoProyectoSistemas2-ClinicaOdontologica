@@ -33,7 +33,7 @@ export const createDate = async (date: DateDTO): Promise<Date> => {
     return await dateRepository.create(trimmedDate);
 }
 export const updateDate = async (id: number, date: DateDTO): Promise<Date> => {
-    let trimmedDate = {
+    const trimmedDate = {
         fecha: date.fecha.trim(),
         idpaciente: date.idpaciente,
         idconsulta: date.idconsulta,

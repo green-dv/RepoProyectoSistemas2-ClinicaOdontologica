@@ -11,14 +11,15 @@ interface UpdateComprobanteRequest {
   enlacecomprobante: string;
 }
 
-export async function PATCH(request: NextRequest, { params }: { params: { id: string } }) {
+export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     console.log('paso por la api');
     /*return NextResponse.json(
       { success: false, error: 'si existe la maldita ruta' },
       { status: 400 }
     );*/
-    const id = parseInt(params.id, 10);
+    const resolvedParams = await params;
+    const id = parseInt(resolvedParams.id); 
     if (isNaN(id)) {
       return NextResponse.json(
         { success: false, error: 'ID de pago inválido' },
