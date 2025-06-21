@@ -33,7 +33,15 @@ export function CalendarComponent({ initialDate }: { initialDate: string }) {
     setCurrentDate,
     setCurrentView,
     setOpen,
+    setSearchQueryDialog,
     setNewDate,
+    searchQueryDialog,
+    patientsDialog,
+    timeError, 
+    patientError,
+    descriptionError,
+    accordedTimeError,
+    aproximateTimeError,
   } = calendarState;
 
   const {
@@ -43,11 +51,9 @@ export function CalendarComponent({ initialDate }: { initialDate: string }) {
   
     const {
   
-      searchQueryDialog,
-      patientsDialog,
+      
       selectedPatientDialog,
       searchLoadingDialog,
-      setSearchQueryDialog,
       setSelectedPatientDialog,
     } = datesState;
 
@@ -126,9 +132,7 @@ export function CalendarComponent({ initialDate }: { initialDate: string }) {
         patients={patientsDialog}
         searchQueryDialog={searchQueryDialog}
         setSearchQueryDialog={setSearchQueryDialog}
-        selectedPatientDialog={selectedPatientDialog}
         searchLoadingDialog={searchLoadingDialog}
-        handlePatientSelectDialog={handlePatientSelectDialog}
         open={open}
         onClose={()=>{setOpen(false)}}
         onSubmit={handleSubmit}
@@ -136,6 +140,11 @@ export function CalendarComponent({ initialDate }: { initialDate: string }) {
         handleChange={handleChange}
         isEditing={!!selectedDate}
         setSelectedPatientDialog={setSelectedPatientDialog}
+        timeError={timeError}
+        patientError={patientError}
+        descriptionError={descriptionError}
+        accordedTimeError={accordedTimeError}
+        aproximateTimeError={aproximateTimeError}
       />
       <SnackbarAlert snackbar={snackbar} onClose={() => {}} />
     </div>

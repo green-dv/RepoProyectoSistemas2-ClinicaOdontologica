@@ -3,7 +3,7 @@ import { Diagnosis } from '@/domain/entities/Diagnosis';
 import useOdontogram from '../hooks/useOdontogram';
 import { OdontogramDescription } from '@/domain/entities/OdontogramDescription';
 import { Odontogram } from '@/domain/entities/Odontogram';
-import useOdontogramData from '../hooks/useOdontogramData';
+//import useOdontogramData from '../hooks/useOdontogramData';
 import { Cara, piezaMap } from '../config/odontogrmaConfig';
 
 export default function useOdontogramHandlers(){
@@ -67,7 +67,7 @@ export default function useOdontogramHandlers(){
     resetForm,
   } = useOdontogram();
 
-  const {
+  /*const {
     currentOdontogram,
     descriptions: currentDescriptions,
     dentalStates,
@@ -78,10 +78,11 @@ export default function useOdontogramHandlers(){
     buildDentalStatesFromDescriptions,
     buildToothFromDescriptions,
     getEstadoFromDiagnosis
-  } = useOdontogramData();
+  } = useOdontogramData();*/
 
 
   useEffect(() => {
+    if(isCreating || consultationId) return;
     handleFetchOdontograms();
   }, [page, rowsperpage]);
 
@@ -145,12 +146,17 @@ export default function useOdontogramHandlers(){
     setRowsPerPage(parseInt(event.target.value, 10));
     setPage(0);
   };
-  const handleFetchLastOdontogram = async(p_idPaciente: number) => {
+  const handleFetchLastOdontogram = async(p_idPaciente: number, creating: boolean) => {
     try{
-      if(isCreating) return;
+      if(creating){
+        console.log('se salio arbitrariamente');
+        return
+      }
       setIsLoanding(true);
       const res = await fetch(`/api/odontogram/patient/${p_idPaciente}`);
       const json = await res.json();
+      console.log('data');
+      console.log(json);
       if(res.ok){
         setOdontogram(json as Odontogram);
         setObservation(json.observaciones);
@@ -186,7 +192,8 @@ export default function useOdontogramHandlers(){
     }
   };
 
-  const handleFetchLasOdontogramPerConsultationId = async (p_idConsulta: number) =>{
+  const handleFetchLasOdontogramPerConsultationId = async (p_idConsulta: number, creating: boolean) =>{
+    if(creating) return;
     try{
       setIsLoanding(true);
       const res = await fetch(`/api/odontogram/consultation/${p_idConsulta}`);
@@ -355,10 +362,10 @@ export default function useOdontogramHandlers(){
     setConsultationId(p_idConsulta);
 
     if(p_idConsulta && !creating){
-      handleFetchLasOdontogramPerConsultationId(p_idConsulta);
+      handleFetchLasOdontogramPerConsultationId(p_idConsulta, creating);
       return;
     }
-    handleFetchLastOdontogram(p_idPaciente);
+    handleFetchLastOdontogram(p_idPaciente, creating);
   };
 
   const handleSnackbarClose = () => {
@@ -387,10 +394,10 @@ export default function useOdontogramHandlers(){
     rowsperpage,
     total,
 
-    currentOdontogram,
+    /*currentOdontogram,
     currentDescriptions,
     //currentDiagnosis,
-    dentalStates,
+    dentalStates,*/
     selectedTooth,
 
 
@@ -425,8 +432,8 @@ export default function useOdontogramHandlers(){
 
     handleFetchOdontograms,
 
-    buildToothFromDescriptions,
-    getEstadoFromDiagnosis,
+    /*buildToothFromDescriptions,
+    getEstadoFromDiagnosis,*/
 
     handleFaceClick,
     handleFaceStateChange,

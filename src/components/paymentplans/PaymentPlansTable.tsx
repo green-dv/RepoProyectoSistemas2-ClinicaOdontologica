@@ -107,8 +107,8 @@ export default function PaymentPlansTable({
               onChange={handleStatusChange}
             >
               <MenuItem value="">Todos</MenuItem>
-              <MenuItem value="Pendiente">Pendiente</MenuItem>
-              <MenuItem value="Completado">Completado</MenuItem>
+              <MenuItem value="pendiente">Pendiente</MenuItem>
+              <MenuItem value="completado">Completado</MenuItem>
             </Select>
           </FormControl>
 

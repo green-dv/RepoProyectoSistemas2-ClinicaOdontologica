@@ -64,6 +64,19 @@ export default function usePaymentPlanHandlers(){
     shouldSearch,
     setShouldSearch,
 
+    fechaCreacionError,
+    fechaLimiteError,
+    montoError,
+    descripcionError,
+    pacienteError,
+    cuotasError,
+    setFechaCreacionError,
+    setFechaLimiteError,
+    setMontoError,
+    setDescripcionError,
+    setPacienteError,
+    setCuotasError,
+
     resetForm,
     showMessage
   } = usePaymentPlans();
@@ -125,18 +138,36 @@ export default function usePaymentPlanHandlers(){
   }
 
   const validations = () => {
-    
+    setFechaCreacionError(false);
+    setFechaLimiteError(false);
+    setMontoError(false);
+    setDescripcionError(false);
+    setPacienteError(false);
+    setCuotasError(false);
     //Validacion de inputs
     if(!newPaymentPlan.fechacreacion || !newPaymentPlan.fechalimite || !newPaymentPlan.montotal || !newPaymentPlan.descripcion || parseInt(cuotas) < 1 || !selectedPatient){
       showMessage('Todos los datos son obligatorios', 'error');
+      setFechaCreacionError(true);
+      setFechaLimiteError(true);
+      setMontoError(true);
+      setDescripcionError(true);
+      setPacienteError(true);
+      setCuotasError(true);
+      return false;
+    }
+    if(newPaymentPlan.descripcion.length > 150){
+      setDescripcionError(true);
+      showMessage('La descripcion debe tener menos de 150 caracteres', 'error');
       return false;
     }
     if(newPaymentPlan.montotal < 20 || newPaymentPlan.montotal === null){
       showMessage('Debe ingresar un monto mayor a 20', 'error');
+      setMontoError(true);
       return false;
     }
     if(newPaymentPlan.idpaciente === null || newPaymentPlan.idpaciente === undefined){
       showMessage('Debe ingresar un paciente', 'error');
+      setPacienteError(true);
       return false;
     }
     const now = new Date();
@@ -152,21 +183,27 @@ export default function usePaymentPlanHandlers(){
       new Date(newPaymentPlan.fechacreacion) > tomorrow
     ) {
       showMessage('La fecha debe estar dentro del último año y no puede ser mayor a mañana.', 'error');
+      setFechaCreacionError(true);
       return false;
     }
     if(new Date(newPaymentPlan.fechalimite) > new Date(new Date().setMonth(new Date().getMonth() + 18)) || newPaymentPlan.fechalimite === null){
+      setFechaLimiteError(true);
       showMessage('No puede registrar una fecha límite superior a un año y medio a partir de ahora', 'error');
       return false;
     }
     if(new Date(newPaymentPlan.fechalimite) < new Date(newPaymentPlan.fechacreacion)){
+      setFechaCreacionError(true);
+      setFechaLimiteError(true);
       showMessage('La fecha limite no puede ser anterior a la fecha de creación', 'error');
       return false;
     }
     if(newPaymentPlan.montotal < 20 || newPaymentPlan.montotal === null){
       showMessage('Debe ingresar un monto mayor a 20', 'error');
+      setMontoError(true);
       return false;
     }
     if(parseInt(cuotas) < 1 || cuotas === null){
+      setCuotasError(true);
       showMessage('Debe ingresar las cuotas', 'error');
       return false;
     }
@@ -178,6 +215,12 @@ export default function usePaymentPlanHandlers(){
   }
 
   const handleSubmit = async () => {
+    setFechaCreacionError(false);
+    setFechaLimiteError(false);
+    setMontoError(false);
+    setDescripcionError(false);
+    setPacienteError(false);
+    setCuotasError(false);
     const updatedPlan = { ...newPaymentPlan, pagos: payments };
     newPaymentPlan.pagos = payments;
     if (selectedPatient) {
@@ -511,6 +554,13 @@ const recalculatePayments2 = (
   }
 
   const handleClose = () => {
+    setFechaCreacionError(false);
+    setFechaLimiteError(false);
+    setMontoError(false);
+    setDescripcionError(false);
+    setPacienteError(false);
+    setCuotasError(false);
+
     setSelectedPaymentPlan(null);
     setIsEditingPayment(1000);
     setOpen(false);
@@ -655,5 +705,12 @@ const recalculatePayments2 = (
     handleClearSearch,
     shouldSearch,
     setShouldSearch,
+
+    fechaCreacionError,
+    fechaLimiteError,
+    montoError,
+    descripcionError,
+    pacienteError,
+    cuotasError,
   }
 }
