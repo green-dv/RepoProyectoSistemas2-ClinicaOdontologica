@@ -1,21 +1,27 @@
-import React from 'react';
+import React, {useState} from 'react';
 import { PatientDialog } from './PatientDialog';
 import AntecedenteDialog from '@/components/antecedent/AntecedentPatientSection';
 import {
-  Typography,
-  Box,
-  Grid,
-  Divider,
-  Chip,
-  Button,
-  CircularProgress,
-  List,
-  ListItem,
-  ListItemIcon,
-  ListItemText,
-  Paper,
-  Tab,
-  Tabs
+ Typography, 
+  Box, 
+  Grid, 
+  Divider, 
+  Chip, 
+  Button, 
+  CircularProgress, 
+  List, 
+  ListItem, 
+  ListItemIcon, 
+  ListItemText, 
+  Paper, 
+  Tab, 
+  Tabs,
+  IconButton,
+  Tooltip,
+  Menu,
+  MenuItem,
+  Alert,
+  Snackbar
 } from '@mui/material';
 import {
   PersonOutline as PersonIcon,
@@ -29,7 +35,12 @@ import {
   FitnessCenter as FitnessCenterIcon,
   Medication as MedicationIcon,
   Healing as HealingIcon,
-  AddCircleOutline as AddIcon
+  AddCircleOutline as AddIcon,
+  Print as PrintIcon,
+  Download as DownloadIcon,
+  Visibility as VisibilityIcon,
+  MoreVert as MoreVertIcon,
+  Close as CloseIcon
 } from '@mui/icons-material';
 
 import { PatientViewDialogProps } from './viewUtils/PatientViewTypes';
@@ -37,6 +48,7 @@ import { TabPanel } from './viewUtils/PatientViewComponent';
 import { usePatientView } from '@/presentation/hooks/usePatientView';
 import { usePatientViewHandlers } from '@/presentation/handlers/usePatientView';
 import { calculateAge, formatDate, getEmbarazoIcon, getEmbarazoLabel } from './viewUtils/PatientViewUtils';
+import { useClinicalPrintHandlers } from '@/presentation/handlers/useClinicalRecordHandler';
 
 export const PatientViewDialog: React.FC<PatientViewDialogProps> = ({
   open,
@@ -45,6 +57,12 @@ export const PatientViewDialog: React.FC<PatientViewDialogProps> = ({
   onEdit,
   onAddAntecedent = () => {}
 }) => {
+  const [printMenuAnchor, setPrintMenuAnchor] = useState<null | HTMLElement>(null);
+  const [snackbar, setSnackbar] = useState<{
+    open: boolean;
+    message: string;
+    severity: 'success' | 'error' | 'info';
+  }>({ open: false, message: '', severity: 'info' });
   const hookData = usePatientView(patient);
   
   const {
@@ -72,6 +90,36 @@ export const PatientViewDialog: React.FC<PatientViewDialogProps> = ({
     hookData,
     onAddAntecedent
   });
+
+  const printHandlers = useClinicalPrintHandlers({
+    patient,
+    onPrintSuccess: () => {
+      setSnackbar({
+        open: true,
+        message: 'Operación completada exitosamente',
+        severity: 'success'
+      });
+      setPrintMenuAnchor(null);
+    },
+    onPrintError: (error: Error) => {
+      setSnackbar({
+        open: true,
+        message: `Error: ${error.message}`,
+        severity: 'error'
+      });
+      setPrintMenuAnchor(null);
+    }
+  });
+
+  const handlePrintMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
+    setPrintMenuAnchor(event.currentTarget);
+  };
+
+  const handlePrintMenuClose = () => {
+    setPrintMenuAnchor(null);
+  };
+
+
 
   if (!patient) {
     return null;
@@ -107,9 +155,71 @@ export const PatientViewDialog: React.FC<PatientViewDialogProps> = ({
               color={patient.habilitado ? 'success' : 'error'} 
               size="medium"
             />
+           
+
+              {/* Botón de Impresión */}
+              <Tooltip title="Opciones de Impresión">
+                <IconButton
+                  onClick={handlePrintMenuOpen}
+                  disabled={printHandlers.isGenerating}
+                  color="primary"
+                  size="large"
+                >
+                  {printHandlers.isGenerating ? (
+                    <CircularProgress size={24} />
+                  ) : (
+                    <PrintIcon />
+                  )}
+                </IconButton>
+              </Tooltip>
           </Box>
 
           <Divider sx={{ mb: 3 }} />
+          
+          {/* Menú de impresión */}
+           <Menu
+            anchorEl={printMenuAnchor}
+            open={Boolean(printMenuAnchor)}
+            onClose={handlePrintMenuClose}
+            anchorOrigin={{
+              vertical: 'bottom',
+              horizontal: 'right',
+            }}
+            transformOrigin={{
+              vertical: 'top',
+              horizontal: 'right',
+            }}
+          >
+            <MenuItem 
+              onClick={printHandlers.handlePreviewPDF}
+              disabled={printHandlers.isGenerating}
+            >
+              <ListItemIcon>
+                <VisibilityIcon fontSize="small" />
+              </ListItemIcon>
+              <ListItemText>Previsualizar PDF</ListItemText>
+            </MenuItem>
+            
+            <MenuItem 
+              onClick={printHandlers.handlePrintPDF}
+              disabled={printHandlers.isGenerating}
+            >
+              <ListItemIcon>
+                <PrintIcon fontSize="small" />
+              </ListItemIcon>
+              <ListItemText>Imprimir</ListItemText>
+            </MenuItem>
+            
+            <MenuItem 
+              onClick={printHandlers.handleDownloadPDF}
+              disabled={printHandlers.isGenerating}
+            >
+              <ListItemIcon>
+                <DownloadIcon fontSize="small" />
+              </ListItemIcon>
+              <ListItemText>Descargar PDF</ListItemText>
+            </MenuItem>
+          </Menu>
 
           {/* Patient details */}
           <Grid container spacing={3}>

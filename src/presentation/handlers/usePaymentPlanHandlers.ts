@@ -176,11 +176,11 @@ export default function usePaymentPlanHandlers(){
   const handleSubmit = async () => {
     newPaymentPlan.pagos = payments;
     if(selectedPatient){
-      newPaymentPlan.idpaciente =  Number(selectedPatient?.idpaciente) ?? null;
+      newPaymentPlan.idpaciente =  Number(selectedPatient.idpaciente) ?? 2;
       console.log('a'+ Number(selectedPatient?.idpaciente ?? 2));
     }
     else if(newPaymentPlan.idpaciente){
-      newPaymentPlan.idpaciente = Number(newPaymentPlan?.idpaciente) ?? null;
+      newPaymentPlan.idpaciente = Number(newPaymentPlan.idpaciente) ?? 2;
       console.log('b'+ Number(newPaymentPlan?.idpaciente ?? 2));
     }
     setNewPaymentPlan(newPaymentPlan)

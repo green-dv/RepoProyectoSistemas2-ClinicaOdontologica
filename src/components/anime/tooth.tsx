@@ -381,9 +381,7 @@ export default function AnimatedTooth() {
           text="OREP PLUS" 
           className="mb-2"
         />
-        <div className="text-gray-500 text-sm font-medium tracking-wide">
-          PABLA KISS POR FAVOR
-        </div>
+      
       </div>
     </div>
   );

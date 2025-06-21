@@ -1,246 +1,186 @@
-import { useCallback } from 'react';
-import debounce from 'lodash/debounce';
-import { Patient, PatientDTO } from '@/domain/entities/Patient';
-import { AlertColor } from '@mui/material';
-import { 
-    fetchPatients,
-    createPatient,
-    updatePatient,
-    deletePatient,
-    restorePatient,
-    deletePatientPermanently
-} from '@/application/usecases/patients';
-import { PatientsResponse } from '@/application/dtos/PatientResponse';
+import { useState, useEffect, useCallback } from 'react';
+import { Patient } from '@/domain/entities/Patient';
 
-
-interface PatientsState {
+interface PatientsResponse {
   patients: Patient[];
-  open: boolean;
-  searchTerm: string;
-  newPatient: PatientDTO;
-  showDisabled: boolean;
-  isLoading: boolean;
-  selectedPatient: Patient | null;
-  snackbar: { message: string; severity: AlertColor } | null;
-  pagination: {
-    page: number;
-    pageSize: number;
-    total: number;
-  };
-  
-  // Setters
-  setPatients: React.Dispatch<React.SetStateAction<Patient[]>>;
-  setOpen: React.Dispatch<React.SetStateAction<boolean>>;
-  setSearchTerm: React.Dispatch<React.SetStateAction<string>>;
-  setNewPatient: React.Dispatch<React.SetStateAction<PatientDTO>>;
-  setShowDisabled: React.Dispatch<React.SetStateAction<boolean>>;
-  setIsLoading: React.Dispatch<React.SetStateAction<boolean>>;
-  setSelectedPatient: React.Dispatch<React.SetStateAction<Patient | null>>;
-  setSnackbar: React.Dispatch<React.SetStateAction<{ message: string; severity: AlertColor } | null>>;
-  setPagination: React.Dispatch<React.SetStateAction<{
-    page: number;
-    pageSize: number;
-    total: number;
-  }>>;
-  resetForm: () => void;
-  showMessage: (message: string, severity: AlertColor) => void;
+  totalPatients: number;
+  currentPage: number;
+  totalPages: number;
 }
 
-// filtro debouce
-const debouncedFetchPatients = debounce(async (
-    query: string, 
-    showDisabled: boolean,
-    page: number,
-    limit: number,
-    setIsLoading: (value: boolean) => void,
-    setPatients: React.Dispatch<React.SetStateAction<Patient[]>>,
-    setPagination: React.Dispatch<React.SetStateAction<{
-        page: number;
-        pageSize: number;
-        total: number;
-    }>>,
-    fetchPatientsFunc: (query: string, showDisabled: boolean, page: number, limit: number) => Promise<PatientsResponse>
-) => {
-    setIsLoading(true);
+interface UsePatientsDataProps {
+  initialPage?: number;
+  initialRowsPerPage?: number;
+  initialSearchQuery?: string;
+  initialShowDisabled?: boolean;
+}
+
+export const usePatientsData = ({
+  initialPage = 0,
+  initialRowsPerPage = 10,
+  initialSearchQuery = '',
+  initialShowDisabled = false,
+}: UsePatientsDataProps = {}) => {
+  // State management
+  const [patients, setPatients] = useState<Patient[]>([]);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
+  const [totalPatients, setTotalPatients] = useState<number>(0);
+  const [page, setPage] = useState<number>(initialPage);
+  const [rowsPerPage, setRowsPerPage] = useState<number>(initialRowsPerPage);
+  const [searchQuery, setSearchQuery] = useState<string>(initialSearchQuery);
+  const [showDisabled, setShowDisabled] = useState<boolean>(initialShowDisabled);
+
+  const [actionLoading, setActionLoading] = useState<boolean>(false);
+  // Fetch patients function
+  const fetchPatients = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+
     try {
-        const response = await fetchPatientsFunc(query, showDisabled, page, limit);
-        setPatients(response.data);
-        setPagination({
-          page: response.pagination.page - 1, 
-          pageSize: response.pagination.limit,
-          total: response.pagination.totalItems
-        });
-    } catch (error) {
-        console.log('Error al cargar los Pacientes', error);
+      const queryParams = new URLSearchParams({
+        page: (page + 1).toString(),
+        limit: rowsPerPage.toString(),
+      });
+
+      if (searchQuery.trim()) {
+        queryParams.append('search', searchQuery.trim());
+      }
+
+      const endpoint = showDisabled 
+        ? `/api/patients/disable?${queryParams.toString()}`
+        : `/api/patients?${queryParams.toString()}`;
+
+      const response = await fetch(endpoint, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data: PatientsResponse = await response.json();
+      
+      setPatients(data.patients || []);
+      setTotalPatients(data.totalPatients || 0);
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Error desconocido al cargar pacientes';
+      setError(`Error al cargar pacientes: ${errorMessage}`);
+      setPatients([]);
+      setTotalPatients(0);
     } finally {
-        setIsLoading(false);
+      setLoading(false);
     }
-}, 300);
+  }, [page, rowsPerPage, searchQuery, showDisabled]);
 
-export default function usePatientHandlers(state: PatientsState) {
-    const {
-        patients,
-        searchTerm,
-        selectedPatient,
-        newPatient,
-        pagination,
-        setPatients,
-        setIsLoading,
-        setOpen,
-        setSelectedPatient,
-        resetForm,
-        showMessage,
-        fetchPatientsWithFilters
-    } = state;
-
-    const handleSnackbarClose = () => {
-        state.setSnackbar(null);
-    };
-
-    const handleFetchPatients = useCallback(
-      (query: string = searchTerm, page: number = 1, pageSize: number = 10) => {
-        fetchPatientsWithFilters(query, page, pageSize);
-      },
-      [fetchPatientsWithFilters, searchTerm]
-    );
-
-  const handleOpen = () => {
-    setSelectedPatient(null);
-    setOpen(true);
-  };
-
-  const handleClose = () => {
-    setOpen(false);
-    resetForm();
-  };
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement> | React.ChangeEvent<{ name?: string; value: unknown }>) => {
-    const { name, value } = e.target;
-    state.setNewPatient((prev) => ({ ...prev, [name as string]: value }));
-  };
-
-  // Para el genero pishe bool
-  const handleBooleanChange = (name: keyof PatientDTO) => (event: React.ChangeEvent<HTMLInputElement>, checked: boolean) => {
-    state.setNewPatient((prev) => ({ ...prev, [name]: checked }));
-  };
-  
-  const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    state.setNewPatient((prev) => ({ ...prev, [name]: value }));
-  };
-
-  const handleEdit = (patient: Patient) => {
-    state.setNewPatient({
-        nombres: patient.nombres || '',
-        apellidos: patient.apellidos || '',
-        direccion: patient.direccion || '',
-        telefonodomicilio: patient.telefonodomicilio || null,
-        telefonopersonal: patient.telefonopersonal || '',
-        lugarnacimiento: patient.lugarnacimiento || null,
-        fechanacimiento: patient.fechanacimiento || '',
-        sexo: patient.sexo || true,
-        estadocivil: patient.estadocivil || '',
-        ocupacion: patient.ocupacion || '',
-        aseguradora: patient.aseguradora || null,
-    });
-    setSelectedPatient(patient);
-    setOpen(true);
-  };
-
-  const handleDelete = async (id: number) => {
+  const handleRestorePatient = useCallback(async (patient: Patient): Promise<boolean> => {
+    setActionLoading(true);
+    setError(null);
     try {
-      await deletePatient(id);
-      setPatients((prev) => prev.filter((patient) => patient.idpaciente !== id));
-      showMessage('Paciente eliminado correctamente', 'success');
-    } catch {
-      showMessage('Error al eliminar el paciente', 'error');
-    }
-  };
-
-  const handleRestore = async (id: number) => {
-    try {
-      await restorePatient(id);
-      setPatients((prev) => prev.filter((patient) => patient.idpaciente !== id));
-      showMessage('Paciente restaurado correctamente', 'success');
-      handleFetchPatients();
-    } catch {
-      showMessage('Error al restaurar el paciente', 'error');
-    }
-  };
-  const handleDeletePermanently = async (id: number) => {
-    if (!window.confirm('¿Está seguro de eliminar este paciente permanentemente? no hay vuelta atras.')) return;
-    try {
-      await deletePatientPermanently(id);
-      showMessage('Paciente eliminado permanentemente', 'success');
-      handleFetchPatients(searchTerm);
-    } catch {
-      showMessage('Error al eliminar el paciente', 'error');
-    }
-  };
-
-  const handleSubmit = async () => { 
-    try {
-      // Verificar duplicaditos
-      const isDuplicate = patients.some(
-        patient => 
-          patient.nombres.toLowerCase().trim() === newPatient.nombres.toLowerCase().trim() && 
-          patient.idpaciente !== selectedPatient?.idpaciente
-      );
-
-      if (isDuplicate) {
-        showMessage('El paciente ya esta registrado', 'error');
-        return;
+      const endpoint = `/api/patients/${patient.idpaciente}/restore`;
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
-
-      if (selectedPatient) {
-        const updatedPatient = await updatePatient(selectedPatient.idpaciente, newPatient);
-        setPatients(prev =>
-          prev.map((p) => p.idpaciente === updatedPatient.idpaciente ? updatedPatient : p)
-        );
-        showMessage('Paciente actualizado correctamente', 'success');
-      } else {
-        const addedPatient = await createPatient(newPatient);
-        setPatients((prev) => [...prev, addedPatient]);
-        showMessage('Paciente agregado correctamente', 'success');
-      }
-      handleClose();
-    } catch (error) {
-      if (error instanceof Error) {
-        showMessage(error.message, 'error');
-      } else {
-        showMessage('Ocurrió un error inesperado', 'error');
-      }
+      await fetchPatients();
+      return true;
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Error desconocido al restaurar paciente';
+      setError(`Error al restaurar paciente: ${errorMessage}`);
+      return false;
+    } finally {
+      setActionLoading(false);
     }
-  };
+  }, [fetchPatients]);
 
-  const toggleView = () => {
-    state.setShowDisabled((prev) => !prev);
-    setPatients([]); 
-    state.setSearchTerm(''); 
-  };
+  const handleDeletePermanently = useCallback(async (patient: Patient): Promise<boolean> => {
+    setActionLoading(true);
+    setError(null);
+    try {
+      const endpoint = `/api/patients/${patient.idpaciente}?permanent=true`;
+      const response = await fetch(endpoint, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      await fetchPatients();
+      return true;
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Error desconocido al eliminar paciente';
+      setError(`Error al eliminar paciente: ${errorMessage}`);
+      return false;
+    } finally {
+      setActionLoading(false);
+    }
+  }, [fetchPatients]);
 
-  const handlePaginationChange = (page: number, pageSize: number) => {
-    handleFetchPatients(searchTerm, page + 1, pageSize);
-  };
-  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    state.setSearchTerm(e.target.value);
-  };
+  useEffect(() => {
+    if (page !== 0) {
+      setPage(0);
+    }
+  }, [searchQuery, showDisabled]);
+
+  // Event handlers
+  const handlePageChange = useCallback((newPage: number) => {
+    setPage(newPage);
+  }, []);
+
+  const handleRowsPerPageChange = useCallback((newRowsPerPage: number) => {
+    setRowsPerPage(newRowsPerPage);
+    setPage(0); 
+  }, []);
+
+  const handleSearchChange = useCallback((query: string) => {
+    setSearchQuery(query);
+  }, []);
+
+  const handleToggleDisabled = useCallback((disabled: boolean) => {
+    setShowDisabled(disabled);
+  }, []);
+
+  const handleRefresh = useCallback(() => {
+    fetchPatients();
+  }, [fetchPatients]);
+
+  const clearError = useCallback(() => {
+    setError(null);
+  }, []);
 
   return {
-    handleFetchPatients,
-    handlePaginationChange,
-    handleOpen,
-    handleClose,
-    handleChange,
-    handleBooleanChange,
-    handleDateChange,
-    handleEdit,
-    handleDelete,
-    handleRestore,
+    // State
+    patients,
+    loading,
+    error,
+    totalPatients,
+    page,
+    rowsPerPage,
+    searchQuery,
+    showDisabled,
+    actionLoading,
+
+    // Actions
+    handlePageChange,
+    handleRowsPerPageChange,
+    handleSearchChange,
+    handleToggleDisabled,
+    handleRefresh,
+    clearError,
+    handleRestorePatient,
     handleDeletePermanently,
-    handleSubmit,
-    toggleView,
-    handleSnackbarClose,
-    handleSearchChange
+    
+    // Manual fetch function
+    fetchPatients,
   };
-}
+};
