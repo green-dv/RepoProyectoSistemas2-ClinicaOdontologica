@@ -74,7 +74,7 @@ export class PaymentService {
             idplanpago: existingPayment.idplanpago       
         };
     
-        return this.paymentRepository.update(paymentUpdate);
+        return this.paymentRepository.update(paymentUpdate, paymentData.idpago);
     }
 
     async getPaymentById(id: number): Promise<Payment | null> {
@@ -111,7 +111,7 @@ export class PaymentService {
         const planWithPayments = await this.paymentPlanRepository.getPlanWithPayments(planId);
         if (!planWithPayments) return;
         //total paga
-        const totalPaid = planWithPayments.pagos.reduce((sum, p) => sum + p.montopagado, 0);
+        const totalPaid = planWithPayments.pagos.reduce((sum, p) => sum + (p.montopagado ?? 0), 0);
         const totalExpected = planWithPayments.pagos.reduce((sum, p) => sum + p.montoesperado, 0);
     
         // poner nuevo estado
@@ -148,9 +148,14 @@ export class PaymentService {
 
     private async handleOverpayment(plan: PaymentPlanWithPayments, overpaymentAmount: number): Promise<void> {
         // obtner los pagos desde el mas antiguo por fecha
+        if(!plan.pagos) return;
         const pendingPayments = plan.pagos
             .filter(p => p.estado !== 'pagado')
-            .sort((a, b) => new Date(a.fechapago).getTime() - new Date(b.fechapago).getTime());
+            .sort((a, b) => {
+                const dateA = a.fechapago ? new Date(a.fechapago).getTime() : 0;
+                const dateB = b.fechapago ? new Date(b.fechapago).getTime() : 0;
+                return dateA - dateB;
+            })
     
         if (pendingPayments.length === 0) {
             return;
@@ -168,7 +173,7 @@ export class PaymentService {
                 ...payment,
                 montoesperado: newExpectedAmount,
                 estado: newExpectedAmount <= 0 ? 'pagado' : 'pendiente'
-            });
+            }, payment.idpago ?? 0);
     
             remainingOverpayment -= amountToDeduct;
         }
@@ -178,8 +183,8 @@ export class PaymentService {
             const lastPayment = pendingPayments[pendingPayments.length - 1];
             await this.paymentRepository.update({
                 ...lastPayment,
-                montopagado: lastPayment.montopagado + remainingOverpayment
-            });
+                montopagado: (lastPayment.montopagado ?? 0) + remainingOverpayment
+            }, lastPayment.idpago ?? 0);
         }
     }
 }

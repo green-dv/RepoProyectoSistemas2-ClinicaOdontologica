@@ -221,7 +221,7 @@ const PaymentReportsPage: React.FC = () => {
     setSelectedPatient(patient);
     setSearchQuery(`${patient.nombres} ${patient.apellidos} ${patient.idpaciente}`);
     setPatients([]);
-    fetchPayments(patient.idpaciente);
+    fetchPayments(patient.idpaciente ?? 1);
   };
 
   const handlePrint = () => {
