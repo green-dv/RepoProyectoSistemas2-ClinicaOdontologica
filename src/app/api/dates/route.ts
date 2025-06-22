@@ -4,10 +4,8 @@ import { getConnection } from "@/infrastructure/db/db";
 export async function GET(request: NextRequest) {
     try{
         const connection = await getConnection();
-        const url = new URL(request.url);
 
-        const searchTerm = url.searchParams.get('q') || '';
-        let query = 'SELECT * FROM fGetDates();';
+        const query = 'SELECT * FROM fGetDates();';
 
         /*
         const values = [];
@@ -20,7 +18,7 @@ export async function GET(request: NextRequest) {
         const result = await connection.query(query/*, values*/);
         
         return NextResponse.json(result.rows);
-    }catch (error) {
+    }catch {
         return NextResponse.json({ message: "Error del servidor" }, { status: 500 });
     }
 }
@@ -47,8 +45,6 @@ export async function POST(req: NextRequest) {
 
         return NextResponse.json(result.rows[0]);
     } catch (error) {
-        console.error('error');
-        console.error(error);
         return NextResponse.json({ message: "Error del servidor", error }, { status: 500 });
     }
 }

@@ -21,8 +21,7 @@ import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { Patient } from '@/domain/entities/Patient';
-import { Clear } from '@mui/icons-material';
-import { Search } from '@mui/icons-material';
+import { Clear, Search } from '@mui/icons-material';
 
 interface DateDialogProps {
   open: boolean;
@@ -32,12 +31,10 @@ interface DateDialogProps {
   handleChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   isEditing: boolean;
   patients: Patient[];
-  searchQuery: string;
-  setSearchQuery: (q: string) => void;
-  selectedPatient: Patient | null;
-  searchLoading: boolean;
-  setSelectedPatient: (p: Patient | null) => void;
-  handlePatientSelect: (p: Patient) => void;
+  searchQueryDialog: string;
+  setSearchQueryDialog: (q: string) => void;
+  searchLoadingDialog: boolean;
+  setSelectedPatientDialog: (p: Patient | null) => void;
 }
 
 export default function DatesDialog({
@@ -48,17 +45,17 @@ export default function DatesDialog({
   handleChange,
   isEditing,
   patients,
-  searchQuery,
-  setSearchQuery,
-  searchLoading,
-  setSelectedPatient
+  searchQueryDialog,
+  setSearchQueryDialog,
+  searchLoadingDialog,
+  setSelectedPatientDialog
 }: DateDialogProps) {
   const [hours, setHours] = useState(0);
   const [minutes, setMinutes] = useState(0);
 
   const handleClearSearch = () => {
-    setSearchQuery('');
-    setSelectedPatient(null);
+    setSearchQueryDialog('');
+    setSelectedPatientDialog(null);
     handleChange({
       target: {
         name: 'idpaciente',
@@ -82,10 +79,12 @@ export default function DatesDialog({
     } as React.ChangeEvent<HTMLInputElement>);
   };
 
-  const handlePatientSelect = (patient: Patient) => {
-    setSelectedPatient(patient);
-    setSearchQuery(`${patient.nombres} ${patient.apellidos} ${patient.idpaciente}`);
+  const handlePatientSelectDialog = (patient: Patient) => {
+    setSelectedPatientDialog(patient);
+    setSearchQueryDialog(`${patient.nombres} ${patient.apellidos} ${patient.idpaciente}`);
   };
+
+  
 
   return (
     <Dialog 
@@ -123,12 +122,12 @@ export default function DatesDialog({
           <TextField
             fullWidth
             placeholder="Buscar paciente por nombre, apellido o ID..."
-            value={searchQuery}
+            value={searchQueryDialog}
             onChange={(e) => {
-              setSearchQuery(e.target.value);
+              setSearchQueryDialog(e.target.value);
             }}
             onFocus={() => {
-              if (!searchQuery) setSearchQuery(""); // Forzar búsqueda inicial
+              if (!searchQueryDialog) setSearchQueryDialog(""); // Forzar búsqueda inicial
             }}
             InputProps={{
               startAdornment: (
@@ -138,12 +137,12 @@ export default function DatesDialog({
               ),
               endAdornment: (
                 <>
-                  {searchLoading && (
+                  {searchLoadingDialog && (
                     <InputAdornment position="end">
                       <CircularProgress size={20} />
                     </InputAdornment>
                   )}
-                  {searchQuery && (
+                  {searchQueryDialog && (
                     <InputAdornment position="end">
                       <IconButton onClick={handleClearSearch} size="small">
                         <Clear/>
@@ -187,14 +186,14 @@ export default function DatesDialog({
                     },
                   }}
                   onClick={() => {
-                    handlePatientSelect(patient); // actualiza selectedPatient y otros estados en el padre
+                    handlePatientSelectDialog(patient); // actualiza selectedPatient y otros estados en el padre
                     handleChange({
                       target: {
                         name: 'idpaciente',
                         value: patient.idpaciente,
                       },
                     } as any); // para que se actualice también en DateDTO
-                    setSearchQuery(`${patient.nombres} ${patient.apellidos}`);
+                    setSearchQueryDialog(`${patient.nombres} ${patient.apellidos}`);
                   }}
                 >
                   <Typography variant="body1" fontWeight="medium">

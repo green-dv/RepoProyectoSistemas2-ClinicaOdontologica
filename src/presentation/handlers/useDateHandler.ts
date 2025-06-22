@@ -38,6 +38,17 @@ interface DatesState{
   error: string | null;
   shouldSearch: boolean;
 
+  //INSERCION/EDICION PACIENTES
+  searchQueryDialog: string | '';
+  debouncedSearchQueryDialog: string | '';
+  patientsDialog: Patient[] | [];
+  selectedPatientDialog: Patient | null;
+  loadingDialog: boolean | false;
+  searchLoadingDialog: boolean | false;
+  errorDialog: string | null;
+  shouldSearchDialog: boolean;
+  pacienteIDDialog: number | null;
+
   setDates: React.Dispatch<React.SetStateAction<DateObj[]>>;
   setOpen: React.Dispatch<React.SetStateAction<boolean>>;
   setSearchTerm: React.Dispatch<React.SetStateAction<string>>;
@@ -61,6 +72,16 @@ interface DatesState{
   setSearchLoading: React.Dispatch<React.SetStateAction<boolean>>;
   setError: React.Dispatch<React.SetStateAction<string | null>>;
   setShouldSearch: React.Dispatch<React.SetStateAction<boolean>>;
+
+  setSearchQueryDialog: React.Dispatch<React.SetStateAction<string>>;
+  setDebouncedSearchQueryDialog: React.Dispatch<React.SetStateAction<string>>;
+  setPatientsDialog: React.Dispatch<React.SetStateAction<Patient[]>>;
+  setSelectedPatientDialog: React.Dispatch<React.SetStateAction<Patient | null>>;
+  setLoadingDialog: React.Dispatch<React.SetStateAction<boolean>>;
+  setSearchLoadingDialog: React.Dispatch<React.SetStateAction<boolean>>;
+  setErrorDialog: React.Dispatch<React.SetStateAction<string | null>>;
+  setShouldSearchDialog: React.Dispatch<React.SetStateAction<boolean>>;
+  setPacienteIdDialog: React.Dispatch<React.SetStateAction<number | null>>;
 
   resetForm: () => void;
   showMessage: (message: string, severity: AlertColor) => void;
@@ -100,11 +121,27 @@ export default function useDatesHandlers(state: DatesState){
     setDebouncedSearchQuery,
     setPatients,
     setSelectedPatient,
-    setLoading,
     setSearchLoading,
     setError,
     shouldSearch,
-    setShouldSearch,
+
+    searchQueryDialog,
+    debouncedSearchQueryDialog,
+    patientsDialog,
+    selectedPatientDialog,
+    loadingDialog,
+    searchLoadingDialog,
+    errorDialog,
+    setSearchQueryDialog,
+    setDebouncedSearchQueryDialog,
+    setPatientsDialog,
+    setSelectedPatientDialog,
+    setLoadingDialog,
+    setSearchLoadingDialog,
+    setErrorDialog,
+    shouldSearchDialog,
+    setShouldSearchDialog,
+    setPacienteIdDialog,
   } = state;
 
 
@@ -389,6 +426,70 @@ export default function useDatesHandlers(state: DatesState){
   
       return () => clearTimeout(timer);
     }, [searchQuery, shouldSearch]);
+    
+
+
+
+    const fetchPatientsDialog = useCallback(async () => {
+      if (!debouncedSearchQueryDialog.trim()) {
+        setPatientsDialog([]);
+        return;
+      }
+  
+      try {
+        setSearchLoadingDialog(true);
+        setErrorDialog(null);
+  
+        const queryParams = new URLSearchParams({
+          page: '1',
+          limit: '10',
+          search: debouncedSearchQueryDialog,
+        });
+  
+        const response = await fetch(`/api/patients?${queryParams}`);
+        
+        if (!response.ok) {
+          throw new Error('Error al cargar los pacientes');
+        }
+        
+        const data: PatientResponse = await response.json();
+        setPatientsDialog(data.data);
+      } catch (err) {
+        console.error('Error fetching patients:', err);
+        setError(err instanceof Error ? err.message : 'Error desconocido');
+        setPatients([]);
+      } finally {
+        setSearchLoading(false);
+      }
+    }, [debouncedSearchQueryDialog]);
+  
+    useEffect(() => {
+      fetchPatientsDialog();
+    }, [fetchPatientsDialog]);
+
+    const handlePatientSelectDialog = (patient: Patient) => {
+      setSelectedPatientDialog(patient);
+      setSearchQueryDialog(`${patient.nombres} ${patient.apellidos} ${patient.idpaciente}`);
+      setPatientsDialog([]);
+      setPacienteIdDialog(patient?.idpaciente ?? 22); 
+    };
+
+  
+    const handleClearSearchDialog = () => {
+      setSearchQueryDialog('');
+      setSelectedPatientDialog(null);
+      setPacienteIdDialog(null);
+    };
+    useEffect(() => {
+      if (!shouldSearchDialog) return;
+  
+      const timer = setTimeout(() => {
+        setDebouncedSearchQueryDialog(searchQueryDialog);
+      }, 500);
+  
+      return () => clearTimeout(timer);
+    }, [searchQueryDialog, shouldSearchDialog]);
+
 
   return {
     handleFetchDates,
@@ -416,6 +517,25 @@ export default function useDatesHandlers(state: DatesState){
     error,
     handlePatientSelect,
     handleClearSearch,  
+
+    searchQueryDialog,
+    debouncedSearchQueryDialog,
+    patientsDialog,
+    selectedPatientDialog,
+    loadingDialog,
+    searchLoadingDialog,
+    errorDialog,
+    setSearchQueryDialog,
+    setDebouncedSearchQueryDialog,
+    setPatientsDialog,
+    setSelectedPatientDialog,
+    setLoadingDialog,
+    setSearchLoadingDialog,
+    setErrorDialog,
+    shouldSearchDialog,
+    setShouldSearchDialog,
+    handlePatientSelectDialog,
+    handleClearSearchDialog
   };
 
 }

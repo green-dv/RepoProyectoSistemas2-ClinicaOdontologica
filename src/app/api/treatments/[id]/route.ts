@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getConnection } from "@/infrastructure/db/db";
 
-export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const connection = await getConnection();
-    const { id } = await params;
+    const resolvedParams = await params;
+    const id = parseInt(resolvedParams.id); 
     const query = `
       SELECT *
       FROM getTreatmentById($1)
@@ -37,9 +38,11 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
 
 export async function PUT(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const resolvedParams = await params;
+    const id = parseInt(resolvedParams.id); 
     const connection = await getConnection();
     const body = await req.json();
 
@@ -70,8 +73,8 @@ export async function PUT(
       SELECT * FROM updTreatment($1, $2, $3, $4)  
     `;
 
-    const values = [nombre, descripcion, precio, params.id];
-    console.log("params.id:", params.id);
+    const values = [nombre, descripcion, precio, id];
+    console.log("params.id:", id);
 
     const result = await connection.query(query, values);
 
@@ -92,10 +95,11 @@ export async function PUT(
   }
 }
 
-export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const connection = await getConnection();
-    const { id } = await params;
+    const resolvedParams = await params;
+    const id = parseInt(resolvedParams.id); 
 
     const url = new URL(req.url);
     // ESTO ES PARA SABER SI SE DESEA UN BORRADO FISICO O LOGICO

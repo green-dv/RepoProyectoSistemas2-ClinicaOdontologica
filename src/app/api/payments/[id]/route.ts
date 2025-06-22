@@ -8,10 +8,11 @@ const paymentRepository = new PaymentRepository();
 const paymentPlanRepository = new PaymentPlanRepository();
 const paymentService = new PaymentService(paymentRepository, paymentPlanRepository);
 
-export async function GET(request: NextRequest, { params }: { params: { id: string }}) 
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) 
 {
     try {
-        const id = parseInt(params.id, 10);
+        const resolvedParams = await params;
+        const id = parseInt(resolvedParams.id); 
         
         if (isNaN(id)) {
             return NextResponse.json({ error: 'ID inválido' }, { status: 400 });
@@ -33,10 +34,11 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
     }
 }
 
-export async function PUT(request: NextRequest,{ params }: { params: { id: string }}) 
+export async function PUT(request: NextRequest,{ params }: { params: Promise<{ id: string }> }) 
 {
     try {
-        const id = parseInt(params.id, 10);
+        const resolvedParams = await params;
+        const id = parseInt(resolvedParams.id); 
         
         if (isNaN(id)) {
             return NextResponse.json({ error: 'ID inválido' }, { status: 400 });

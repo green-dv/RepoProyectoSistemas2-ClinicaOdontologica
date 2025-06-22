@@ -14,20 +14,14 @@ const patientRepository = new IPatientRepository();
 const getPatientByIdUseCase = new GetPatientByIdUseCase(patientRepository);
 const updatePatientUseCase = new UpdatePatientUseCase(patientRepository);
 const deletePatientUseCase = new DeletePatientUseCase(patientRepository);
-const restorePatientUseCase = new RestorePatientUseCase(patientRepository);
-const deletePermanentlyPatientUseCase = new DeletePermanentlyPatientUseCase(patientRepository);
-interface RouteParams {
-  params: {
-    id: string;
-  };
-}
 
 export async function GET(
   request: NextRequest,
-  { params }: RouteParams
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const id = parseInt(params.id);
+    const resolvedParams = await params;
+    const id = parseInt(resolvedParams.id); 
     
     if (isNaN(id)) {
       return NextResponse.json(
@@ -57,10 +51,11 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: RouteParams
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const id = parseInt(params.id);
+    const resolvedParams = await params;
+    const id = parseInt(resolvedParams.id); 
     
     if (isNaN(id)) {
       return NextResponse.json(
@@ -115,10 +110,12 @@ export async function PUT(
 // DELETE /api/pacientes/[id]
 export async function DELETE(
   request: NextRequest,
-  { params }: RouteParams
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  try {
-    const id = parseInt(params.id);
+
+try{
+    const resolvedParams = await params;
+    const id = parseInt(resolvedParams.id); 
     
     if (isNaN(id)) {
       return NextResponse.json(

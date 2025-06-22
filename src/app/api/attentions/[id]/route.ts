@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getConnection } from "@/infrastructure/db/db";
 
-export async function GET(req: NextRequest, {params} : {params : { id: string }}){
+export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }){
   try{
     const connection = getConnection();
-    const { id } = params;
+    const resolvedParams = await params;
+    const id = parseInt(resolvedParams.id);
     const query = `SELECT * FROM fGetAttentionById($1)`;
 
     const result = await connection.query(query, [id]);
@@ -28,9 +29,11 @@ export async function GET(req: NextRequest, {params} : {params : { id: string }}
   }
 }
 
-export async function PUT(req: NextRequest, { params }: { params: { id: string } }){
+export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string }> }){
   try{
     const connection = getConnection();
+    const resolvedParams = await params;
+    const id = parseInt(resolvedParams.id);
     const body = await req.json();
     
     const { atencion } = body;
@@ -42,7 +45,7 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
       );
     }
     const query = `SELECT * FROM fUpdateMedicalAttention($1, $2)`;
-    const values = [params.id, atencion];
+    const values = [id, atencion];
     const result = await connection.query(query, values);
 
     if(result.rows.length === 0){
@@ -59,10 +62,11 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
   }
 }
 
-export async function DELETE(req: NextRequest, { params }: {params: {id: string}}){
+export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }){
   try{
     const connection = getConnection();
-    const { id } = await params;
+    const resolvedParams = await params;
+    const id = parseInt(resolvedParams.id);
 
     const url = new URL(req.url);
 

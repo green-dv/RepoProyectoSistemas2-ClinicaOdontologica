@@ -2,16 +2,13 @@ import { useState } from "react";
 import { Date as DateObj, DateDTO } from "@/domain/entities/Dates";
 import { AlertColor } from "@mui/material";
 import { View, Views } from "react-big-calendar";
+import { IEventoCalendario } from "@/components/calendar/BigCalendar";
 
 export interface SnackbarMessage {
   message: string;
   severity: AlertColor;
 }
-interface IEventoCalendario {
-  title: string;
-  start: globalThis.Date;
-  end: globalThis.Date;
-}
+
 export interface CalendarState {
   dates: DateObj[];
   events: IEventoCalendario[];
