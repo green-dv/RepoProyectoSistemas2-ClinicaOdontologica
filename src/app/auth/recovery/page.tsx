@@ -1,14 +1,14 @@
-'use client';
+'use client'; // 👈 Importante, si accedes a searchParams desde el navegador
+
+import { useSearchParams } from 'next/navigation';
 import { Suspense } from 'react';
 import PasswordRecoveryComponent from '@/components/login/passwordRecovery';
 
-type PageProps = {
-  searchParams?: Record<string, string | string[] | undefined>;
-};
+export default function RecoveryPage() {
+  const searchParams = useSearchParams();
 
-export default function RecoveryPage({ searchParams }: PageProps) {
-  const email = typeof searchParams?.email === 'string' ? searchParams.email : '';
-  const isPasswordRecovery = searchParams?.passwordRecovery === 'true';
+  const email = searchParams.get('email') || '';
+  const isPasswordRecovery = searchParams.get('passwordRecovery') === 'true';
 
   return (
     <Suspense fallback={<div>Cargando...</div>}>
