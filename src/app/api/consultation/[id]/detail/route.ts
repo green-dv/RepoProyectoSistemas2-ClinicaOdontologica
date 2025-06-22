@@ -7,10 +7,11 @@ const getConsultationDetailUseCases = new GetConsultationDetailUseCases(consulta
 
 export async function GET(
     request: NextRequest,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     try {
-        const id = parseInt(params.id);
+        const resolvedParams = await params;
+        const id = parseInt(resolvedParams.id);
         const consultationDetail = await getConsultationDetailUseCases.execute(id);
         return NextResponse.json(consultationDetail, { status: 200 });
     } catch (error) {
