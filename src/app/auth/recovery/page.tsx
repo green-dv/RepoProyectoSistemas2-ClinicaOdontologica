@@ -13,8 +13,6 @@ export default function RecoveryPage() {
   return (
     <Suspense fallback={<div>Cargando...</div>}>
       <PasswordRecoveryComponent
-        emailParam={email}
-        isPasswordRecoveryParam={isPasswordRecovery}
       />
     </Suspense>
   );

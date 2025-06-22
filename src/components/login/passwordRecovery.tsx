@@ -18,21 +18,14 @@ import{
 } from '@mui/material';
 import { useSession } from 'next-auth/react';
 
-
-export default function PasswordRecoveryComponent({
-  emailParam,
-  isPasswordRecoveryParam
-}: {
-  emailParam: string;
-  isPasswordRecoveryParam: boolean;
-}) {
+export default function PasswordRecoveryComponent(){
   const [error, setError] = useState('');
-  const [email, setEmail] = useState(emailParam || '');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [inputCode, setInputCode] = useState(0);
   const [sentCode, setSentCode] = useState(0);
-  const [isPasswordRecovery, setIsPasswordRecovery] = useState(isPasswordRecoveryParam);
+  const [isPasswordRecovery, setIsPasswordRecovery] = useState(true);
   const [isCodeSent, setIsCodeSent] = useState(false);
 
   const router = useRouter();
