@@ -11,11 +11,12 @@ const deleteConsultationUseCases = new DeleteConsultationUseCases(consultationRe
 
 export async function GET(
     request: NextRequest,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     try {
-        const id = parseInt(params.id);
-        const consultation = await getConsultaUseCases.execute(id);
+        const { id } = await params;
+        const consultationId = parseInt(id);
+        const consultation = await getConsultaUseCases.execute(consultationId);
         return NextResponse.json(consultation, { status: 200 });
     } catch (error) {
         console.error("Error al obtener consulta:", error);

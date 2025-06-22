@@ -12,11 +12,12 @@ const removeTreatmentsConsultationUseCases = new RemoveTreatmentsConsultationUse
 
 export async function GET(
     request: NextRequest,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     try {
-        const id = parseInt(params.id);
-        const treatments = await getTreatmentsByConsultationUseCases.execute(id);
+         const { id } = await params;
+        const treatmentId = parseInt(id);
+        const treatments = await getTreatmentsByConsultationUseCases.execute(treatmentId);
         return NextResponse.json(treatments, { status: 200 });
     } catch (error) {
         console.error("Error al obtener tratamientos de consulta:", error);
