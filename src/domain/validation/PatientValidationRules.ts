@@ -8,7 +8,23 @@ export interface ValidationResult {
     errors: Record<string, string>;
 }
 
+export type PatientFieldKey = 
+  'nombres' |
+  'apellidos' |
+  'telefonopersonal' |
+  'telefonodomicilio' |
+  'direccion' |
+  'lugarnacimiento' |
+  'fechanacimiento' |
+  'estadocivil' |
+  'ocupacion' |
+  'aseguradora';
+
+
+
 export class PatientValidationRules {
+
+
   // Reglas para nombres
     static readonly nombres: ValidationRule<string>[] = [
         {
@@ -248,36 +264,38 @@ export class PatientValidationRules {
     ];
 
     // Método para validar un campo específico
-    static validateField<K extends keyof PatientValidationRules>(
-        fieldName: K,
+    static validateField(
+        fieldName: PatientFieldKey,
         value: string
-    ): string | null {
+        ): string | null {
         const rules = this[fieldName] as ValidationRule<string>[];
-        
+
         for (const rule of rules) {
-        const error = rule.validate(value);
-        if (error) {
+            const error = rule.validate(value);
+            if (error) {
             return error;
+            }
         }
-        }
-        
+
         return null;
-    }
+        }
+
 
     // Método para obtener todas las reglas de validación
-    static getAllFieldRules(): Record<string, ValidationRule<string>[]> {
+    static getAllFieldRules(): Record<PatientFieldKey, ValidationRule<string>[]> {
         return {
-        nombres: this.nombres,
-        apellidos: this.apellidos,
-        telefonopersonal: this.telefonopersonal,
-        telefonodomicilio: this.telefonodomicilio,
-        direccion: this.direccion,
-        lugarnacimiento: this.lugarnacimiento,
-        fechanacimiento: this.fechanacimiento,
-        estadocivil: this.estadocivil,
-        ocupacion: this.ocupacion,
-        aseguradora: this.aseguradora
+            nombres: this.nombres,
+            apellidos: this.apellidos,
+            telefonopersonal: this.telefonopersonal,
+            telefonodomicilio: this.telefonodomicilio,
+            direccion: this.direccion,
+            lugarnacimiento: this.lugarnacimiento,
+            fechanacimiento: this.fechanacimiento,
+            estadocivil: this.estadocivil,
+            ocupacion: this.ocupacion,
+            aseguradora: this.aseguradora
         };
     }
+
     
 }
