@@ -1,14 +1,16 @@
 'use client';
 import CalendarComponent from "@/components/calendar/Calendar";
-import { useSearchParams } from 'next/navigation';
+import { Suspense } from "react";
 
 export default function CalendarPage() {
-  const searchParams = useSearchParams();
-  const dateParam = searchParams.get('date') || new Date().toISOString();
+  
 
   return (
     <main>
-      <CalendarComponent initialDate={dateParam} />
+      <Suspense fallback={<div>Cargando...</div>}>
+          <CalendarComponent
+          />
+      </Suspense>
     </main>
   );
 }

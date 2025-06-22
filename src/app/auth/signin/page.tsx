@@ -3,6 +3,7 @@
 import { Box, Container, Grid, useTheme, useMediaQuery } from '@mui/material';
 import LoginForm from '@/components/login/LoginForm';
 import AnimatedTooth from '@/components/anime/tooth'; 
+import { Suspense } from 'react';
 
 export default function LoginPage() {
   const theme = useTheme();
@@ -62,7 +63,9 @@ export default function LoginPage() {
             }}
           >
             <Box sx={{ width: '100%', maxWidth: 450 }}>
-              <LoginForm />
+              <Suspense fallback={<div>Cargando...</div>}>
+                <LoginForm/>
+              </Suspense>
             </Box>
           </Grid>
         </Grid>

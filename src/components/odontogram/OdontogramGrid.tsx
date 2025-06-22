@@ -8,18 +8,17 @@ import useOdontogramHandlers from '@/presentation/handlers/useOdontogramaHandler
 import "@/app/styles/odontogram-print.css";
 import SnackbarAlert from '@/components/SnackbarAlert';
 import LocalPrintshopIcon from '@mui/icons-material/LocalPrintshop';
+import { useSearchParams } from 'next/navigation';
 
-interface OdontogramaGridProps {
-  creating: boolean;
-  idpaciente: number;
-  idconsulta: number | null;
-}
 
-const OdontogramaGrid: React.FC<OdontogramaGridProps> = ({
-  creating,
-  idpaciente,
-  idconsulta
-}) => {
+
+const OdontogramaGrid = () => {
+  const searchParams = useSearchParams();
+  const idpaciente = parseInt(searchParams.get('idpaciente') ?? '0', 10);
+  const idconsultaParam = searchParams.get('idconsulta');
+  const creating = searchParams.get('creating') === 'true';
+
+  const idconsulta = idconsultaParam ? parseInt(idconsultaParam) : null;
   const{
     diagnosis,
     handleFetchDiagnosis,

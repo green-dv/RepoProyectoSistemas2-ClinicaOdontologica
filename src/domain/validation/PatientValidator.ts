@@ -1,6 +1,6 @@
 import { Patient } from '@/domain/entities/Patient';
-import { PatientValidationRules, ValidationResult } from './PatientValidationRules';
-
+import { PatientValidationRules, ValidationResult} from './PatientValidationRules';
+import {PatientFieldKey} from '@/domain/validation/PatientValidationRules'
 export interface PatientValidationError {
   field: keyof Patient;
   message: string;
@@ -186,14 +186,30 @@ export class PatientValidator {
      * Obtiene todas las reglas de validación para un campo específico
      */
     static getFieldRules(fieldName: keyof Patient): string[] {
-        const rules = PatientValidationRules.getAllFieldRules();
-        const fieldRules = rules[fieldName as string];
-        
-        if (!fieldRules) {
-        return [];
+    const rules = PatientValidationRules.getAllFieldRules();
+
+        if (!this.isValidFieldKey(fieldName)) {
+            return [];
         }
-        
-        return fieldRules.map(rule => rule.message);
+
+        return rules[fieldName].map(rule => rule.message);
+    }
+
+    private static isValidFieldKey(field: keyof Patient): field is PatientFieldKey {
+    const validKeys: PatientFieldKey[] = [
+        'nombres',
+        'apellidos',
+        'telefonopersonal',
+        'telefonodomicilio',
+        'direccion',
+        'lugarnacimiento',
+        'fechanacimiento',
+        'estadocivil',
+        'ocupacion',
+        'aseguradora'
+    ];
+
+    return validKeys.includes(field as PatientFieldKey);
     }
 
     /**
