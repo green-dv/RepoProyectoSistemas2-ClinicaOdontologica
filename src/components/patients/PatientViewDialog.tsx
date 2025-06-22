@@ -11,7 +11,6 @@ import {
   CircularProgress, 
   List, 
   ListItem, 
-  ListItemButton,
   ListItemIcon, 
   ListItemText, 
   Paper, 
@@ -21,6 +20,9 @@ import {
   Tooltip,
   Menu,
   MenuItem,
+  Alert,
+  Snackbar,
+  ListItemButton
 } from '@mui/material';
 import {
   PersonOutline as PersonIcon,
@@ -38,6 +40,8 @@ import {
   Print as PrintIcon,
   Download as DownloadIcon,
   Visibility as VisibilityIcon,
+  MoreVert as MoreVertIcon,
+  Close as CloseIcon
 } from '@mui/icons-material';
 
 import { PatientViewDialogProps } from './viewUtils/PatientViewTypes';
@@ -101,7 +105,7 @@ export const PatientViewDialog: React.FC<PatientViewDialogProps> = ({
     onPrintError: (error: Error) => {
       setSnackbar({
         open: true,
-        message: Error: ${error.message},
+        message: `Error: ${error.message}`,
         severity: 'error'
       });
       setPrintMenuAnchor(null);
@@ -260,7 +264,7 @@ export const PatientViewDialog: React.FC<PatientViewDialogProps> = ({
                       </Typography>
                       {age !== null && (
                         <Chip 
-                          label={${age} años} 
+                          label={`${age} años`} 
                           size="small" 
                           variant="outlined"
                         />
@@ -458,28 +462,32 @@ export const PatientViewDialog: React.FC<PatientViewDialogProps> = ({
                       </Typography>
                       <List sx={{ p: 0 }}>
                         {antecedentes.map((antecedente, index) => (
-                          <ListItem disablePadding key={antecedente.idantecedente || index}>
-                            <ListItemButton
-                              selected={currentAntecedente?.idantecedente === antecedente.idantecedente}
-                              onClick={() => handlers.handleSelectAntecedente(antecedente)}
-                              sx={{
-                                '&.Mui-selected': {
-                                  bgcolor: 'primary.light',
-                                  '&:hover': {
-                                    bgcolor: 'primary.light',
-                                  },
-                                },
-                              }}
-                            >
-                              <ListItemIcon>
-                                {getEmbarazoIcon(antecedente.embarazo)}
-                              </ListItemIcon>
-                              <ListItemText
-                                primary={Antecedente #${antecedente.idantecedente}}
-                                secondary={formatDate(antecedente.fecha)}
-                              />
-                            </ListItemButton>
-                          </ListItem>
+                          <List sx={{ p: 0 }}>
+                            {antecedentes.map((antecedente, index) => (
+                              <ListItem key={antecedente.idantecedente || index} disablePadding divider>
+                                <ListItemButton
+                                  selected={currentAntecedente?.idantecedente === antecedente.idantecedente}
+                                  onClick={() => handlers.handleSelectAntecedente(antecedente)}
+                                  sx={{
+                                    '&.Mui-selected': {
+                                      bgcolor: 'primary.light',
+                                      '&:hover': {
+                                        bgcolor: 'primary.light',
+                                      },
+                                    },
+                                  }}
+                                >
+                                  <ListItemIcon>
+                                    {getEmbarazoIcon(antecedente.embarazo)}
+                                  </ListItemIcon>
+                                  <ListItemText
+                                    primary={`Antecedente #${antecedente.idantecedente}`}
+                                    secondary={formatDate(antecedente.fecha)}
+                                  />
+                                </ListItemButton>
+                              </ListItem>
+                            ))}
+                          </List>
                         ))}
                       </List>
                     </Paper>
