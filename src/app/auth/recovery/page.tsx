@@ -1,11 +1,13 @@
-'use client';
-
-import PasswordRecoveryComponent from '@/components/login/passwordRecovery';
 import { Suspense } from 'react';
+import PasswordRecoveryComponent from '@/components/login/passwordRecovery';
 
-export default function RecoveryPage({ searchParams }: { searchParams: Record<string, string> }) {
-  const email = searchParams.email || '';
-  const passwordRecovery = searchParams.passwordRecovery === 'true';
+interface RecoveryPageProps {
+  searchParams?: { [key: string]: string | string[] | undefined };
+}
+
+export default function RecoveryPage({ searchParams }: RecoveryPageProps) {
+  const email = typeof searchParams?.email === 'string' ? searchParams.email : '';
+  const passwordRecovery = searchParams?.passwordRecovery === 'true';
 
   return (
     <Suspense fallback={<div>Cargando...</div>}>
