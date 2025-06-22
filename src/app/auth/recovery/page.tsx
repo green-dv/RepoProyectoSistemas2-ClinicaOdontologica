@@ -1,13 +1,13 @@
 import { Suspense } from 'react';
 import PasswordRecoveryComponent from '@/components/login/passwordRecovery';
 
-interface RecoveryPageProps {
-  searchParams: URLSearchParams;
-}
+type Props = {
+  searchParams?: { [key: string]: string | string[] | undefined };
+};
 
-export default function RecoveryPage({ searchParams }: RecoveryPageProps) {
-  const email = searchParams.get('email') || '';
-  const isPasswordRecovery = searchParams.get('passwordRecovery') === 'true';
+export default function RecoveryPage({ searchParams }: Props) {
+  const email = typeof searchParams?.email === 'string' ? searchParams.email : '';
+  const isPasswordRecovery = searchParams?.passwordRecovery === 'true';
 
   return (
     <Suspense fallback={<div>Cargando...</div>}>
