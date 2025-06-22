@@ -18,15 +18,14 @@ import{
 } from '@mui/material';
 import { useSession } from 'next-auth/react';
 
-interface PasswordRecoveryProps {
-  emailParam: string;
-  isPasswordRecoveryParam: boolean;
-}
 
 export default function PasswordRecoveryComponent({
   emailParam,
   isPasswordRecoveryParam
-}: PasswordRecoveryProps) {
+}: {
+  emailParam: string;
+  isPasswordRecoveryParam: boolean;
+}) {
   const [error, setError] = useState('');
   const [email, setEmail] = useState(emailParam || '');
   const [password, setPassword] = useState('');
