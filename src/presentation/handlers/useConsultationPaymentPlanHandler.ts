@@ -216,69 +216,56 @@ export default function useConsultationPaymentPlanHandlers(){
     setPacienteError(false);
     setCuotasError(false);
 
-    // Copiar y preparar plan actualizado
-    const updatedPlan = { ...newPaymentPlan, pagos: payments };
+    // Validaciones antes de proceder (te recomiendo activarlas nuevamente)
+    //if (!validations() || !submitValidations()) return;
 
-    // Asignar paciente
-    if (selectedPatient) {
-      updatedPlan.idpaciente = Number(selectedPatient);
-    } else if (updatedPlan.idpaciente) {
-      updatedPlan.idpaciente = Number(updatedPlan.idpaciente);
-    }
+    // Asegurar campos requeridos
+    const updatedPlan: typeof newPaymentPlan = {
+      ...newPaymentPlan,
+      pagos: payments,
+      idpaciente: selectedPatient ? Number(selectedPatient) : newPaymentPlan.idpaciente ?? null,
+      idconsulta: consultationID && consultationID !== 0 ? consultationID : null,
+      descripcion: newPaymentPlan.descripcion ?? '',
+      fechacreacion: newPaymentPlan.fechacreacion ?? new Date(),
+      fechalimite: newPaymentPlan.fechalimite ?? new Date(),
+      montotal: montotal,
+    };
 
-    // Asignar consulta
-    if (!consultationID || consultationID === 0) {
-      console.log('La id de la consulta es nula o 0: ' + consultationID);
-    } else {
-      updatedPlan.idconsulta = consultationID;
-    }
-
-    // Validaciones
-    //if (!validations()) return;
-    //if (!submitValidations()) return;
-    console.log('se avanzo en la funcion')
-
-    // Guardar nuevo plan en estado (opcional si solo es para enviar)
     setNewPaymentPlan(updatedPlan);
 
-    // 🔄 Siempre hacer UPDATE (ya que `selectedPaymentPlan` siempre es null)
     try {
-      const isUpdate = updatedPlan.idplanpago !== undefined;
-      console.log('enviando....');
-      console.log(updatedPlan);
-      const url = isUpdate
-        ? `/api/paymentsplan/consultation/`
-        : `/api/paymentsplan`;
-      const method = 'POST';
-      
-
+      console.log('Enviando plan de pago...');
       console.log(updatedPlan);
 
-      const res = await fetch(url, {
-        method,
+      const res = await fetch('/api/paymentsplan/consultation', {
+        method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
         },
-        body: JSON.stringify(updatedPlan)
+        body: JSON.stringify(updatedPlan),
       });
 
       const data = await res.json();
 
       if (!res.ok) {
         console.error('Error del servidor:', data.error);
+        showMessage('No se pudo crear el plan de pagos', 'error');
         return;
       }
 
-      console.log(`Plan ${isUpdate ? 'actualizado' : 'creado'} con éxito:`, data.data);
-      showMessage(
-        `Plan de pagos ${isUpdate ? 'actualizado' : 'creado'} con éxito`,
-        'success'
-      );
+      console.log('Plan creado con éxito:', data.data);
+      showMessage('Plan de pagos creado con éxito', 'success');
     } catch (err) {
       console.error('Error al enviar:', err);
+      showMessage('Error al crear el plan de pagos', 'error');
     }
   };
 
+  const handleChangeMontotal = (montoAux: number) => {
+    if(montoAux > 0 && montoAux < 1000000){
+      setMontotal(montoAux);
+    }
+  }
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -329,6 +316,9 @@ const recalculatePayments2 = (
   cuotas: number,
   pagosExistentes: Payment[]
   ): Payment[] => {
+    console.log('se entro a recalculate');
+    console.log('montotal: ' + montotal);
+    console.log('cuotas: ' + cuotas);
     if (cuotas <= 0 || montotal <= 0) return [];
 
     if(pagosExistentes.length === 0){
@@ -429,6 +419,37 @@ const recalculatePayments2 = (
     });
     setIsEditingPayment(1000);
     showMessage('Pago actualizado correctamente', 'success');
+  };
+
+  const handleFetchByConsultationId = async (idConsulta: number): Promise<PaymentPlan | null> => {
+    try {
+      const res = await fetch(`/api/paymentsplan/consultation/${idConsulta}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        console.error('Error del servidor:', data.error);
+        showMessage('No se pudo obtener el plan de pagos', 'error');
+        return null;
+      }
+
+      if (!data.data) {
+        showMessage('No se encontró ningún plan de pagos', 'info');
+        return null;
+      }
+
+      console.log('Plan obtenido con éxito:', data.data);
+      return data.data as PaymentPlan;
+    } catch (err) {
+      console.error('Error al obtener el plan de pagos:', err);
+      showMessage('Error al obtener el plan de pagos', 'error');
+      return null;
+    }
   };
 
 
@@ -543,7 +564,7 @@ const recalculatePayments2 = (
       idpaciente: patient.idpaciente ?? null,
     };
     setNewPaymentPlan(updatedPlan);
-    setSelectedPatient(patient.idpaciente ?? null);
+    setSelectedPatient(patient.idpaciente ?? 1);
     setSearchQuery(`${patient.nombres} ${patient.apellidos} ${patient.idpaciente}`);
     setPatients([]);
   };
@@ -629,5 +650,7 @@ const recalculatePayments2 = (
     pacienteError,
     cuotasError,
     callRecalculatePayments,
+    handleChangeMontotal,
+    handleFetchByConsultationId
   }
 }

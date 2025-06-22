@@ -20,6 +20,7 @@ import {
 import { Treatment } from '@/domain/entities/Treatments';
 import { useConsultationRelationsHandlers } from '@/presentation/handlers/useConsultationRelationsHandlers';
 import { UpdateConsultationDTO } from '@/domain/dto/consultation';
+import ReadonlyPaymentsPlanDialog from '../paymentplans/ViewPaymentPlan';
 
 interface Props {
     open: boolean;
@@ -314,6 +315,9 @@ export const ConsultationEditDialog: React.FC<Props> = ({
                         </Box>
                     </Stack>
                 )}
+                <ReadonlyPaymentsPlanDialog
+                    idConsulta={consultationId ?? 0}
+                />
             </DialogContent>
 
             <DialogActions sx={{ px: 3, pb: 2 }}>

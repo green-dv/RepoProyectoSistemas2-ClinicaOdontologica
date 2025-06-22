@@ -345,7 +345,10 @@ export default function useOdontogramHandlers(){
         },
         body: JSON.stringify(odontogram),
       });
-
+      if (response.ok) {
+        // Go back to the previous page in the browser after successful POST
+        window.history.back();
+      }
       if (!response.ok) {
         throw new Error(`Error en el POST: ${response.statusText}`);
       }

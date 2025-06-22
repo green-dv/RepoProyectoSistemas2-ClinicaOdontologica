@@ -2,8 +2,8 @@ import { ReactNode } from 'react';
 import { Patient } from '@/domain/entities/Patient';
 
 /*
-    ********** Aqui estan las interfaces y tipos utilizados 
-    en el componente PatientViewDialog.*********
+    **** Aqui estan las interfaces y tipos utilizados 
+    en el componente PatientViewDialog.***
 */
 
 export interface PatientViewDialogProps {
