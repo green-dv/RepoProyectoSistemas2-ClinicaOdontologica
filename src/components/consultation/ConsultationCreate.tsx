@@ -27,6 +27,9 @@ import { es } from "date-fns/locale";
 import { useCreateConsultation } from "@/presentation/hooks/useConsultationDialog";
 import { CreateConsultationDTO } from "@/domain/dto/consultation";
 import { PersonSearch, MedicalServices, CalendarToday, AttachMoney, Payment } from "@mui/icons-material";
+import PaymentsPlanForm from "../paymentplans/PaymentsPlanForm";
+import useConsultationPaymentPlanHandlers from "@/presentation/handlers/useConsultationPaymentHandler";
+import usePaymentHandlers from "@/presentation/handlers/usePaymentHandler";
 
 interface Props {
     open: boolean;
@@ -46,6 +49,61 @@ export const CreateConsultationDialog: React.FC<Props> = ({
     userId,
 }) => {
     const {
+        paymentPlans,
+        
+        isLoading,
+        paymentsLoading,
+        page,
+        total,
+        cuotas,
+        rowsPerPage,
+        newPaymentPlan,
+        snackbar,
+        payments,
+
+        handleSubmitPaymentPlan,
+        selectedPaymentPlan,
+        handleSnackbarClose,
+        handleEditPayment,
+        handleEditPaymentInput,
+        setIsEditingPayment,
+        setPayments,
+        shouldSearch,
+        setShouldSearch,
+        handleChange,
+        searchLoading,
+        handleClearSearch,
+        handlePatientSelect,
+        isEditingPayment,
+
+        fechaCreacionError,
+        fechaLimiteError,
+        montoError,
+        descripcionError,
+        pacienteError,
+        cuotasError,
+        callRecalculatePayments,
+    } = useConsultationPaymentPlanHandlers();
+
+    const{
+        handleUploadComprobante,
+        handleCloseComprobanteDialog,
+        handleOpenComprobanteDialog,
+        handleStatusChange,
+        status,
+        fechapago,
+        montopago,
+
+        paymentIndex,
+        comprobanteDialogOpen,
+        selectedPayment,
+        selectedIndex,
+        setFechaPago,
+        setMontoPago,
+        
+    } = usePaymentHandlers();
+
+    const {
         searchQuery,
         setSearchQuery,
         patients,
@@ -64,6 +122,7 @@ export const CreateConsultationDialog: React.FC<Props> = ({
 
     const [fecha, setFecha] = useState<Date | null>(new Date());
     const [presupuesto, setPresupuesto] = useState<number>(0);
+    const [montotal, setMontotal] = useState<number>(0);
     const [estadopago, setEstadopago] = useState<boolean>(false);
     const [formError, setFormError] = useState<string>("");
 
@@ -78,6 +137,13 @@ export const CreateConsultationDialog: React.FC<Props> = ({
             setSelectedTreatments([]);
         }
     }, [open, clearPatient, setSelectedTreatments]);
+
+    useEffect(() => {
+        console.log('se recalculo el montotal');
+        const montoAux: Number = Number(presupuesto) + Number(selectedTreatments.reduce((t, i) => i.precio + t, 0)) + 0.0;
+        setMontotal(Number(montoAux));
+        callRecalculatePayments(Number(montoAux));
+    }, [setSelectedTreatments, presupuesto, selectedTreatments])
 
     // Validar formulario
     const validateForm = (): boolean => {
@@ -336,6 +402,43 @@ export const CreateConsultationDialog: React.FC<Props> = ({
                             }
                         />
                     </Box>
+                    <PaymentsPlanForm
+                        cuotas={Number(cuotas)}
+                        paymentPlan={newPaymentPlan}
+                        payments={payments}
+                        status={status}
+                        handleChange={handleChange}
+                        isEditing={!!selectedPaymentPlan}
+                        paymentIndex={paymentIndex ?? 0}
+                        handleEditPayment={handleEditPayment}
+                        isEditingPayment={isEditingPayment}
+                        setIsEditingPayment={setIsEditingPayment}
+                        handleEditPaymentInput={handleEditPaymentInput}
+                        selectedPayment={selectedPayment}
+                        selectedIndex={selectedIndex}
+                        handleStatusChange={handleStatusChange}
+                        handleCloseComprobanteDialog={handleCloseComprobanteDialog}
+                        handleOpenComprobanteDialog={handleOpenComprobanteDialog}
+                        handleUploadComprobante={handleUploadComprobante}
+                        setPayments={setPayments}
+                        searchLoading={searchLoading}
+                        searchQuery={searchQuery}
+                        patients={patients}
+                        handleClearSearch={handleClearSearch}
+                        handlePatientSelect={handlePatientSelect}
+                        setSearchQuery={setSearchQuery}
+                        setShouldSearch={setShouldSearch}
+                        shouldSearch={shouldSearch}
+                        fechaCreacionError={fechaCreacionError}
+                        fechaLimiteError={fechaLimiteError}
+                        montoError={montoError}
+                        descripcionError={descripcionError}
+                        pacienteError={pacienteError}
+                        cuotasError={cuotasError}
+                        isConsultation={false}
+                        montotalConsultation={montotal}
+                        fechaConsulta={fecha}
+                    />
                 </Paper>
             </DialogContent>
 

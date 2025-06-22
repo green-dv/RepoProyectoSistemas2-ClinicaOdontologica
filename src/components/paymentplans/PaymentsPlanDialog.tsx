@@ -175,6 +175,9 @@ export default function PaymentsPlanDialog({
           descripcionError={descripcionError}
           pacienteError={pacienteError}
           cuotasError={cuotasError}
+          montotalConsultation={null}
+          isConsultation={false}
+          fechaConsulta={null}
         />
       </DialogContent>
 

@@ -22,6 +22,10 @@ export interface PaymentPlansState {
   selectedPaymentPlan: PaymentPlan | null;
   snackbar: SnackbarMessage | null;
 
+  //consultas
+  isEditingConsultation: boolean;
+  consultationID: number;
+
   fechaCreacionError: boolean;
   fechaLimiteError: boolean;
   montoError: boolean;
@@ -47,6 +51,9 @@ export interface PaymentPlansState {
   error: string | null;
   shouldSearch: boolean;
   
+  setConsultationID: React.Dispatch<React.SetStateAction<number>>;
+  setIsEditingConsultation: React.Dispatch<React.SetStateAction<boolean>>;
+
   setPaymentPlans: React.Dispatch<React.SetStateAction<PaymentPlan[]>>;
   setOpen: React.Dispatch<React.SetStateAction<boolean>>;
   setNewPaymentPlan: React.Dispatch<React.SetStateAction<PaymentPlan>>;
@@ -128,6 +135,9 @@ export default function usePaymentPlans(): PaymentPlansState {
   const [pacienteError, setPacienteError] = useState(false);
   const [cuotasError, setCuotasError] = useState(false);
 
+  //CONSULTAS
+  const[consultationID, setConsultationID] = useState(0); 
+  const[isEditingConsultation, setIsEditingConsultation] = useState(false);
 
   //PACIENTES
 
@@ -234,6 +244,12 @@ export default function usePaymentPlans(): PaymentPlansState {
     setShouldSearch,
     
     resetForm,
-    showMessage
+    showMessage,
+
+    //consultas
+    consultationID, 
+    setConsultationID,
+    isEditingConsultation, 
+    setIsEditingConsultation,
   };
 }
