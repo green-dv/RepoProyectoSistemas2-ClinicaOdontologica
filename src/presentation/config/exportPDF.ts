@@ -1,4 +1,4 @@
-import jsPDF from "jspdf";
+import { jsPDF } from 'jspdf';
 
 interface PDFExportOptions {
   orientation?: 'portrait' | 'landscape';
@@ -45,14 +45,14 @@ export const exportToPDF = async (
           creator: 'Sistema de Reportes',
           keywords: 'reporte, pagos, paciente, medical'
         });
-        
+
         doc.save(`${fileName}.pdf`);
       },
       x: margin,
       y: margin,
       width: width,
       windowWidth: element.scrollWidth || 1200,
-      autoPaging: 'text',
+      autoPaging: 'text' as const,
       html2canvas: {
         scale: quality,
         useCORS: true,
@@ -61,11 +61,6 @@ export const exportToPDF = async (
         logging: false,
         letterRendering: true,
         removeContainer: true
-      },
-      jsPDF: {
-        unit: 'pt',
-        format: format,
-        orientation: orientation
       }
     };
 
