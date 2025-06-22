@@ -1,6 +1,5 @@
 'use client'; // 👈 Importante, si accedes a searchParams desde el navegador
 
-import { useSearchParams } from 'next/navigation';
 import { Suspense } from 'react';
 import PasswordRecoveryComponent from '@/components/login/passwordRecovery';
 
