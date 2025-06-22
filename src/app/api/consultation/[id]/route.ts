@@ -33,10 +33,11 @@ export async function GET(
 
 export async function PUT(
     request: NextRequest,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     try {
-        const id = parseInt(params.id);
+        const { id } = await params;
+        const consultationId = parseInt(id);
         const body = await request.json();
         
         // Convertir fecha string a Date si es necesario
@@ -44,7 +45,7 @@ export async function PUT(
             body.fecha = new Date(body.fecha);
         }
         
-        const consultation = await updateConsultationUseCases.execute(id, body);
+        const consultation = await updateConsultationUseCases.execute(consultationId, body);
         return NextResponse.json(consultation, { status: 200 });
     } catch (error) {
         console.error("Error al actualizar consulta:", error);
@@ -61,11 +62,12 @@ export async function PUT(
 
 export async function DELETE(
     request: NextRequest,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     try {
-        const id = parseInt(params.id);
-        const result = await deleteConsultationUseCases.execute(id);
+        const { id } = await params;
+        const consultationId = parseInt(id);
+        const result = await deleteConsultationUseCases.execute(consultationId);
         
         if (result) {
             return NextResponse.json(

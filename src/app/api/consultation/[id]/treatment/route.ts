@@ -15,7 +15,7 @@ export async function GET(
     { params }: { params: Promise<{ id: string }> }
 ) {
     try {
-         const { id } = await params;
+        const { id } = await params;
         const treatmentId = parseInt(id);
         const treatments = await getTreatmentsByConsultationUseCases.execute(treatmentId);
         return NextResponse.json(treatments, { status: 200 });
@@ -34,10 +34,11 @@ export async function GET(
 
 export async function POST(
     request: NextRequest,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     try {
-        const id = parseInt(params.id);
+        const { id } = await params;
+        const treatmentId = parseInt(id);
         const { treatmentIds } = await request.json();
         
         if (!Array.isArray(treatmentIds)) {
@@ -47,7 +48,7 @@ export async function POST(
             );
         }
         
-        await addTreatmentsConsultationUseCases.execute(id, treatmentIds);
+        await addTreatmentsConsultationUseCases.execute(treatmentId, treatmentIds);
         return NextResponse.json(
             { message: "Tratamientos agregados exitosamente" }, 
             { status: 200 }
@@ -67,10 +68,11 @@ export async function POST(
 
 export async function DELETE(
     request: NextRequest,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     try {
-        const id = parseInt(params.id);
+        const { id } = await params;
+        const treatmentId = parseInt(id);
         const { treatmentIds } = await request.json();
         
         if (!Array.isArray(treatmentIds)) {
@@ -80,7 +82,7 @@ export async function DELETE(
             );
         }
         
-        await removeTreatmentsConsultationUseCases.execute(id, treatmentIds);
+        await removeTreatmentsConsultationUseCases.execute(treatmentId, treatmentIds);
         return NextResponse.json(
             { message: "Tratamientos removidos exitosamente" }, 
             { status: 200 }
