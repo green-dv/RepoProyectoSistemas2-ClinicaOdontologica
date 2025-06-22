@@ -11,10 +11,11 @@ const deleteConsultationUseCases = new DeleteConsultationUseCases(consultationRe
 
 export async function GET(
     request: NextRequest,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     try {
-        const id = parseInt(params.id);
+        const resolvedParams = await params;
+        const id = parseInt(resolvedParams.id);
         const consultation = await getConsultaUseCases.execute(id);
         return NextResponse.json(consultation, { status: 200 });
     } catch (error) {
@@ -32,10 +33,11 @@ export async function GET(
 
 export async function PUT(
     request: NextRequest,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     try {
-        const id = parseInt(params.id);
+        const resolvedParams = await params;
+        const id = parseInt(resolvedParams.id);
         const body = await request.json();
         
         // Convertir fecha string a Date si es necesario
@@ -60,10 +62,11 @@ export async function PUT(
 
 export async function DELETE(
     request: NextRequest,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     try {
-        const id = parseInt(params.id);
+        const resolvedParams = await params;
+        const id = parseInt(resolvedParams.id);
         const result = await deleteConsultationUseCases.execute(id);
         
         if (result) {

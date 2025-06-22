@@ -40,6 +40,7 @@ import {
 
 import { useConsultationRelationsHandlers } from '@/presentation/handlers/useConsultationRelationsHandlers';
 import { useRouter } from 'next/navigation';
+import ReadonlyPaymentsPlanDialog from '../paymentplans/ViewPaymentPlan';
 
 interface ConsultationDetailDialogProps {
     open: boolean;
@@ -99,7 +100,7 @@ export const ConsultationDetailDialog: React.FC<ConsultationDetailDialogProps> =
     //================================
     const handleNavigateToOdontogram = () => {
         if (consultationDetail) {
-            router.push(`/odontograma/${consultationDetail.idconsulta}`);
+            router.push(`/odontogram?idconsulta=${consultationDetail.idconsulta}&creating=${!consultationDetail.odontograma}&idpaciente=${consultationDetail.paciente.idpaciente}`);
             handleClose(); 
         }
     };
@@ -376,6 +377,9 @@ export const ConsultationDetailDialog: React.FC<ConsultationDetailDialogProps> =
                         </Grid>
                     </Grid>
                 )}
+                <ReadonlyPaymentsPlanDialog
+                    idConsulta={consultationId ?? 0}
+                />
             </DialogContent>
 
             <DialogActions sx={{ px: 3, py: 2 }}>

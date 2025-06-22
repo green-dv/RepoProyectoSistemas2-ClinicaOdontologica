@@ -54,6 +54,61 @@ export class PaymentPlanService {
         };
     }
 
+    async createPaymentPlanWithInstallmentsByConsultationId(dto: CreatePaymentPlanDTO): Promise<PaymentPlanWithPayments> {
+        //this.validatePaymentPlanInput(dto);
+        console.log('hola desde el create');
+
+        let pagado = false;
+        if (dto.pagos.reduce((total, p) => total + (p.montopagado ?? 0), 0) >= dto.montotal) {
+            pagado = true;
+        }
+
+        // 🔍 Look up the consulta if dto.idconsulta is provided and not 0
+        let validIdConsulta: number | null = null;
+        const consultaId = await this.paymentPlanRepository.findByConsultationId();
+        console.log("Hola desde el use case: " + consultaId);
+
+        const paymentPlanData: Omit<PaymentPlan, 'idplanpago'> = {
+            fechacreacion: new Date(dto.fechacreacion),
+            fechalimite: new Date(dto.fechalimite),
+            montotal: dto.montotal,
+            descripcion: dto.descripcion,
+            idpaciente: dto.idpaciente ?? null,
+            estado: pagado ? 'completado' : 'pendiente',
+            paciente: null,
+            idconsulta: consultaId ?? 0,
+        };
+
+        const createdPlan = await this.paymentPlanRepository.create(paymentPlanData);
+
+        if (!createdPlan.idplanpago) {
+            throw new Error('No se pudo crear el plan de pago o el ID no se ha generado');
+        }
+
+        const payments: Payment[] = [];
+        for (const installment of dto.pagos) {
+            const payment: Omit<Payment, 'idpago'> = {
+                montoesperado: installment.montoesperado!,
+                montopagado: installment.montopagado ?? 0,
+                fechapago: installment.fechapago ? new Date(installment.fechapago) : null,
+                estado: (installment.montopagado ?? 0) > 0 ? 'completado' : 'pendiente',
+                enlacecomprobante: installment.enlacecomprobante,
+                idplanpago: createdPlan.idplanpago
+            };
+
+            const createdPayment = await this.paymentRepository.create(payment);
+            payments.push(createdPayment);
+        }
+
+        return {
+            ...createdPlan,
+            pagos: payments
+        };
+    }
+    async getPaymentsPlanByConsultationId(idConsulta: number): Promise<PaymentPlan | null> {
+        return this.paymentPlanRepository.getPaymentsPlanByConsultationId(idConsulta);
+    }
+
     async updatePaymentPlan(dto: UpdatePaymentPlanDTO): Promise<PaymentPlanWithPayments> {
         const existingPlan = await this.paymentPlanRepository.getById(dto.idplanpago);
         if (!existingPlan) {
@@ -185,9 +240,11 @@ export class PaymentPlanService {
     }*/
     async validatePaymentPlanInput(dto: CreatePaymentPlanDTO | UpdatePaymentPlanDTO, existingPlan?: PaymentPlan) {
         const today = new Date();
-    
-        if (dto.fechalimite && new Date(dto.fechalimite) < today) {
-            throw new Error('La fecha límite debe ser posterior a la fecha actual');
+        const todayWithOffset = new Date(today);
+        todayWithOffset.setDate(today.getDate() - 1);
+
+        if (dto.fechalimite && new Date(dto.fechalimite) < todayWithOffset) {
+            throw new Error('La fecha límite debe ser posterior a ayer');
         }
     
         if (dto.fechacreacion && new Date(dto.fechacreacion).getMonth() < today.getMonth() - 1) {

@@ -33,6 +33,34 @@ export class PaymentPlanRepository implements IPaymentPlanRepository {
         const result = await this.db.query(query, values);
         return result.rows[0] as PaymentPlan;
     }
+    async getPaymentsPlanByConsultationId(idConsulta: number): Promise<(PaymentPlan & { pagos: Payment[] }) | null> {
+        const query = `
+            SELECT 
+            pp.idplanpago, 
+            pp.fechacreacion, 
+            pp.fechalimite, 
+            pp.montotal, 
+            pp.descripcion, 
+            pp.estado, 
+            pp.idpaciente,
+            (pt.nombres || ' ' || pt.apellidos) as paciente
+            FROM planpagos pp
+            JOIN pacientes pt ON pt.idpaciente = pp.idpaciente
+            WHERE pp.idconsulta = $1
+            LIMIT 1
+        `;
+
+        const result = await this.db.query(query, [idConsulta]);
+
+        if (result.rows.length === 0) {
+            return null;
+        }
+
+        const paymentPlan = result.rows[0] as PaymentPlan;
+
+        // Usa tu función reutilizable
+        return this.getPlanWithPayments(paymentPlan.idplanpago);
+        }
 
     async update(paymentPlan: PaymentPlan): Promise<PaymentPlan> {
         if (!paymentPlan.idplanpago) {
@@ -162,6 +190,16 @@ export class PaymentPlanRepository implements IPaymentPlanRepository {
             data: plans,
             totalCount
         };
+    }
+
+    async findByConsultationId(): Promise<number> {
+        const query = `SELECT MAX(idconsulta) AS max FROM consultas;`;
+
+        const result = await this.db.query(query);
+        console.log('imprimiendo resultado de la consulta');
+        console.log(result);
+
+        return result.rows[0].max as number;
     }
 
     async getByConsultaId(consultaId: number): Promise<PaymentPlan[]> {

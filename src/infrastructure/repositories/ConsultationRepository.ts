@@ -72,7 +72,14 @@ export class IConsultationRepository implements ConsultationRepository {
                 p.habilitado as paciente_habilitado,
                 u.nombre as usuario_nombre, u.apellido as usuario_apellido, 
                 u.email, u.fecharegistro, u.cambiopassword, 
-                u.habilitado as usuario_habilitado
+                u.habilitado as usuario_habilitado,
+                
+                EXISTS (
+                    SELECT 1 
+                    FROM odontogramas o 
+                    WHERE o.idconsulta = c.idconsulta
+                ) AS odontograma
+
             FROM consultas c
             INNER JOIN pacientes p ON c.idpaciente = p.idpaciente
             INNER JOIN usuarios u ON c.idusuario = u.idusuario
@@ -91,6 +98,7 @@ export class IConsultationRepository implements ConsultationRepository {
             presupuesto: parseFloat(row.presupuesto),
             estadopago: row.estadopago,
             habilitado: row.habilitado,
+            odontograma: row.odontograma,
             paciente: {
                 idpaciente: row.idpaciente,
                 nombres: row.nombres,

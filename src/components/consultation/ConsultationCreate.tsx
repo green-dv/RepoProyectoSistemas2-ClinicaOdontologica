@@ -28,8 +28,9 @@ import { useCreateConsultation } from "@/presentation/hooks/useConsultationDialo
 import { CreateConsultationDTO } from "@/domain/dto/consultation";
 import { PersonSearch, MedicalServices, CalendarToday, AttachMoney, Payment } from "@mui/icons-material";
 import PaymentsPlanForm from "../paymentplans/PaymentsPlanForm";
-import useConsultationPaymentPlanHandlers from "@/presentation/handlers/useConsultationPaymentHandler";
-import usePaymentHandlers from "@/presentation/handlers/usePaymentHandler";
+import useConsultationPaymentPlanHandlers from "@/presentation/handlers/useConsultationPaymentPlanHandler";
+import useConsultationPaymentHandler from "@/presentation/handlers/useConsultationPaymentHandlers";
+import ConsultationDialog from "../comprobante/ConsultationDialog";
 
 interface Props {
     open: boolean;
@@ -83,6 +84,8 @@ export const CreateConsultationDialog: React.FC<Props> = ({
         pacienteError,
         cuotasError,
         callRecalculatePayments,
+        handleSetNewDate,
+        handleChangeMontotal,
     } = useConsultationPaymentPlanHandlers();
 
     const{
@@ -101,7 +104,7 @@ export const CreateConsultationDialog: React.FC<Props> = ({
         setFechaPago,
         setMontoPago,
         
-    } = usePaymentHandlers();
+    } = useConsultationPaymentHandler();
 
     const {
         searchQuery,
@@ -137,13 +140,24 @@ export const CreateConsultationDialog: React.FC<Props> = ({
             setSelectedTreatments([]);
         }
     }, [open, clearPatient, setSelectedTreatments]);
+    useEffect(() => {
+        if(!fecha) return;
+        handleSetNewDate(fecha);
+    }, [fecha]);
 
     useEffect(() => {
-        console.log('se recalculo el montotal');
-        const montoAux: Number = Number(presupuesto) + Number(selectedTreatments.reduce((t, i) => i.precio + t, 0)) + 0.0;
+        console.log(selectedTreatments)
+        const montoAux = Number(presupuesto) + selectedTreatments.reduce(
+            (total, item) => total + Number(item.precio), 0
+        );
         setMontotal(Number(montoAux));
+        handleChangeMontotal(Number(montoAux));
         callRecalculatePayments(Number(montoAux));
     }, [setSelectedTreatments, presupuesto, selectedTreatments])
+    useEffect(() => {
+        if(!selectedPatient) return;
+        handlePatientSelect(selectedPatient);
+    }, [selectedPatient])
 
     // Validar formulario
     const validateForm = (): boolean => {
@@ -451,7 +465,10 @@ export const CreateConsultationDialog: React.FC<Props> = ({
                     Cancelar
                 </Button>
                 <Button 
-                    onClick={handleSubmit}
+                    onClick={() => {
+                        handleSubmit();
+                        handleSubmitPaymentPlan();
+                    }}
                     disabled={loading || !selectedPatient || !fecha}
                     variant="contained"
                     startIcon={loading ? <CircularProgress size={20} /> : null}
@@ -459,6 +476,25 @@ export const CreateConsultationDialog: React.FC<Props> = ({
                     {loading ? "Creando..." : "Crear Consulta"}
                 </Button>
             </DialogActions>
+            {selectedPayment && (
+                <ConsultationDialog
+                    open={comprobanteDialogOpen}
+                    onClose={handleCloseComprobanteDialog}
+                    onUpload={handleUploadComprobante}
+                    payment={selectedPayment}  
+                    idpago={selectedIndex}
+                    montotal={montotal}
+                    cuotas={Number(cuotas)}
+                    paymentIndex={paymentIndex ?? 0}
+                    fechapago={fechapago}
+                    payments={payments}
+                    setPayments={setPayments}
+                    montopago={montopago}
+                    setFechaPago={setFechaPago}
+                    setMontoPago={setMontoPago}
+                />
+            )}
         </Dialog>
+        
     );
 };

@@ -21,7 +21,8 @@ import {
   Menu,
   MenuItem,
   Alert,
-  Snackbar
+  Snackbar,
+  ListItemButton
 } from '@mui/material';
 import {
   PersonOutline as PersonIcon,
@@ -461,29 +462,32 @@ export const PatientViewDialog: React.FC<PatientViewDialogProps> = ({
                       </Typography>
                       <List sx={{ p: 0 }}>
                         {antecedentes.map((antecedente, index) => (
-                          <ListItem 
-                            key={antecedente.idantecedente || index}
-                            component="button"
-                            divider
-                            selected={currentAntecedente?.idantecedente === antecedente.idantecedente}
-                            onClick={() => handlers.handleSelectAntecedente(antecedente)}
-                            sx={{ 
-                              '&.Mui-selected': { 
-                                bgcolor: 'primary.light',
-                                '&:hover': {
-                                  bgcolor: 'primary.light',
-                                }
-                              }
-                            }}
-                          >
-                            <ListItemIcon>
-                              {getEmbarazoIcon(antecedente.embarazo)}
-                            </ListItemIcon>
-                            <ListItemText 
-                              primary={`Antecedente #${antecedente.idantecedente}`}
-                              secondary={formatDate(antecedente.fecha)}
-                            />
-                          </ListItem>
+                          <List sx={{ p: 0 }}>
+                            {antecedentes.map((antecedente, index) => (
+                              <ListItem key={antecedente.idantecedente || index} disablePadding divider>
+                                <ListItemButton
+                                  selected={currentAntecedente?.idantecedente === antecedente.idantecedente}
+                                  onClick={() => handlers.handleSelectAntecedente(antecedente)}
+                                  sx={{
+                                    '&.Mui-selected': {
+                                      bgcolor: 'primary.light',
+                                      '&:hover': {
+                                        bgcolor: 'primary.light',
+                                      },
+                                    },
+                                  }}
+                                >
+                                  <ListItemIcon>
+                                    {getEmbarazoIcon(antecedente.embarazo)}
+                                  </ListItemIcon>
+                                  <ListItemText
+                                    primary={`Antecedente #${antecedente.idantecedente}`}
+                                    secondary={formatDate(antecedente.fecha)}
+                                  />
+                                </ListItemButton>
+                              </ListItem>
+                            ))}
+                          </List>
                         ))}
                       </List>
                     </Paper>
