@@ -145,8 +145,7 @@ export async function GET(request: NextRequest) {
         );
     }
 }
-  
-  // POST /api/pacientes
+
 export async function POST(request: NextRequest) {
     try {
         const data = await request.json();

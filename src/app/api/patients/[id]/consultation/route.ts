@@ -5,20 +5,14 @@ import { GetConsultationsByPatientUseCases } from "@/application/usecases/consul
 const consultationRepository = new IConsultationRepository();
 const getConsultationsByPatientUseCases = new GetConsultationsByPatientUseCases(consultationRepository);
 
-interface PatientRouteParams {
-    params: {
-        id: string;
-    };
-    }
-
-
 export async function GET(
     request: NextRequest,
-    { params }: PatientRouteParams
+    { params }: { params: Promise<{ id: string }> }
 ) {
     try {
-        const patientId = parseInt(params.id);
-        const consultations = await getConsultationsByPatientUseCases.execute(patientId);
+        const resolvedParams = await params;
+        const id = parseInt(resolvedParams.id); 
+        const consultations = await getConsultationsByPatientUseCases.execute(id);
         return NextResponse.json(consultations, { status: 200 });
     } catch (error) {
         console.error("Error al obtener consultas del paciente:", error);

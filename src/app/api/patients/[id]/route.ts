@@ -14,6 +14,9 @@ const patientRepository = new IPatientRepository();
 const getPatientByIdUseCase = new GetPatientByIdUseCase(patientRepository);
 const updatePatientUseCase = new UpdatePatientUseCase(patientRepository);
 const deletePatientUseCase = new DeletePatientUseCase(patientRepository);
+const deletePermanentlyPatientUseCase = new DeletePermanentlyPatientUseCase(patientRepository);
+const restorePatientUseCase = new RestorePatientUseCase(patientRepository);
+
 
 export async function GET(
   request: NextRequest,
@@ -107,7 +110,6 @@ export async function PUT(
   }
 }
 
-// DELETE /api/pacientes/[id]
 export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -124,12 +126,10 @@ try{
       );
     }
 
-    // Obtener parámetros de query para determinar el tipo de eliminación
     const url = new URL(request.url);
     const permanent = url.searchParams.get('permanent') === 'true';
     
     if (permanent) {
-      // Eliminación permanente
       const result = await deletePermanentlyPatientUseCase.execute(id);
       
       if (!result) {
@@ -144,7 +144,6 @@ try{
         { status: 200 }
       );
     } else {
-      // Eliminación suave (deshabilitar)
       const result = await deletePatientUseCase.execute(id);
       
       if (!result) {
@@ -170,10 +169,11 @@ try{
 
 export async function PATCH(
   request: NextRequest,
-  { params }: RouteParams
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const id = parseInt(params.id);
+    const resolvedParams = await params;
+    const id = parseInt(resolvedParams.id); 
     
     if (isNaN(id)) {
       return NextResponse.json(
@@ -184,7 +184,6 @@ export async function PATCH(
 
     const data = await request.json();
     
-    // Verificar si es una operación de restauración
     if (data.action === 'restore') {
       const result = await restorePatientUseCase.execute(id);
       

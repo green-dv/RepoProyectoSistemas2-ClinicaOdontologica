@@ -5,18 +5,13 @@ import { IPatientRepository } from '@/infrastructure/repositories/PatientReposit
 const patientRepository = new IPatientRepository();
 const restorePatientUseCase = new RestorePatientUseCase(patientRepository);
 
-interface RouteParams {
-    params: {
-        id: string;
-    };
-}
-
 export async function POST(
-    request: NextRequest,
-    { params }: RouteParams
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
 ) {
     try {
-        const id = parseInt(params.id);
+        const resolvedParams = await params;
+        const id = parseInt(resolvedParams.id); 
         
         if (isNaN(id)) {
             return NextResponse.json(
