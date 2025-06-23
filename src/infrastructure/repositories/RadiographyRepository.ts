@@ -74,7 +74,13 @@ export class RadiographyRepository implements IRadiographyRepository {
     }
 
     async getAll(): Promise<Radiography[]> {
-      const query = `SELECT * FROM radiografias`;
+      const query = `select 
+          r.idradiografia as idradiografia,
+          r.enlaceradiografia as enlaceradiografia,
+          r.fechasubida as fechasubida,
+          r.idpaciente as idpaciente,
+          concat(p.nombres, ' ', p.apellidos) as paciente
+      FROM radiografias r JOIN pacientes p ON r.idpaciente = p.idpaciente`;
       const result = await this.db.query(query);
 
       const radiografias: Radiography[] = [];
@@ -91,7 +97,14 @@ export class RadiographyRepository implements IRadiographyRepository {
     }
 
     async getByPatientId(patientid: number): Promise<Radiography[] | null> {
-      const query = `SELECT * FROM radiografias WHERE idpaciente = $1`;
+      const query = `select 
+          r.idradiografia as idradiografia,
+          r.enlaceradiografia as enlaceradiografia,
+          r.fechasubida as fechasubida,
+          r.idpaciente as idpaciente,
+          concat(p.nombres, ' ', p.apellidos) as paciente
+      FROM radiografias r JOIN pacientes p ON r.idpaciente = p.idpaciente 
+      WHERE idpaciente = $1`;
       const result = await this.db.query(query, [patientid]);
 
       if (result.rows.length === 0) return null;
@@ -109,21 +122,31 @@ export class RadiographyRepository implements IRadiographyRepository {
       return radiografias;
     }
 
-    async getByRadiographyId(radiographyid: number): Promise<Radiography[]> {
-      const query = `SELECT * FROM radiografias WHERE idradiografia = $1`;
+    async getByRadiographyId(radiographyid: number): Promise<Radiography | null> {
+      const query = `
+        SELECT 
+          r.idradiografia,
+          r.enlaceradiografia,
+          r.fechasubida,
+          r.idpaciente,
+          CONCAT(p.nombres, ' ', p.apellidos) AS paciente
+        FROM radiografias r 
+        JOIN pacientes p ON r.idpaciente = p.idpaciente 
+        WHERE r.idradiografia = $1
+        LIMIT 1
+      `;
+
       const result = await this.db.query(query, [radiographyid]);
 
-      const radiografias: Radiography[] = [];
+      if (result.rows.length === 0) return null;
 
-      for (const row of result.rows) {
-          const detecciones = await this.getDetectionsByRadiographyId(row.idradiografia);
-          radiografias.push({
-              ...row,
-              detecciones: detecciones
-          });
-      }
+      const row = result.rows[0];
+      const detecciones = await this.getDetectionsByRadiographyId(row.idradiografia);
 
-      return radiografias;
+      return {
+        ...row,
+        detecciones
+      };
     }
 
     async getDetectionsByRadiographyId(radiographyId: number): Promise<Detection[]> {

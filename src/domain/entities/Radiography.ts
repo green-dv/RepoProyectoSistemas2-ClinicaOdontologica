@@ -3,6 +3,7 @@ export interface Radiography {
     enlaceradiografia: string;
     fechasubida: Date;
     idpaciente: number;
+    paciente: string;
     detecciones: Detection[] | null;
 }
 

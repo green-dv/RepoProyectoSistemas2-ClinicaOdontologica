@@ -1,7 +1,7 @@
 import { Radiography } from "@/domain/entities/Radiography";
 import { RadiographyRepository } from "@/infrastructure/repositories/RadiographyRepository";
 
-export class createdRadiography {
+export class createRadiography {
     constructor(private radiographyRepository: RadiographyRepository) {}
 
     async execute(radiography: Radiography): Promise<Radiography | null> {

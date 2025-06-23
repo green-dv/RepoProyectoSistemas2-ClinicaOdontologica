@@ -5,6 +5,6 @@ export interface IRadiographyRepository {
     createDetection(detection: Detection, radiographyid: number): Promise<Detection>;
     getAll(): Promise<Radiography[]>;
     getByPatientId(patientid: number): Promise<Radiography[] | null>;
-    getByRadiographyId(radiographyid: number): Promise<Radiography[]>;
+    getByRadiographyId(radiographyid: number): Promise<Radiography | null>;
     getDetectionsByRadiographyId(radiographyId: number): Promise<Detection[]>;
 }
