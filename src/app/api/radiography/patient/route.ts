@@ -11,7 +11,9 @@ const getRadiographiesUseCases = new getRadiographyById(radiographyRepository);
 export async function GET(request: NextRequest) { 
     try {
         const body = await request.json();
-        if(!body.idpaciente) return null;
+        if(!body.idpaciente){
+            return NextResponse.json({ error: 'Falta el parámetro radiografia' }, { status: 400 });
+        };
         const response = await getRadiographiesUseCases.execute(body.idpaciente);
         return NextResponse.json(response);
     } catch (error) {
