@@ -10,10 +10,13 @@ import useDates from '@/presentation/hooks/useDate';
 import useDatesHandlers from '@/presentation/handlers/useDateHandler';
 import { SlotInfo } from 'react-big-calendar';
 import type { IEventoCalendario } from './BigCalendar';
+import { useSearchParams } from "next/navigation";
 
 
 
-export function CalendarComponent({ initialDate }: { initialDate: string }) {
+export function CalendarComponent() {
+  const searchParams = useSearchParams();
+  const dateParam = searchParams.get('date') || new Date().toISOString();
   const calendarState = useCalendar();
   const datesState = useDates();
   const{
@@ -33,7 +36,15 @@ export function CalendarComponent({ initialDate }: { initialDate: string }) {
     setCurrentDate,
     setCurrentView,
     setOpen,
+    setSearchQueryDialog,
     setNewDate,
+    searchQueryDialog,
+    patientsDialog,
+    timeError, 
+    patientError,
+    descriptionError,
+    accordedTimeError,
+    aproximateTimeError,
   } = calendarState;
 
   const {
@@ -43,22 +54,18 @@ export function CalendarComponent({ initialDate }: { initialDate: string }) {
   
     const {
   
-      searchQueryDialog,
-      patientsDialog,
+      
       selectedPatientDialog,
       searchLoadingDialog,
-      setSearchQueryDialog,
       setSelectedPatientDialog,
     } = datesState;
+  
 
   useEffect(() => {
-    if (initialDate) {
-      const parsedDate = new Date(initialDate);
-      setCurrentDate(!isNaN(parsedDate.getTime()) ? parsedDate : new Date());
-    } else {
-      setCurrentDate(new Date());
-    }
-  }, [initialDate, setCurrentDate]);
+    const parsedDate = new Date(dateParam);
+    setCurrentDate(!isNaN(parsedDate.getTime()) ? parsedDate : new Date());
+  }, [dateParam, setCurrentDate]);
+
 
   useEffect(() => {
     handleFetchDates(""); // Fetch dates when the component mounts
@@ -116,7 +123,7 @@ export function CalendarComponent({ initialDate }: { initialDate: string }) {
         onEdit={handleEdit}
         onUpdate={() => handleFetchDates}
         onNavigate={(date) => setCurrentDate(date)}
-        defaultDate={new Date(initialDate)}
+        defaultDate={new Date(dateParam)}
         onSelectSlot={handleSelectSlot}
         view={currentView}
         onView={(view) => setCurrentView(view)}
@@ -126,9 +133,7 @@ export function CalendarComponent({ initialDate }: { initialDate: string }) {
         patients={patientsDialog}
         searchQueryDialog={searchQueryDialog}
         setSearchQueryDialog={setSearchQueryDialog}
-        selectedPatientDialog={selectedPatientDialog}
         searchLoadingDialog={searchLoadingDialog}
-        handlePatientSelectDialog={handlePatientSelectDialog}
         open={open}
         onClose={()=>{setOpen(false)}}
         onSubmit={handleSubmit}
@@ -136,6 +141,11 @@ export function CalendarComponent({ initialDate }: { initialDate: string }) {
         handleChange={handleChange}
         isEditing={!!selectedDate}
         setSelectedPatientDialog={setSelectedPatientDialog}
+        timeError={timeError}
+        patientError={patientError}
+        descriptionError={descriptionError}
+        accordedTimeError={accordedTimeError}
+        aproximateTimeError={aproximateTimeError}
       />
       <SnackbarAlert snackbar={snackbar} onClose={() => {}} />
     </div>

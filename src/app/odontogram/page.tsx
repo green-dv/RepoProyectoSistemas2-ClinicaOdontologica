@@ -1,10 +1,10 @@
 'use client';
 
-import { useSearchParams } from 'next/navigation';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
 import { Container, Typography, Box, Paper } from '@mui/material';
 import OdontogramaGrid from '@/components/odontogram/OdontogramGrid';
+import { Suspense } from 'react';
 
 const theme = createTheme({
   palette: {
@@ -18,12 +18,7 @@ const theme = createTheme({
 });
 
 export default function OdontogramaPage() {
-  const searchParams = useSearchParams();
-  const idpaciente = parseInt(searchParams.get('idpaciente') ?? '0');
-  const idconsultaParam = searchParams.get('idconsulta');
-  const creating = searchParams.get('creating') === 'true';
-
-  const idconsulta = idconsultaParam ? parseInt(idconsultaParam) : null;
+  
 
   return (
     <ThemeProvider theme={theme}>
@@ -43,11 +38,10 @@ export default function OdontogramaPage() {
             background: 'linear-gradient(145deg, #ffffff 0%, #f8f9fa 100%)',
           }}
         >
-          <OdontogramaGrid
-            creating={creating}
-            idpaciente={idpaciente}
-            idconsulta={idconsulta}
-          />
+          <Suspense fallback={<div>Cargando...</div>}>
+            <OdontogramaGrid
+            />
+          </Suspense>
         </Paper>
       </Container>
     </ThemeProvider>

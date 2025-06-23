@@ -42,7 +42,7 @@ interface ClinicalReportData {
 
 interface UseClinicalReportPrintReturn {
   isGenerating: boolean;
-  generatePDF: (patient: Patient) => Promise<void>;
+  generatePDF: (patient: Patient) => Promise<jsPDF>;
   downloadPDF: (patient: Patient) => Promise<void>;
   printPDF: (patient: Patient) => Promise<void>;
 }

@@ -1,5 +1,5 @@
 // @/hooks/useOdontogramData.ts
-import { useState } from 'react';
+/*import { useState } from 'react';
 import { Odontogram } from '@/domain/entities/Odontogram';
 import { OdontogramDescription } from '@/domain/entities/OdontogramDescription';
 import { Diagnosis } from '@/domain/entities/Diagnosis';
@@ -120,4 +120,4 @@ export default function useOdontogramData(): OdontogramDataState {
     buildToothFromDescriptions,
     getEstadoFromDiagnosis
   };
-}
+}*/

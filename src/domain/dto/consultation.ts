@@ -46,6 +46,7 @@ export interface ConsultationDetail {
     paciente: Patient;
     usuario: User;
     tratamientos: Treatment[];
+    odontograma: boolean
 }
 
 

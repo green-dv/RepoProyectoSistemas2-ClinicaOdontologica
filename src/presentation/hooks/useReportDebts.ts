@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { debtsByPatient } from '@/domain/entities/reports/debtsByPatient';
 import { Patient } from '@/domain/entities/Patient';
 import { PatientResponse } from '@/domain/dto/patient';
@@ -15,6 +15,8 @@ export const useDebtReports = () => {
     const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
 
     const [patientsCache, setPatientsCache] = useState<Map<number, Patient>>(new Map());
+    
+    const fetchDebtReportRef = useRef<(patientId: number | null) => Promise<void>>();
 
     useEffect(() => {
         const timer = setTimeout(() => {
@@ -27,11 +29,6 @@ export const useDebtReports = () => {
     }, [searchQuery]);
 
     const fetchPatientById = useCallback(async (patientId: number): Promise<Patient | null> => {
-        // Verificar si ya está en cache
-        if (patientsCache.has(patientId)) {
-            return patientsCache.get(patientId) || null;
-        }
-
         try {
             const response = await fetch(`/api/patients/${patientId}`);
             if (!response.ok) {
@@ -41,60 +38,150 @@ export const useDebtReports = () => {
             
             const patient: Patient = await response.json();
             
-            // Agregar al cache
-            setPatientsCache(prev => new Map(prev).set(patientId, patient));
+            setPatientsCache(prev => {
+                const newCache = new Map(prev);
+                newCache.set(patientId, patient);
+                return newCache;
+            });
             
             return patient;
         } catch (err) {
             console.error(`Error al obtener paciente ${patientId}:`, err);
             return null;
         }
-    }, [patientsCache]);
+    }, []);
 
     const fetchPatientsByIds = useCallback(async (patientIds: number[]): Promise<Patient[]> => {
         const uniqueIds = [...new Set(patientIds)];
-        const uncachedIds = uniqueIds.filter(id => !patientsCache.has(id));
         
-        if (uncachedIds.length === 0){
-            return uniqueIds.map(id => patientsCache.get(id)).filter(Boolean) as Patient[];
-        }
-
-        try {
-            const idsParam = uncachedIds.join(',');
-            const response = await fetch(`/api/patients/batch?ids=${idsParam}`);
+        setPatientsCache(currentCache => {
+            const uncachedIds = uniqueIds.filter(id => !currentCache.has(id));
             
-            if (response.ok) {
-                const fetchedPatients: Patient[] = await response.json();
-                
-                const newCache = new Map(patientsCache);
-                fetchedPatients.forEach(patient => {
-                    if (patient.idpaciente) {
-                        newCache.set(patient.idpaciente, patient);
-                    }
-                });
-                setPatientsCache(newCache);
-                
-                return uniqueIds.map(id => newCache.get(id)).filter(Boolean) as Patient[];
-            } else {
-                const patientPromises = uncachedIds.map(id => fetchPatientById(id));
-                const fetchedPatients = await Promise.all(patientPromises);
-                
-                return uniqueIds.map(id => 
-                    patientsCache.get(id) || fetchedPatients.find(p => p?.idpaciente === id)
-                ).filter(Boolean) as Patient[];
+            if (uncachedIds.length === 0) {
+                // Todos están en cache, devolver inmediatamente
+                Promise.resolve(uniqueIds.map(id => currentCache.get(id)).filter(Boolean) as Patient[]);
+                return currentCache;
             }
-        } catch (err) {
-            console.error('Error al obtener pacientes por lote:', err);
-            
-            const patientPromises = uncachedIds.map(id => fetchPatientById(id));
-            const fetchedPatients = await Promise.all(patientPromises);
-            
-            return uniqueIds.map(id => 
-                patientsCache.get(id) || fetchedPatients.find(p => p?.idpaciente === id)
-            ).filter(Boolean) as Patient[];
-        }
-    }, [patientsCache, fetchPatientById]);
 
+            // Procesar IDs no cacheados
+            (async () => {
+                try {
+                    const idsParam = uncachedIds.join(',');
+                    const response = await fetch(`/api/patients/batch?ids=${idsParam}`);
+                    
+                    if (response.ok) {
+                        const fetchedPatients: Patient[] = await response.json();
+                        
+                        setPatientsCache(prevCache => {
+                            const newCache = new Map(prevCache);
+                            fetchedPatients.forEach(patient => {
+                                if (patient.idpaciente) {
+                                    newCache.set(patient.idpaciente, patient);
+                                }
+                            });
+                            return newCache;
+                        });
+                    } else {
+                        // Fallback: obtener uno por uno
+                        const patientPromises = uncachedIds.map(id => fetchPatientById(id));
+                        await Promise.all(patientPromises);
+                    }
+                } catch (err) {
+                    console.error('Error al obtener pacientes por lote:', err);
+                    // Fallback: obtener uno por uno
+                    const patientPromises = uncachedIds.map(id => fetchPatientById(id));
+                    await Promise.all(patientPromises);
+                }
+            })();
+
+            return currentCache;
+        });
+
+        // Retornar una promesa que se resuelve cuando el cache se actualiza
+        return new Promise((resolve) => {
+            const checkCache = () => {
+                setPatientsCache(currentCache => {
+                    const result = uniqueIds.map(id => currentCache.get(id)).filter(Boolean) as Patient[];
+                    if (result.length === uniqueIds.length || result.length > 0) {
+                        resolve(result);
+                    } else {
+                        // Reintentar después de un breve delay
+                        setTimeout(checkCache, 100);
+                    }
+                    return currentCache;
+                });
+            };
+            checkCache();
+        });
+    }, [fetchPatientById]);
+
+    // Función principal para obtener el reporte de deudas
+    const fetchDebtReport = useCallback(async (patientId: number | null = null) => {
+        try {
+            setLoading(true);
+            setError(null);
+
+            const queryParams = new URLSearchParams();
+            if (patientId !== null) {
+                queryParams.append('idpaciente', patientId.toString());
+            }
+
+            const response = await fetch(`/api/reports/debtsByPatient?${queryParams}`);
+            
+            if (!response.ok) {
+                throw new Error('Error al cargar el reporte de deudas');
+            }
+            
+            const rawData: debtsByPatient[] = await response.json();
+            
+            // Si no hay datos, establecer array vacío y salir
+            if (!rawData || rawData.length === 0) {
+                setDebts([]);
+                return;
+            }
+            
+            const patientIds = [...new Set(rawData.map(debt => debt.idpaciente))];
+            
+            // Obtener datos de pacientes
+            const patientsData = await fetchPatientsByIds(patientIds);
+            
+            const patientsMap = new Map<number, Patient>();
+            patientsData.forEach(patient => {
+                if (patient.idpaciente) {
+                    patientsMap.set(patient.idpaciente, patient);
+                }
+            });
+            
+            // Enriquecer datos con información de pacientes
+            const enrichedData: debtsByPatient[] = rawData.map(debt => {
+                const patient = patientsMap.get(debt.idpaciente);
+                return {
+                    ...debt,
+                    nombres: patient?.nombres || debt.nombres || 'N/A',
+                    apellidos: patient?.apellidos || debt.apellidos || 'N/A'
+                };
+            });
+            
+            // Importar dinámicamente el handler y procesar datos
+            const { DebtReportsHandlers } = await import('../handlers/useDebtsReportHandler');
+            const groupedData = DebtReportsHandlers.groupDebtsByPatient(enrichedData);
+            
+            setDebts(groupedData);
+        } catch (err) {
+            console.error('Error fetching debt report:', err);
+            setError(err instanceof Error ? err.message : 'Error desconocido');
+            setDebts([]);
+        } finally {
+            setLoading(false);
+        }
+    }, [fetchPatientsByIds]);
+
+    // Asignar la función al ref para evitar dependencias circulares
+    useEffect(() => {
+        fetchDebtReportRef.current = fetchDebtReport;
+    }, [fetchDebtReport]);
+
+    // Función para buscar pacientes (sin dependencias problemáticas)
     const fetchPatients = useCallback(async () => {
         if (!debouncedSearchQuery.trim()) {
             setPatients([]);
@@ -121,13 +208,15 @@ export const useDebtReports = () => {
             setPatients(data.data);
 
             // Agregar al cache
-            const newCache = new Map(patientsCache);
-            data.data.forEach(patient => {
-                if (patient.idpaciente) {
-                    newCache.set(patient.idpaciente, patient);
-                }
+            setPatientsCache(prev => {
+                const newCache = new Map(prev);
+                data.data.forEach(patient => {
+                    if (patient.idpaciente) {
+                        newCache.set(patient.idpaciente, patient);
+                    }
+                });
+                return newCache;
             });
-            setPatientsCache(newCache);
 
         } catch (err) {
             console.error('Error fetching patients:', err);
@@ -136,67 +225,26 @@ export const useDebtReports = () => {
         } finally {
             setSearchLoading(false);
         }
-    }, [debouncedSearchQuery, patientsCache]);
+    }, [debouncedSearchQuery]);
 
-    const fetchDebtReport = useCallback(async (patientId: number | null = null) => {
-        try {
-            setLoading(true);
-            setError(null);
-
-            const queryParams = new URLSearchParams();
-            if (patientId !== null) {
-                queryParams.append('idpaciente', patientId.toString());
-            }
-
-            const response = await fetch(`/api/reports/debtsByPatient?${queryParams}`);
-            
-            if (!response.ok) {
-                throw new Error('Error al cargar el reporte de deudas');
-            }
-            
-            const rawData: debtsByPatient[] = await response.json();
-            
-            const patientIds = [...new Set(rawData.map(debt => debt.idpaciente))];
-            
-            const patientsData = await fetchPatientsByIds(patientIds);
-            
-            const patientsMap = new Map<number, Patient>();
-            patientsData.forEach(patient => {
-                if (patient.idpaciente) {
-                    patientsMap.set(patient.idpaciente, patient);
-                }
-            });
-            
-            const enrichedData: debtsByPatient[] = rawData.map(debt => {
-                const patient = patientsMap.get(debt.idpaciente);
-                return {
-                    ...debt,
-                    nombres: patient?.nombres || debt.nombres || 'N/A',
-                    apellidos: patient?.apellidos || debt.apellidos || 'N/A'
-                };
-            });
-            
-            const { DebtReportsHandlers } = await import('../handlers/useDebtsReportHandler');
-            const groupedData = DebtReportsHandlers.groupDebtsByPatient(enrichedData);
-            
-            setDebts(groupedData);
-        } catch (err) {
-            console.error('Error fetching debt report:', err);
-            setError(err instanceof Error ? err.message : 'Error desconocido');
-            setDebts([]);
-        } finally {
-            setLoading(false);
-        }
-    }, [fetchPatientsByIds]);
-
+    // Effect para buscar pacientes cuando cambia la query
     useEffect(() => {
         fetchPatients();
     }, [fetchPatients]);
 
+    // Función para limpiar búsqueda de pacientes
     const clearPatientSearch = useCallback(() => {
         setSearchQuery('');
         setPatients([]);
         setSelectedPatient(null);
+    }, []);
+
+    // Función wrapper para fetchDebtReport que usa el ref
+    const fetchDebtReportWrapper = useCallback((patientId: number | null) => {
+        if (fetchDebtReportRef.current) {
+            return fetchDebtReportRef.current(patientId);
+        }
+        return Promise.resolve();
     }, []);
 
     return {
@@ -209,7 +257,7 @@ export const useDebtReports = () => {
         selectedPatient,
         setSearchQuery,
         setSelectedPatient,
-        fetchDebtReport,
+        fetchDebtReport: fetchDebtReportWrapper,
         clearPatientSearch,
         clearPatientsCache: () => setPatientsCache(new Map()),
     };

@@ -10,4 +10,6 @@ export interface IPaymentPlanRepository {
     }>;
     getPlanWithPayments(id: number): Promise<PaymentPlanWithPayments | null>;
     getByConsultaId(consultaId: number): Promise<PaymentPlan[]>;
+    findByConsultationId(): Promise<number>;
+    getPaymentsPlanByConsultationId(idConsulta: number): Promise<PaymentPlan | null>;
 }

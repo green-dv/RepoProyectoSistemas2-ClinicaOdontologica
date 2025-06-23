@@ -14,9 +14,9 @@ const patientRepository = new IPatientRepository();
 const getPatientByIdUseCase = new GetPatientByIdUseCase(patientRepository);
 const updatePatientUseCase = new UpdatePatientUseCase(patientRepository);
 const deletePatientUseCase = new DeletePatientUseCase(patientRepository);
+
 const deletePermanentlyPatientUseCase = new DeletePermanentlyPatientUseCase(patientRepository);
 const restorePatientUseCase = new RestorePatientUseCase(patientRepository);
-
 
 export async function GET(
   request: NextRequest,
@@ -173,6 +173,7 @@ export async function PATCH(
 ) {
   try {
     const resolvedParams = await params;
+
     const id = parseInt(resolvedParams.id); 
     
     if (isNaN(id)) {

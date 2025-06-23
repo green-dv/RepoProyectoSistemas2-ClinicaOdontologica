@@ -13,6 +13,7 @@ export async function GET(
     try {
         const resolvedParams = await params;
         const id = parseInt(resolvedParams.id); 
+
         
         if (isNaN(id)) {
             return NextResponse.json(

@@ -6,7 +6,7 @@ import { PatientResponse } from '@/domain/dto/patient';
 import usePaymentPlans from '../hooks/usePaymentPlan';
 import { SelectChangeEvent } from '@mui/material/Select';
 
-export default function usePaymentPlanHandlers(){
+export default function useConsultationPaymentPlanHandlers(){
   const {
     paymentPlans,
     open,
@@ -78,15 +78,18 @@ export default function usePaymentPlanHandlers(){
     setCuotasError,
 
     resetForm,
-    showMessage
+    showMessage,
+
+    //Consultas
+    consultationID, 
+    setConsultationID,
+    isEditingConsultation, 
+    setIsEditingConsultation,
   } = usePaymentPlans();
-  const [montotal, setMontotal] = useState('');
+  const [montotal, setMontotal] = useState(0);
   // USE EFFECTS
   let pacienteIdAux = 2;
-  useEffect(() => {
-    console.log(page, rowsPerPage);
-    handleFetchPaymentPlans();
-  }, [page, rowsPerPage]);
+
 
   // HANDLERS
 
@@ -99,20 +102,10 @@ export default function usePaymentPlanHandlers(){
     setPage(0);
   };
 
-  const handleFetchPaymentPlans = async () => {
+  const handleFetchPaymentPlans = async (p_consultationId: number) => {
     try {
       setIsLoading(true);
-      let filters = '';
-      if(filterStatus !== ''){
-        filters += '&estado='+filterStatus;
-      }
-      if(filterStartDate !== ''){
-        filters += '&fechainicio='+filterStartDate;
-      }
-      if(filterEndDate !== ''){
-        filters += '&fechafin='+filterEndDate;
-      }
-      const res = await fetch(`/api/paymentsplan?page=${page+1}&limit=${10}${filters}`);
+      const res = await fetch(`/api/paymentsplan?consultationId=${p_consultationId}`);
       const json = await res.json();
 
       if (res.ok) {
@@ -214,92 +207,64 @@ export default function usePaymentPlanHandlers(){
     return true;
   }
 
-  const handleSubmit = async () => {
+  const handleSubmitPaymentPlan = async () => {
+    // Reset errores
     setFechaCreacionError(false);
     setFechaLimiteError(false);
     setMontoError(false);
     setDescripcionError(false);
     setPacienteError(false);
     setCuotasError(false);
-    const updatedPlan = { ...newPaymentPlan, pagos: payments };
-    newPaymentPlan.pagos = payments;
-    if (selectedPatient) {
-      updatedPlan.idpaciente = Number(selectedPatient);
-    } else if (updatedPlan.idpaciente) {
-      updatedPlan.idpaciente = Number(updatedPlan.idpaciente);
-    }
-    setNewPaymentPlan(newPaymentPlan)
-    console.log('ID newpaymentplan: '+newPaymentPlan.idpaciente);
-    console.log('ID paciente AUX: '+ pacienteIdAux);
-    console.log('ID paciente seleccionado: '+ selectedPatient);
-    
-    if(!validations()){
-      return;
-    }
-    if(!submitValidations()){
-      return;
-    }
-    if(selectedPaymentPlan){
-      try {
-        console.log(newPaymentPlan);
-        console.log(selectedPatient);
-        const res = await fetch(`/api/paymentsplan/${newPaymentPlan.idplanpago}`, {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify(newPaymentPlan)
-        });
-        
-        const data = await res.json();
-    
-        if (!res.ok) {
-          console.error('Error del servidor:', data.error);
-          return;
-        }
-    
-        console.log('Plan actualizado con éxito:', data.data);
-        showMessage('Plan de pagos actualizado con éxito','success');
-        handleFetchPaymentPlans();
-        handleClose();
-      } catch (err) {
-        console.error('Error al enviar:', err);
-      }
-    }
-    else{
-      //create
-      try {
-        console.log(newPaymentPlan);
-        
-        const res = await fetch('/api/paymentsplan', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          
-          body: JSON.stringify(newPaymentPlan)
-        });
-    
-        const data = await res.json();
-    
-        if (!res.ok) {
-          console.error('Error del servidor:', data.error);
-          return;
-        }
-    
-        console.log('Plan creado con éxito:', data.data);
-        showMessage('Plan de pagos creado con éxito','success');
-        handleFetchPaymentPlans();
-        handleClose();
-      } catch (err) {
-        console.error('Error al enviar:', err);
-      }
-    }
-  }
 
-  const handleMonTotalChange = (newMonTotal: number) => {
-    if (newMonTotal > 100000 || newMonTotal < 20) return;
-    setMontotal(newMonTotal + '');
+    // Validaciones antes de proceder (te recomiendo activarlas nuevamente)
+    //if (!validations() || !submitValidations()) return;
+
+    // Asegurar campos requeridos
+    const updatedPlan: typeof newPaymentPlan = {
+      ...newPaymentPlan,
+      pagos: payments,
+      idpaciente: selectedPatient ? Number(selectedPatient) : newPaymentPlan.idpaciente ?? null,
+      idconsulta: consultationID && consultationID !== 0 ? consultationID : null,
+      descripcion: newPaymentPlan.descripcion ?? '',
+      fechacreacion: newPaymentPlan.fechacreacion ?? new Date(),
+      fechalimite: newPaymentPlan.fechalimite ?? new Date(),
+      montotal: montotal,
+    };
+
+    setNewPaymentPlan(updatedPlan);
+
+    try {
+      console.log('Enviando plan de pago...');
+      console.log(updatedPlan);
+
+      const res = await fetch('/api/paymentsplan/consultation', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(updatedPlan),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        console.error('Error del servidor:', data.error);
+        showMessage('No se pudo crear el plan de pagos', 'error');
+        return;
+      }
+
+      console.log('Plan creado con éxito:', data.data);
+      showMessage('Plan de pagos creado con éxito', 'success');
+    } catch (err) {
+      console.error('Error al enviar:', err);
+      showMessage('Error al crear el plan de pagos', 'error');
+    }
+  };
+
+  const handleChangeMontotal = (montoAux: number) => {
+    if(montoAux > 0 && montoAux < 1000000){
+      setMontotal(montoAux);
+    }
   }
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -319,7 +284,7 @@ export default function usePaymentPlanHandlers(){
   
     if (name === 'montotal') {
       if (value.length > 6 || parseInt(value) > 100000) return;
-      setMontotal(value);
+      setMontotal(parseInt(value));
     }
   
     setNewPaymentPlan((prev) => ({
@@ -328,7 +293,7 @@ export default function usePaymentPlanHandlers(){
     }));
   
     const cuotasNum = parseInt(name === 'cuotas' ? value : cuotas || '0');
-    const montoNum = parseFloat(name === 'montotal' ? value : montotal || '0');
+    const montoNum = Number(name === 'montotal' ? Number(value) : montotal || '0');
   
     if (
       cuotasNum > 0 &&
@@ -340,95 +305,99 @@ export default function usePaymentPlanHandlers(){
     }
   };
 
+const callRecalculatePayments = (montoNum: number) => {
+  console.log('call recalculate');
+  console.log(montoNum + ' ' + cuotas + ' ');
+  setPayments(recalculatePayments2(montoNum, Number(cuotas), payments));
+}
+
 const recalculatePayments2 = (
   montotal: number,
   cuotas: number,
   pagosExistentes: Payment[]
-): Payment[] => {
-  if (cuotas <= 0 || montotal <= 0) return [];
+  ): Payment[] => {
+    console.log('se entro a recalculate');
+    console.log('montotal: ' + montotal);
+    console.log('cuotas: ' + cuotas);
+    if (cuotas <= 0 || montotal <= 0) return [];
 
-  if(pagosExistentes.length === 0){
-    const montoPorCuota = Math.floor(montotal/cuotas);
-    const montoAdicional = montotal - (montoPorCuota * cuotas);
-    const pagosNuevos: Payment[] = [];
-    for(let i = 0; i < cuotas; i++){
+    if(pagosExistentes.length === 0){
+      const montoPorCuota = Math.floor(montotal/cuotas);
+      const montoAdicional = montotal - (montoPorCuota * cuotas);
+      const pagosNuevos: Payment[] = [];
+      for(let i = 0; i < cuotas; i++){
+        pagosNuevos.push({
+          montoesperado: i === 0 ? montoPorCuota + montoAdicional : montoPorCuota,
+          montopagado: 0,
+          estado: 'pendiente',
+          enlacecomprobante: null,
+          fechapago: null,
+          idplanpago: pagosExistentes[0]?.idplanpago ?? 0
+        });
+      }
+      return pagosNuevos;
+    }
+
+    // Definicion de monto pagado y monto esperado restante
+    let pagosEditadosSinMontoPagado = pagosExistentes.filter(
+      (p) =>
+        (p.estado === 'editado' ||
+        p.estado === 'pagado') && 
+        (p.montopagado ?? 0) === 0
+    );
+    let montoEsperadoEditado = pagosEditadosSinMontoPagado.reduce((total, p) => total + p.montoesperado, 0);
+
+    let pagosConMontoPagado = pagosExistentes.filter(
+      (p) =>
+        (p.montopagado && p.montopagado > 0)
+    );
+    let montoPagado = pagosConMontoPagado.reduce((total, p) => total + Number(p.montopagado ?? 0), 0)
+    
+    
+    //CUOTAS Y MONTO RESTANTE
+    //si es <= 0 entonces hace falta agregar un pago
+    let cuotasPendientes = cuotas - pagosEditadosSinMontoPagado.length - pagosConMontoPagado.length;
+
+    let montoRestante = montotal - (montoPagado + montoEsperadoEditado);
+
+    console.log('Monto Esperado : ' + montoEsperadoEditado);
+    console.log('Monto Pagado Total: ' + montoPagado);
+    console.log('Monto Restante Total: ' + montoRestante);
+
+    if(cuotasPendientes <= 0){
+      cuotasPendientes = 1;
+    }
+
+    let montoRestantePorCuotaRestante = Math.ceil(montoRestante / cuotasPendientes);
+
+    console.log('monto restante por cuota:' + montoRestantePorCuotaRestante);
+
+    //REASIGNAR LOS PLANES DE PAGO
+    //retornar si es que se detecta que no es necesario recalcular
+    if(montoPagado + montoEsperadoEditado >= montotal) return pagosExistentes;
+
+
+    //crear un array de cuotas a agregar
+    let pagosNuevos: Payment[] = []
+    for(let i = 0; i < cuotasPendientes; i++){
       pagosNuevos.push({
-        montoesperado: i === 0 ? montoPorCuota + montoAdicional : montoPorCuota,
-        montopagado: 0,
-        estado: 'pendiente',
+        montoesperado: montoRestantePorCuotaRestante,
         enlacecomprobante: null,
+        montopagado: 0,
         fechapago: null,
-        idplanpago: pagosExistentes[0]?.idplanpago ?? 0
+        estado: 'pendiente',
+        idplanpago: pagosExistentes[0].idplanpago ?? 0
       });
     }
-    return pagosNuevos;
-  }
-
-  // Definicion de monto pagado y monto esperado restante
-  let pagosEditadosSinMontoPagado = pagosExistentes.filter(
-    (p) =>
-      (p.estado === 'editado' ||
-      p.estado === 'pagado') && 
-      (p.montopagado ?? 0) === 0
-  );
-  let montoEsperadoEditado = pagosEditadosSinMontoPagado.reduce((total, p) => total + p.montoesperado, 0);
-
-  let pagosConMontoPagado = pagosExistentes.filter(
-    (p) =>
-      (p.montopagado && p.montopagado > 0)
-  );
-  let montoPagado = pagosConMontoPagado.reduce((total, p) => total + Number(p.montopagado ?? 0), 0)
   
-  
-  //CUOTAS Y MONTO RESTANTE
-  //si es <= 0 entonces hace falta agregar un pago
-  let cuotasPendientes = cuotas - pagosEditadosSinMontoPagado.length - pagosConMontoPagado.length;
-
-  let montoRestante = montotal - (montoPagado + montoEsperadoEditado);
-
-  console.log('Monto Esperado : ' + montoEsperadoEditado);
-  console.log('Monto Pagado Total: ' + montoPagado);
-  console.log('Monto Restante Total: ' + montoRestante);
-
-  if(cuotasPendientes <= 0){
-    cuotasPendientes = 1;
-  }
-
-  let montoRestantePorCuotaRestante = Math.ceil(montoRestante / cuotasPendientes);
-
-  console.log('monto restante por cuota:' + montoRestantePorCuotaRestante);
-
-  //REASIGNAR LOS PLANES DE PAGO
-  //retornar si es que se detecta que no es necesario recalcular
-  if(montoPagado + montoEsperadoEditado >= montotal) return pagosExistentes;
-
-
-  //crear un array de cuotas a agregar
-  let pagosNuevos: Payment[] = []
-  for(let i = 0; i < cuotasPendientes; i++){
-    pagosNuevos.push({
-      montoesperado: montoRestantePorCuotaRestante,
-      enlacecomprobante: null,
-      montopagado: 0,
-      fechapago: null,
-      estado: 'pendiente',
-      idplanpago: pagosExistentes[0].idplanpago ?? 0
-    });
-  }
-
-  
-  return [
-    ...pagosEditadosSinMontoPagado,
-    ...pagosConMontoPagado,
-    ...pagosNuevos
-  ];
+    return [
+      ...pagosEditadosSinMontoPagado,
+      ...pagosConMontoPagado,
+      ...pagosNuevos
+    ];
   };
 
-  
-
   const handleEditPayment = (index: number, changes: Partial<Payment>) => {
-
-    
     if(changes.montoesperado! < 20){
       showMessage('El monto es demasiado pequeño', 'error');
       return;
@@ -443,75 +412,46 @@ const recalculatePayments2 = (
         estado: 'editado'
       };
 
-      const montotalActual = parseFloat(newPaymentPlan.montotal as any) || parseInt(montotal);
-      const cuotasActual = parseInt(cuotas);
+      const montotalActual = parseFloat(newPaymentPlan.montotal as any) || montotal;
+      const cuotasActual = cuotas;
 
-      return recalculatePayments2(montotalActual, cuotasActual, updated);
+      return recalculatePayments2(Number(montotalActual), Number(cuotasActual), updated);
     });
     setIsEditingPayment(1000);
     showMessage('Pago actualizado correctamente', 'success');
   };
 
-
-  const handleEdit = async (idPaymentPlan: number) => {
+  const handleFetchByConsultationId = async (idConsulta: number): Promise<PaymentPlan | null> => {
     try {
-      setShouldSearch(false);
-      setPaymentsLoading(true);
+      const res = await fetch(`/api/paymentsplan/consultation/${idConsulta}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
 
-      const res = await fetch(`/api/paymentsplan/${idPaymentPlan}`);
-      const json = await res.json();
+      const data = await res.json();
 
-      if (res.ok) {
-        const rawPlan = json.data;
-
-        // Transformar los campos
-        const paymentPlan: PaymentPlan = {
-          idplanpago: rawPlan.idplanpago,
-          fechacreacion: new Date(rawPlan.fechacreacion),
-          fechalimite: new Date(rawPlan.fechalimite),
-          montotal: parseFloat(rawPlan.montotal),
-          descripcion: rawPlan.descripcion,
-          estado: rawPlan.estado,
-          idconsulta: rawPlan.idconsulta,
-          idpaciente: parseInt(rawPlan.idpaciente),
-          paciente: rawPlan.paciente,
-          pagos: rawPlan.pagos?.map((pago: Payment) => ({
-            idpago: pago.idpago,
-            fechapago: new Date(pago.fechapago ?? new Date()),
-            montoesperado: (pago.montoesperado),
-            montopagado: (pago.montopagado),
-            enlacecomprobante:pago.enlacecomprobante,
-            estado: pago.estado,
-          })),
-        };
-        setNewPaymentPlan(paymentPlan);
-        setSelectedPaymentPlan(paymentPlan);
-        setCuotas(rawPlan.pagos?.length ?? 0);
-        setMontotal(rawPlan.montotal ?? '');
-        setPayments(rawPlan.pagos ?? []);
-        console.log("paciente:" + rawPlan.idpaciente)
-        pacienteIdAux = rawPlan.idpaciente;
-        console.log('id auxiliar: '+pacienteIdAux);
-        if(rawPlan.paciente && rawPlan.idpaciente) {
-          setSelectedPatient(rawPlan.idpaciente);
-          setSearchQuery(rawPlan.paciente);
-          pacienteIdAux = rawPlan.idpaciente;
-          console.log('si se encontro al paciente');
-          console.log('ID: ' + rawPlan.idpaciente)
-          console.log('Tipo: ' + typeof rawPlan.idpaciente);
-        }
-        console.log('paciente: '+ rawPlan.paciente);
-        setOpen(true);
-      } else {
-        showMessage('Error al obtener planes', 'error');
+      if (!res.ok) {
+        console.error('Error del servidor:', data.error);
+        showMessage('No se pudo obtener el plan de pagos', 'error');
+        return null;
       }
-    } catch(error) {
-      showMessage('Error al obtener planes', 'error');
-      console.log(error);
-    } finally {
-      setPaymentsLoading(false);
+
+      if (!data.data) {
+        showMessage('No se encontró ningún plan de pagos', 'info');
+        return null;
+      }
+
+      console.log('Plan obtenido con éxito:', data.data);
+      return data.data as PaymentPlan;
+    } catch (err) {
+      console.error('Error al obtener el plan de pagos:', err);
+      showMessage('Error al obtener el plan de pagos', 'error');
+      return null;
     }
   };
+
 
 
   const handleEditPaymentInput = (index: number, monto: number) => {
@@ -520,13 +460,13 @@ const recalculatePayments2 = (
     const montoTotalPlan = newPaymentPlan?.montotal ?? 0;
 
     // Validaciones
-    if (monto > parseInt(montotal)) {
+    if (monto > montotal) {
       showMessage('El monto esperado sobrepasa al monto total del plan: ' + monto, 'error');
       return;
     }
 
     const nuevoMontoEsperadoTotal = montoPagado + monto;
-    if (nuevoMontoEsperadoTotal > parseInt(montotal)) {
+    if (nuevoMontoEsperadoTotal > montotal) {
       showMessage(
         `El monto pagado mas el nuevo monto es (${nuevoMontoEsperadoTotal}) y supera el monto del plan (${montoTotalPlan})`,
         'error'
@@ -547,12 +487,48 @@ const recalculatePayments2 = (
     );
   };
 
+  const handleConsultationConfiguration = (p_consultationId: number, p_isEditingConsultation: boolean) => {
+    setPayments([]);
+    setPaymentPlans([]);
+    setNewPaymentPlan({
+      idplanpago: 0,
+      idconsulta: 0,
+      idpaciente: 0,
+      descripcion: '',
+      estado: '',
+      fechacreacion: new Date(),
+      fechalimite: new Date(),
+      montotal: 0,
+      paciente: '',
+    });
+    setConsultationID(p_consultationId);
+    setIsEditingConsultation(p_isEditingConsultation);
+    if(p_isEditingConsultation){
+      handleFetchPaymentPlans(p_consultationId);
+    }
+  }
+
+  const handleSetNewDate = (newDate: Date) => {
+    const updatedDatePlan: PaymentPlan = {
+      idplanpago: newPaymentPlan.idplanpago,
+      idconsulta: newPaymentPlan.idconsulta,
+      idpaciente: newPaymentPlan.idpaciente,
+      descripcion: newPaymentPlan.descripcion,
+      estado: newPaymentPlan.estado,
+      fechacreacion: newDate,
+      fechalimite: newPaymentPlan.fechalimite,
+      montotal: newPaymentPlan.montotal,
+      paciente: '',
+    };
+    setNewPaymentPlan(updatedDatePlan);
+  }
+
 
 
   const handleOpen = () => {
     setOpen(true);
     setIsEditingPayment(1000);
-    setMontotal('');
+    setMontotal(0);
     setCuotas('');
     setSelectedPatient(null);
     setSearchQuery('');
@@ -571,7 +547,7 @@ const recalculatePayments2 = (
     setOpen(false);
     setPayments([]);
     resetForm();
-    setMontotal('');
+    setMontotal(0);
     setCuotas('');
     setSelectedPatient(null);
     setSearchQuery('');
@@ -581,50 +557,6 @@ const recalculatePayments2 = (
     setSnackbar(null);
   }
 
-  const handleStatusFilterChange = (event: SelectChangeEvent) => {
-    setFilterStatus(event.target.value);
-  };
-
-
-
-
-  //PACIENTES
-  const fetchPatients = useCallback(async () => {
-    if (!debouncedSearchQuery.trim()) {
-      setPatients([]);
-      return;
-    }
-
-    try {
-      setSearchLoading(true);
-      setError(null);
-
-      const queryParams = new URLSearchParams({
-        page: '1',
-        limit: '10',
-        search: debouncedSearchQuery,
-      });
-
-      const response = await fetch(`/api/patients?${queryParams}`);
-      
-      if (!response.ok) {
-        throw new Error('Error al cargar los pacientes');
-      }
-      
-      const data: PatientResponse = await response.json();
-      setPatients(data.data);
-    } catch (err) {
-      console.error('Error fetching patients:', err);
-      setError(err instanceof Error ? err.message : 'Error desconocido');
-      setPatients([]);
-    } finally {
-      setSearchLoading(false);
-    }
-  }, [debouncedSearchQuery]);
-
-  useEffect(() => {
-    fetchPatients();
-  }, [fetchPatients]);
 
   const handlePatientSelect = (patient: Patient) => {
     const updatedPlan = {
@@ -632,7 +564,7 @@ const recalculatePayments2 = (
       idpaciente: patient.idpaciente ?? null,
     };
     setNewPaymentPlan(updatedPlan);
-    setSelectedPatient(patient.idpaciente ?? null);
+    setSelectedPatient(patient.idpaciente ?? 1);
     setSearchQuery(`${patient.nombres} ${patient.apellidos} ${patient.idpaciente}`);
     setPatients([]);
   };
@@ -666,6 +598,8 @@ const recalculatePayments2 = (
     payments,
     isEditingPayment,
     recalculatePayments2,
+    handleConsultationConfiguration,
+    handleSetNewDate,
 
     handleChangePage,
     handleChangeRowsPerPage,
@@ -674,15 +608,13 @@ const recalculatePayments2 = (
     handleClose,
     setNewPaymentPlan,
     setSnackbar,
-    handleSubmit,
+    handleSubmitPaymentPlan,
     handleChange,
     handleSnackbarClose,
-    handleEdit,
     handleEditPayment,
     handleEditPaymentInput,
     setIsEditingPayment,
     setPayments,
-    handleStatusFilterChange,
 
     //filtros
     filterStatus, 
@@ -717,5 +649,8 @@ const recalculatePayments2 = (
     descripcionError,
     pacienteError,
     cuotasError,
+    callRecalculatePayments,
+    handleChangeMontotal,
+    handleFetchByConsultationId
   }
 }

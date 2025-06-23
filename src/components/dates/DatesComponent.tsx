@@ -81,18 +81,53 @@ export function DatesComponent() {
     searchLoadingDialog,
     setSearchQueryDialog,
     setSelectedPatientDialog,
+    timeError, 
+    patientError,
+    descriptionError,
+    accordedTimeError,
+    aproximateTimeError,
   } = datesState;
   const [filteredDates, setFilteredDates] = useState(dates);
   const [statusList, setStatus] = useState<Status[]>([]);
   useEffect(() => {
       handleFetchDates(searchTerm);
       return () => handleFetchDates.cancel();
-    }, [searchTerm, handleFetchDates]);
+  }, [searchTerm, handleFetchDates]);
 
   useEffect(() => {
-    const citasFiltradas = handleDatesFilter();
+    let citasFiltradas = handleDatesFilter(); // Aplica filtros de estado, fechaInicio, fechaFin y paciente
+
+    const today = moment();
+
+    switch (filter) {
+      case 'todas':
+        // No se aplica ningún filtro adicional
+        break;
+
+      case 'proximas':
+        citasFiltradas = citasFiltradas.filter(cita => {
+          const fecha = moment(cita.fechacita);
+          return fecha.isSameOrAfter(today, 'day') && fecha.diff(today, 'days') <= 7;
+        });
+        break;
+
+      case 'futuras':
+        citasFiltradas = citasFiltradas.filter(cita => {
+          const fecha = moment(cita.fechacita);
+          return fecha.isAfter(today, 'day');
+        });
+        break;
+
+      case 'pasadas':
+        citasFiltradas = citasFiltradas.filter(cita => {
+          const fecha = moment(cita.fechacita);
+          return fecha.isBefore(today, 'day');
+        });
+        break;
+    }
+
     setFilteredDates(citasFiltradas);
-  }, [dates, estadoFiltro, fechaInicio, fechaFin, pacienteId]);
+  }, [dates, estadoFiltro, fechaInicio, fechaFin, pacienteId, filter]);
 
   useEffect(() => {
     const fetchStatuses = async () => {
@@ -276,6 +311,11 @@ export function DatesComponent() {
         handleChange={handleChange}
         isEditing={!!selectedDate}
         setSelectedPatientDialog={setSelectedPatientDialog}
+        timeError={timeError}
+        patientError={patientError}
+        descriptionError={descriptionError}
+        accordedTimeError={accordedTimeError}
+        aproximateTimeError={aproximateTimeError}
       />
 
       <SnackbarAlert

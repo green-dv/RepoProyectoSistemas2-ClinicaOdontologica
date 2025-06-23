@@ -15,9 +15,10 @@ export async function GET(
     { params }: { params: Promise<{ id: string }> }
 ) {
     try {
-        const { id } = await params;
-        const treatmentId = parseInt(id);
-        const treatments = await getTreatmentsByConsultationUseCases.execute(treatmentId);
+
+        const resolvedParams = await params;
+        const id = parseInt(resolvedParams.id);
+        const treatments = await getTreatmentsByConsultationUseCases.execute(id);
         return NextResponse.json(treatments, { status: 200 });
     } catch (error) {
         console.error("Error al obtener tratamientos de consulta:", error);
@@ -39,6 +40,7 @@ export async function POST(
     try {
         const { id } = await params;
         const treatmentId = parseInt(id);
+
         const { treatmentIds } = await request.json();
         
         if (!Array.isArray(treatmentIds)) {
@@ -73,6 +75,7 @@ export async function DELETE(
     try {
         const { id } = await params;
         const treatmentId = parseInt(id);
+
         const { treatmentIds } = await request.json();
         
         if (!Array.isArray(treatmentIds)) {

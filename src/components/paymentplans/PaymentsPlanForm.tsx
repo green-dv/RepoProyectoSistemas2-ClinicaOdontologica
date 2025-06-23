@@ -55,12 +55,16 @@ interface PaymentPlanDialogProps {
   selectedIndex: number;
   paymentIndex: number;
 
+  montotalConsultation: number | null;
+
   patients: Patient[];
   searchQuery: string | '';
   searchLoading: boolean | false;
   handleClearSearch: () => void;
   handlePatientSelect: (patient: Patient) => void;
   shouldSearch: boolean;
+
+  fechaConsulta: Date | null;
 
   setIsEditingPayment: (v_editingPayment: number) => void;
   handleEditPaymentInput: (index: number, monto: number)=>void;
@@ -70,6 +74,15 @@ interface PaymentPlanDialogProps {
   handleCloseComprobanteDialog: ()=>void;
   setPayments: React.Dispatch<React.SetStateAction<Payment[]>>;
   setShouldSearch: React.Dispatch<React.SetStateAction<boolean>>;
+
+  fechaCreacionError: boolean;
+  fechaLimiteError: boolean;
+  montoError: boolean;
+  descripcionError: boolean;
+  pacienteError: boolean;
+  cuotasError: boolean;
+
+  isConsultation: boolean;
 
   setSearchQuery: React.Dispatch<React.SetStateAction<string>>;
 }
@@ -93,6 +106,7 @@ export default function PaymentsPlanDialog({
   handleUploadComprobante,
   handleCloseComprobanteDialog,
   setPayments,
+  montotalConsultation,
 
   searchLoading,
   searchQuery,
@@ -101,6 +115,17 @@ export default function PaymentsPlanDialog({
   handlePatientSelect,
   setSearchQuery,
   setShouldSearch,
+
+  fechaCreacionError,
+  fechaLimiteError,
+  montoError,
+  descripcionError,
+  pacienteError,
+  cuotasError,
+
+  fechaConsulta,
+
+  isConsultation,
 }: Readonly<PaymentPlanDialogProps>) {
 
 
@@ -108,27 +133,32 @@ export default function PaymentsPlanDialog({
     <Box display="flex" flexDirection={{ xs: 'column', md: 'row' }} gap={2}>
       {/* FORMULARIO */}
       <Box flex={1}>
-        <LocalizationProvider dateAdapter={AdapterDateFns}>
-          <DatePicker
-            name="fechacreacion"
-            label="Fecha Creación"
-            value={paymentPlan.fechacreacion ? new Date(paymentPlan.fechacreacion) : null}
-            onChange={(newValue) =>
-              handleChange({
-                target: { name: 'fechacreacion', value: newValue?.toISOString() ?? '' }
-              }as any)
-            }
-            slots={{ textField: TextField }}
-            slotProps={{
-              textField: {
-                fullWidth: true,
-                margin: 'dense',
-                required: true,
-                InputLabelProps: { shrink: true },
-              } as TextFieldProps
-            }}
-          />
-        </LocalizationProvider>
+        {!isConsultation && (
+          <LocalizationProvider dateAdapter={AdapterDateFns}>
+            <DatePicker
+              name="fechacreacion"
+              label="Fecha Creación"
+              value={fechaConsulta ?? (paymentPlan.fechacreacion ? new Date(paymentPlan.fechacreacion) : null)}
+              onChange={(newValue) =>
+                handleChange({
+                  target: { name: 'fechacreacion', value: newValue?.toISOString() ?? '' }
+                }as any)
+              }
+              slots={{ textField: TextField }}
+              slotProps={{
+                textField: {
+                  id:fechaCreacionError ? 'outlined-error-helper-text' : 'fechaCreacion',
+                  error:fechaCreacionError,
+                  fullWidth: true,
+                  margin: 'dense',
+                  required: true,
+                  InputLabelProps: { shrink: true },
+                } as TextFieldProps
+              }}
+            />
+          </LocalizationProvider>
+        )}
+        
 
         <LocalizationProvider dateAdapter={AdapterDateFns}>
           <DatePicker
@@ -143,6 +173,8 @@ export default function PaymentsPlanDialog({
             slots={{ textField: TextField }}
             slotProps={{
               textField: {
+                id:fechaLimiteError ? 'outlined-error-helper-text' : 'fechaLimite',
+                error:fechaLimiteError,
                 fullWidth: true,
                 margin: 'dense',
                 required: true,
@@ -151,19 +183,25 @@ export default function PaymentsPlanDialog({
             }}
           />
         </LocalizationProvider>
+        { !isConsultation && (
+          <TextField
+            label="Monto Total"
+            id={montoError ? 'outlined-error-helper-text' : 'monto'}
+            error={montoError}
+            name="montotal"
+            inputMode="numeric"
+            type="text"
+            fullWidth
+            margin="dense"
+            value={montotalConsultation ?? paymentPlan.montotal}
+            onChange={handleChange}
+          />
+        )}
+        
 
         <TextField
-          label="Monto Total"
-          name="montotal"
-          inputMode="numeric"
-          type="text"
-          fullWidth
-          margin="dense"
-          value={paymentPlan.montotal}
-          onChange={handleChange}
-        />
-
-        <TextField
+          id={descripcionError ? 'outlined-error-helper-text' : 'descripcion'}
+          error={descripcionError}
           label="Descripción"
           name="descripcion"
           type="text"
@@ -172,76 +210,80 @@ export default function PaymentsPlanDialog({
           onChange={handleChange}
           value={paymentPlan.descripcion}
         />
-
-        <Box className="no-print" position="relative">
-          <TextField
-            fullWidth
-            placeholder="Buscar paciente por nombre, apellido o id..."
-            value={searchQuery}
-            onChange={(e) => {
-              setShouldSearch(true);
-              setSearchQuery(e.target.value);
-            }}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <SearchIcon />
-                </InputAdornment>
-              ),
-              endAdornment: (
-                <InputAdornment position="end">
-                  {searchLoading && <CircularProgress size={20} />}
-                  {searchQuery && (
-                    <IconButton onClick={handleClearSearch} size="small">
-                      <ClearIcon />
-                    </IconButton>
-                  )}
-                </InputAdornment>
-              ),
-            }}
-            sx={{
-              '& .MuiOutlinedInput-root': {
-                borderRadius: 2,
-              },
-            }}
-          />
-
-          {/* Lista de pacientes encontrados */}
-          {patients.length > 0 && (
-            <Paper
-              elevation={4}
-              sx={{
-                position: 'absolute',
-                top: '100%',
-                left: 0,
-                right: 0,
-                zIndex: 1000,
-                maxHeight: 300,
-                overflow: 'auto',
-                mt: 1,
+        {!isConsultation && (
+          <Box className="no-print" position="relative">
+            <TextField
+              id={pacienteError ? 'outlined-error-helper-text' : 'paciente'}
+              error={pacienteError}
+              fullWidth
+              placeholder="Buscar paciente por nombre, apellido o id..."
+              value={searchQuery}
+              onChange={(e) => {
+                setShouldSearch(true);
+                setSearchQuery(e.target.value);
               }}
-            >
-              {patients.map((patient) => (
-                <Box
-                  key={patient.idpaciente}
-                  sx={{
-                    p: 2,
-                    cursor: 'pointer',
-                    borderBottom: '1px solid #eee',
-                    '&:hover': {
-                      backgroundColor: 'action.hover',
-                    },
-                  }}
-                  onClick={() => handlePatientSelect(patient)}
-                >
-                  <Typography variant="body1" fontWeight="medium">
-                    {patient.nombres} {patient.apellidos}
-                  </Typography>
-                </Box>
-              ))}
-            </Paper>
-          )}
-        </Box>
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <SearchIcon />
+                  </InputAdornment>
+                ),
+                endAdornment: (
+                  <InputAdornment position="end">
+                    {searchLoading && <CircularProgress size={20} />}
+                    {searchQuery && (
+                      <IconButton onClick={handleClearSearch} size="small">
+                        <ClearIcon />
+                      </IconButton>
+                    )}
+                  </InputAdornment>
+                ),
+              }}
+              sx={{
+                '& .MuiOutlinedInput-root': {
+                  borderRadius: 2,
+                },
+              }}
+            />
+
+            {/* Lista de pacientes encontrados */}
+            {patients.length > 0 && (
+              <Paper
+                elevation={4}
+                sx={{
+                  position: 'absolute',
+                  top: '100%',
+                  left: 0,
+                  right: 0,
+                  zIndex: 1000,
+                  maxHeight: 300,
+                  overflow: 'auto',
+                  mt: 1,
+                }}
+              >
+                {patients.map((patient) => (
+                  <Box
+                    key={patient.idpaciente}
+                    sx={{
+                      p: 2,
+                      cursor: 'pointer',
+                      borderBottom: '1px solid #eee',
+                      '&:hover': {
+                        backgroundColor: 'action.hover',
+                      },
+                    }}
+                    onClick={() => handlePatientSelect(patient)}
+                  >
+                    <Typography variant="body1" fontWeight="medium">
+                      {patient.nombres} {patient.apellidos}
+                    </Typography>
+                  </Box>
+                ))}
+              </Paper>
+            )}
+          </Box>
+        )}
+        
 
         <FormControl fullWidth margin="dense" variant="outlined">
           <InputLabel htmlFor="native-select-estado">Estado</InputLabel>
@@ -259,6 +301,8 @@ export default function PaymentsPlanDialog({
         </FormControl>
 
         <TextField
+          id={cuotasError ? 'outlined-error-helper-text' : 'cuotas'}
+          error={cuotasError}
           label="Número de Cuotas"
           name="cuotas"
           type="text"

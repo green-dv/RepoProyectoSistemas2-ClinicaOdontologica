@@ -17,6 +17,7 @@ export async function GET(
         const { id } = await params;
         const consultationId = parseInt(id);
         const consultation = await getConsultaUseCases.execute(consultationId);
+
         return NextResponse.json(consultation, { status: 200 });
     } catch (error) {
         console.error("Error al obtener consulta:", error);
@@ -38,6 +39,7 @@ export async function PUT(
     try {
         const { id } = await params;
         const consultationId = parseInt(id);
+
         const body = await request.json();
         
         // Convertir fecha string a Date si es necesario
@@ -68,6 +70,7 @@ export async function DELETE(
         const { id } = await params;
         const consultationId = parseInt(id);
         const result = await deleteConsultationUseCases.execute(consultationId);
+
         
         if (result) {
             return NextResponse.json(

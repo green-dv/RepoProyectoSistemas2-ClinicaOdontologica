@@ -13,6 +13,7 @@ export async function GET(
         const { id } = await params;
         const consultationId = parseInt(id);
         const consultationDetail = await getConsultationDetailUseCases.execute(consultationId);
+
         return NextResponse.json(consultationDetail, { status: 200 });
     } catch (error) {
         console.error("Error al obtener detalle de consulta:", error);

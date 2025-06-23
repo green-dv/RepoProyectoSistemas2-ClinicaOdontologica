@@ -1,4 +1,5 @@
 
+'use client';
 import VpnKeyIcon from '@mui/icons-material/VpnKey';
 import LockIcon from '@mui/icons-material/Lock';
 import { useState, useEffect } from 'react';

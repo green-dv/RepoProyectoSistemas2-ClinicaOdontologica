@@ -22,6 +22,16 @@ export interface PaymentPlansState {
   selectedPaymentPlan: PaymentPlan | null;
   snackbar: SnackbarMessage | null;
 
+  //consultas
+  isEditingConsultation: boolean;
+  consultationID: number;
+
+  fechaCreacionError: boolean;
+  fechaLimiteError: boolean;
+  montoError: boolean;
+  descripcionError: boolean;
+  pacienteError: boolean;
+  cuotasError: boolean;
   //filtros
   filterStatus: string;
   filterStartDate: string;
@@ -41,6 +51,9 @@ export interface PaymentPlansState {
   error: string | null;
   shouldSearch: boolean;
   
+  setConsultationID: React.Dispatch<React.SetStateAction<number>>;
+  setIsEditingConsultation: React.Dispatch<React.SetStateAction<boolean>>;
+
   setPaymentPlans: React.Dispatch<React.SetStateAction<PaymentPlan[]>>;
   setOpen: React.Dispatch<React.SetStateAction<boolean>>;
   setNewPaymentPlan: React.Dispatch<React.SetStateAction<PaymentPlan>>;
@@ -72,6 +85,12 @@ export interface PaymentPlansState {
   setError: React.Dispatch<React.SetStateAction<string | null>>;
   setShouldSearch: React.Dispatch<React.SetStateAction<boolean>>;
 
+  setFechaCreacionError: React.Dispatch<React.SetStateAction<boolean>>;
+  setFechaLimiteError: React.Dispatch<React.SetStateAction<boolean>>;
+  setMontoError: React.Dispatch<React.SetStateAction<boolean>>;
+  setDescripcionError: React.Dispatch<React.SetStateAction<boolean>>;
+  setPacienteError: React.Dispatch<React.SetStateAction<boolean>>;
+  setCuotasError: React.Dispatch<React.SetStateAction<boolean>>;
   
   resetForm: () => void;
   showMessage: (message: string, severity: AlertColor) => void;
@@ -108,6 +127,17 @@ export default function usePaymentPlans(): PaymentPlansState {
   const [filterStatus, setFilterStatus] = useState<string>('');
   const [filterStartDate, setFilterStartDate] = useState<string>('');
   const [filterEndDate, setFilterEndDate] = useState<string>('');
+
+  const [fechaCreacionError, setFechaCreacionError] = useState(false);
+  const [fechaLimiteError, setFechaLimiteError] = useState(false);
+  const [montoError, setMontoError] = useState(false);
+  const [descripcionError, setDescripcionError] = useState(false);
+  const [pacienteError, setPacienteError] = useState(false);
+  const [cuotasError, setCuotasError] = useState(false);
+
+  //CONSULTAS
+  const[consultationID, setConsultationID] = useState(0); 
+  const[isEditingConsultation, setIsEditingConsultation] = useState(false);
 
   //PACIENTES
 
@@ -152,6 +182,19 @@ export default function usePaymentPlans(): PaymentPlansState {
     paymentsLoading,
     payments,
     isEditingPayment,
+
+    fechaCreacionError,
+    fechaLimiteError,
+    montoError,
+    descripcionError,
+    pacienteError,
+    cuotasError,
+    setFechaCreacionError,
+    setFechaLimiteError,
+    setMontoError,
+    setDescripcionError,
+    setPacienteError,
+    setCuotasError,
 
     page,
     rowsPerPage,
@@ -201,6 +244,12 @@ export default function usePaymentPlans(): PaymentPlansState {
     setShouldSearch,
     
     resetForm,
-    showMessage
+    showMessage,
+
+    //consultas
+    consultationID, 
+    setConsultationID,
+    isEditingConsultation, 
+    setIsEditingConsultation,
   };
 }

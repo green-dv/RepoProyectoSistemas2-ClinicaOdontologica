@@ -12,6 +12,7 @@ export async function GET(
     try {
         const resolvedParams = await params;
         const id = parseInt(resolvedParams.id); 
+
         const consultations = await getConsultationsByPatientUseCases.execute(id);
         return NextResponse.json(consultations, { status: 200 });
     } catch (error) {

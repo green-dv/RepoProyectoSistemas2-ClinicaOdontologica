@@ -80,6 +80,13 @@ interface PaymentPlanDialogProps {
   setPayments: React.Dispatch<React.SetStateAction<Payment[]>>;
   setShouldSearch: React.Dispatch<React.SetStateAction<boolean>>;
 
+  fechaCreacionError: boolean;
+  fechaLimiteError: boolean;
+  montoError: boolean;
+  descripcionError: boolean;
+  pacienteError: boolean;
+  cuotasError: boolean;
+
   setSearchQuery: React.Dispatch<React.SetStateAction<string>>;
 }
 
@@ -119,6 +126,13 @@ export default function PaymentsPlanDialog({
   handlePatientSelect,
   setSearchQuery,
   setShouldSearch,
+  
+  fechaCreacionError,
+  fechaLimiteError,
+  montoError,
+  descripcionError,
+  pacienteError,
+  cuotasError,
 }: Readonly<PaymentPlanDialogProps>) {
 
 
@@ -155,6 +169,15 @@ export default function PaymentsPlanDialog({
           setSearchQuery={setSearchQuery}
           setShouldSearch={setShouldSearch}
           shouldSearch={shouldSearch}
+          fechaCreacionError={fechaCreacionError}
+          fechaLimiteError={fechaLimiteError}
+          montoError={montoError}
+          descripcionError={descripcionError}
+          pacienteError={pacienteError}
+          cuotasError={cuotasError}
+          montotalConsultation={null}
+          isConsultation={false}
+          fechaConsulta={null}
         />
       </DialogContent>
 
