@@ -27,6 +27,8 @@ import LogoutIcon from '@mui/icons-material/Logout';
 import BarChartOutlined from '@mui/icons-material/BarChartOutlined';
 import { signOut } from "next-auth/react";
 import { animate, stagger } from 'animejs';
+import MonitorHeartIcon from '@mui/icons-material/MonitorHeart';
+import VaccinesIcon from '@mui/icons-material/Vaccines';
 import { text } from 'stream/consumers';
 import PaymentsIcon from '@mui/icons-material/Payments';
 
@@ -163,6 +165,8 @@ export default function MiniDrawer({ children }: MiniDrawerProps) {
     { text: 'Citas', path: '/dates' },
     { text: 'Calendario', path: '/calendar' },
     { text: 'Tratamientos', path: '/treatments' },
+    { text: 'Consultas', path: '/consultation' },
+    { text: 'Radiografias', path: '/radiographies/patients/create/12' },
     { text: 'Reportes', path: '/reports' },
     { text: 'Pagos', path: '/paymentsPlan' },
   ];
@@ -283,6 +287,7 @@ export default function MiniDrawer({ children }: MiniDrawerProps) {
                   ]}
                 >
                   {
+                    
                     text === 'Inicio' ? <HomeIcon /> :
                     text === 'Pacientes' ? <PeopleAltIcon/> :
                     text === 'Citas' ? <AccessTimeIcon/> :
@@ -290,6 +295,8 @@ export default function MiniDrawer({ children }: MiniDrawerProps) {
                     text === 'Tratamientos' ? <LocalHospitalIcon/> :
                     text === 'Reportes' ? <BarChartOutlined/> :
                     text === 'Pagos' ? <PaymentsIcon/> :
+                    text === 'Consultas' ? <VaccinesIcon/> :
+                    text === 'Radiografias' ? <MonitorHeartIcon/> :
                     <HomeIcon />
                   }
                 </ListItemIcon>

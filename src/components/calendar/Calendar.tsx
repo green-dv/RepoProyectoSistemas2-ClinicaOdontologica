@@ -64,7 +64,7 @@ export function CalendarComponent() {
   useEffect(() => {
     const parsedDate = new Date(dateParam);
     setCurrentDate(!isNaN(parsedDate.getTime()) ? parsedDate : new Date());
-  }, [dateParam, setCurrentDate]);
+  }, [setCurrentDate]);
 
 
   useEffect(() => {
