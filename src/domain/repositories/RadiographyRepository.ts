@@ -1,13 +1,10 @@
-import { Payment } from '../entities/Payments';
+import { Radiography, Detection } from "../entities/Radiography";
 
-export interface IPaymentRepository {
-    create(payment: Payment): Promise<Payment>;
-    update(payment: Payment, id:number): Promise<Payment>;
-    getById(id: number): Promise<Payment | null>;
-    getByPlanId(planId: number): Promise<Payment[]>;
-    delete(id: number): Promise<Payment>;
-    getPaginated(page: number, limit: number): Promise<{
-      data: Payment[];
-      totalCount: number;
-    }>;
+export interface IRadiographyRepository {
+    create(radiography: Radiography): Promise<Radiography>;
+    createDetection(detection: Detection, radiographyid: number): Promise<Detection>;
+    getAll(): Promise<Radiography[]>;
+    getByPatientId(patientid: number): Promise<Radiography[] | null>;
+    getByRadiographyId(radiographyid: number): Promise<Radiography[]>;
+    getDetectionsByRadiographyId(radiographyId: number): Promise<Detection[]>;
 }
