@@ -45,32 +45,32 @@ const reportsData: ReportItem[] = [
     category: 'financiero',
     isActive: true
   },
-//   {
-//     id: 'ingresos-mensuales',
-//     title: 'Ingresos Mensuales',
-//     description: 'Análisis de ingresos por mes y comparativa anual',
-//     icon: <TrendingUpIcon />,
-//     path: '/reportes/ingresos-mensuales',
-//     category: 'financiero',
-//     isActive: false
-//   },
   {
-    id: 'pacientes-activos',
-    title: 'Pacientes Activos',
-    description: 'Lista de pacientes con citas recientes y estado de tratamiento',
-    icon: <PersonIcon />,
-    path: '/reportes/pacientes-activos',
+    id: 'deudas-pacientes',
+    title: 'Deudas por Pacientes',
+    description: 'Deudas de pacientes y busqueda por id de paciente',
+    icon: <TrendingUpIcon />,
+    path: '/reports/debtsByPatient',
     category: 'pacientes',
-    isActive: false
+    isActive: true
   },
+  // {
+  //   id: 'pacientes-activos',
+  //   title: 'Pacientes Activos',
+  //   description: 'Lista de pacientes con citas recientes y estado de tratamiento',
+  //   icon: <PersonIcon />,
+  //   path: '/reports/pacientes-activos',
+  //   category: 'pacientes',
+  //   isActive: false
+  // },
   {
     id: 'citas-programadas',
     title: 'Citas Programadas',
-    description: 'Reporte de citas por período con estado y seguimiento',
+    description: 'Reporte de citas por rango de fechas',
     icon: <EventNoteIcon />,
-    path: '/reportes/citas-programadas',
+    path: '/reports/datesReport',
     category: 'programacion',
-    isActive: false
+    isActive: true
   },
   // {
   //   id: 'ocupacion-agenda',

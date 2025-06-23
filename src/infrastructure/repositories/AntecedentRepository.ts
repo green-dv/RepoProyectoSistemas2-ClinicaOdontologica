@@ -18,13 +18,12 @@ export class IAntecedenteRepository implements AntecedenteRepository {
     async getAntecedentes(page: number, limit: number): Promise<AntecedentResponse> {
         const offset = (page - 1) * limit;
         
-        // Get total count for pagination
         const countResult = await this.db.query(
         'SELECT COUNT(*) FROM antecedentes WHERE habilitado = true'
         );
         const totalCount = parseInt(countResult.rows[0].count);
         
-        // Get antecedentes with pagination
+        
         const result = await this.db.query(
         'SELECT * FROM antecedentes WHERE habilitado = true ORDER BY idantecedente LIMIT $1 OFFSET $2',
         [limit, offset]
@@ -42,7 +41,6 @@ export class IAntecedenteRepository implements AntecedenteRepository {
     }
 
     async getAntecedentesByPatientId(patientId: number): Promise<AntecedentResponse> {
-        // Get antecedentes by patient id
         const result = await this.db.query(
         'SELECT * FROM antecedentes WHERE idpaciente = $1 AND habilitado = true ORDER BY idantecedente',
         [patientId]
@@ -60,7 +58,6 @@ export class IAntecedenteRepository implements AntecedenteRepository {
     }
 
     async getAntecedenteById(id: number): Promise<AntecedenteCompleto | null> {
-        // First get base antecedente
         const antecedenteResult = await this.db.query(
         'SELECT * FROM antecedentes WHERE idantecedente = $1 AND habilitado = true',
         [id]
@@ -72,35 +69,30 @@ export class IAntecedenteRepository implements AntecedenteRepository {
         
         const antecedente = antecedenteResult.rows[0] as Antecedent;
         
-        // Get related enfermedades
         const enfermedadesResult = await this.db.query(
         'SELECT idenfermedad FROM antecedenteenfermedad WHERE idantecedente = $1',
         [id]
         );
         const enfermedades = enfermedadesResult.rows.map(row => row.idenfermedad);
         
-        // Get related habitos
         const habitosResult = await this.db.query(
         'SELECT idhabito FROM antecedentehabito WHERE idantecedente = $1',
         [id]
         );
         const habitos = habitosResult.rows.map(row => row.idhabito);
         
-        // Get related medicaciones
         const medicacionesResult = await this.db.query(
         'SELECT idmedicacion FROM antecedentemedicacion WHERE idantecedente = $1',
         [id]
         );
         const medicaciones = medicacionesResult.rows.map(row => row.idmedicacion);
         
-        // Get related atenciones medicas
         const atencionesResult = await this.db.query(
         'SELECT idatencionmedica FROM antecedenteatencionmedica WHERE idantecedente = $1',
         [id]
         );
         const atencionesMedicas = atencionesResult.rows.map(row => row.idatencionmedica);
         
-        // Combine everything
         return {
         ...antecedente,
         enfermedades,
@@ -111,13 +103,12 @@ export class IAntecedenteRepository implements AntecedenteRepository {
     }
 
     async createAntecedente(antecedente: AntecedenteCompleto): Promise<Antecedent> {
-        // Start a transaction
+    
         const client = await this.db.connect();
         
         try {
         await client.query('BEGIN');
         
-        // Create base antecedente
         const antecedenteResult = await client.query(
             `INSERT INTO antecedentes (idpaciente, embarazo, habilitado, fecha) 
             VALUES ($1, $2, $3, $4) 
@@ -133,7 +124,6 @@ export class IAntecedenteRepository implements AntecedenteRepository {
         const createdAntecedente = antecedenteResult.rows[0] as Antecedent;
         const antecedenteId = createdAntecedente.idantecedente;
         
-        // Add related enfermedades if provided
         if (antecedente.enfermedades && antecedente.enfermedades.length > 0) {
             for (const enfermedadId of antecedente.enfermedades) {
             await client.query(
@@ -143,7 +133,6 @@ export class IAntecedenteRepository implements AntecedenteRepository {
             }
         }
         
-        // Add related habitos if provided
         if (antecedente.habitos && antecedente.habitos.length > 0) {
             for (const habitoId of antecedente.habitos) {
             await client.query(
@@ -153,7 +142,6 @@ export class IAntecedenteRepository implements AntecedenteRepository {
             }
         }
         
-        // Add related medicaciones if provided
         if (antecedente.medicaciones && antecedente.medicaciones.length > 0) {
             for (const medicacionId of antecedente.medicaciones) {
             await client.query(
@@ -162,8 +150,7 @@ export class IAntecedenteRepository implements AntecedenteRepository {
             );
             }
         }
-        
-        // Add related atenciones medicas if provided
+
         if (antecedente.atencionesMedicas && antecedente.atencionesMedicas.length > 0) {
             for (const atencionId of antecedente.atencionesMedicas) {
             await client.query(
@@ -184,13 +171,11 @@ export class IAntecedenteRepository implements AntecedenteRepository {
     }
 
     async updateAntecedente(id: number, antecedente: AntecedenteCompleto): Promise<Antecedent | null> {
-        // Start a transaction
         const client = await this.db.connect();
         
         try {
         await client.query('BEGIN');
         
-        // Update base antecedente
         const antecedenteResult = await client.query(
             `UPDATE antecedentes SET 
             idpaciente = $1, 
@@ -215,13 +200,11 @@ export class IAntecedenteRepository implements AntecedenteRepository {
         
         const updatedAntecedente = antecedenteResult.rows[0] as Antecedent;
         
-        // Delete existing relationships to replace them
         await client.query('DELETE FROM antecedenteenfermedad WHERE idantecedente = $1', [id]);
         await client.query('DELETE FROM antecedentehabito WHERE idantecedente = $1', [id]);
         await client.query('DELETE FROM antecedentemedicacion WHERE idantecedente = $1', [id]);
         await client.query('DELETE FROM antecedenteatencionmedica WHERE idantecedente = $1', [id]);
         
-        // Add related enfermedades if provided
         if (antecedente.enfermedades && antecedente.enfermedades.length > 0) {
             for (const enfermedadId of antecedente.enfermedades) {
             await client.query(
@@ -231,7 +214,6 @@ export class IAntecedenteRepository implements AntecedenteRepository {
             }
         }
         
-        // Add related habitos if provided
         if (antecedente.habitos && antecedente.habitos.length > 0) {
             for (const habitoId of antecedente.habitos) {
             await client.query(
@@ -241,7 +223,6 @@ export class IAntecedenteRepository implements AntecedenteRepository {
             }
         }
         
-        // Add related medicaciones if provided
         if (antecedente.medicaciones && antecedente.medicaciones.length > 0) {
             for (const medicacionId of antecedente.medicaciones) {
             await client.query(
@@ -251,7 +232,6 @@ export class IAntecedenteRepository implements AntecedenteRepository {
             }
         }
         
-        // Add related atenciones medicas if provided
         if (antecedente.atencionesMedicas && antecedente.atencionesMedicas.length > 0) {
             for (const atencionId of antecedente.atencionesMedicas) {
             await client.query(
@@ -272,7 +252,6 @@ export class IAntecedenteRepository implements AntecedenteRepository {
     }
 
     async deleteAntecedente(id: number): Promise<boolean> {
-        // Logical deletion - set habilitado to false
         const result = await this.db.query(
         'UPDATE antecedentes SET habilitado = false WHERE idantecedente = $1 AND habilitado = true',
         [id]

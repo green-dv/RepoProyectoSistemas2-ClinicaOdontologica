@@ -13,82 +13,69 @@ export class IPatientRepository implements PatientRepository {
 
     async getPatients(page: number, limit: number, searchQuery?: string): Promise<PatientResponse> {
         const offset = (page - 1) * limit;
-        const baseParams: (string | number)[] = [];
-        let whereClause = 'WHERE habilitado = true';
+
+        const allResult = await this.db.query(`SELECT * FROM get_all_pacientes()`);
+
+        let filtered = allResult.rows;
 
         if (searchQuery) {
-            baseParams.push(`%${searchQuery.toLowerCase()}%`);
-            whereClause += ` AND (LOWER(nombres) ILIKE $${baseParams.length} OR LOWER(apellidos) ILIKE $${baseParams.length})`;
+            const query = searchQuery.toLowerCase();
+            filtered = filtered.filter(p =>
+                p.nombres?.toLowerCase().includes(query) ||
+                p.apellidos?.toLowerCase().includes(query)
+            );
         }
 
-        const countResult = await this.db.query(
-            `SELECT COUNT(*) FROM pacientes ${whereClause}`,
-            baseParams
-        );
-        
-        const queryParams = [...baseParams];
-        
-        queryParams.push(limit, offset);
-        
-        const result = await this.db.query(
-            `SELECT * FROM pacientes ${whereClause} ORDER BY idpaciente DESC LIMIT $${queryParams.length - 1} OFFSET $${queryParams.length}`,
-            queryParams
-        );
-
-        const totalCount = parseInt(countResult.rows[0].count);
+        const totalItems = filtered.length;
+        const paginated = filtered.slice(offset, offset + limit);
 
         return {
-            data: result.rows as Patient[],
+            data: paginated,
             pagination: {
-              page,
-              limit,
-              totalItems: totalCount,
-              totalPages: Math.ceil(totalCount / limit)
-            }
+                page,
+                limit,
+                totalItems,
+                totalPages: Math.ceil(totalItems / limit),
+            },
         };
     }
+
       
     async getPatientsDisabled(page: number, limit: number, searchQuery?: string): Promise<PatientResponse> {
         const offset = (page - 1) * limit;
-        const baseParams: (string | number)[] = [];
-        let whereClause = 'WHERE habilitado = false';
+
+        const allResult = await this.db.query(`SELECT * FROM get_all_patients_disabled()`);
+
+        let filtered = allResult.rows as Patient[];
 
         if (searchQuery) {
-            baseParams.push(`%${searchQuery.toLowerCase()}%`);
-            whereClause += ` AND (LOWER(nombres) ILIKE $${baseParams.length} OR LOWER(apellidos) ILIKE $${baseParams.length})`;
+            const lowerSearch = searchQuery.toLowerCase();
+            filtered = filtered.filter(p =>
+                p.nombres.toLowerCase().includes(lowerSearch) ||
+                p.apellidos.toLowerCase().includes(lowerSearch)
+            );
         }
 
-        const countResult = await this.db.query(
-            `SELECT COUNT(*) FROM pacientes ${whereClause}`,
-            baseParams
-        );
-        
-        const queryParams = [...baseParams];
-        
-        queryParams.push(limit, offset);
-        
-        const result = await this.db.query(
-            `SELECT * FROM pacientes ${whereClause} ORDER BY idpaciente DESC LIMIT $${queryParams.length - 1} OFFSET $${queryParams.length}`,
-            queryParams
-        );
+        const totalCount = filtered.length;
 
-        const totalCount = parseInt(countResult.rows[0].count);
+        const paginated = filtered.slice(offset, offset + limit);
 
         return {
-            data: result.rows as Patient[],
+            data: paginated,
             pagination: {
-              page,
-              limit,
-              totalItems: totalCount,
-              totalPages: Math.ceil(totalCount / limit)
+                page,
+                limit,
+                totalItems: totalCount,
+                totalPages: Math.ceil(totalCount / limit)
             }
         };
     }
+
       
 
     async getPatientById(id: number): Promise<Patient | null> {
         const result = await this.db.query(
-        'SELECT * FROM pacientes WHERE idpaciente = $1 AND habilitado = true',
+        'SELECT * FROM get_all_pacientes() WHERE idpaciente = $1 AND habilitado = true',
         [id]
         );
         
@@ -101,101 +88,88 @@ export class IPatientRepository implements PatientRepository {
 
     async createPatient(patient: Patient): Promise<Patient> {
         const result = await this.db.query(
-        `INSERT INTO pacientes 
-        (nombres, apellidos, direccion, telefonodomicilio, telefonopersonal, 
-        lugarnacimiento, fechanacimiento, sexo, estadocivil, ocupacion, 
-        aseguradora, habilitado) 
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) 
-        RETURNING *`,
-        [
-            patient.nombres, 
-            patient.apellidos, 
-            patient.direccion, 
-            patient.telefonodomicilio, 
-            patient.telefonopersonal,
-            patient.lugarnacimiento, 
-            patient.fechanacimiento, 
-            patient.sexo, 
-            patient.estadocivil, 
-            patient.ocupacion,
-            patient.aseguradora, 
-            patient.habilitado ?? true
-        ]
+            `SELECT * FROM createPatiente($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)`,
+            [
+                patient.nombres,
+                patient.apellidos,
+                patient.direccion,
+                patient.telefonodomicilio,
+                patient.telefonopersonal,
+                patient.lugarnacimiento,
+                patient.fechanacimiento,
+                patient.sexo,
+                patient.estadocivil,
+                patient.ocupacion,
+                patient.aseguradora,
+                patient.habilitado ?? true
+            ]
         );
-        
+
         return result.rows[0] as Patient;
     }
+
 
     async updatePatient(id: number, patient: Patient): Promise<Patient | null> {
         const result = await this.db.query(
-        `UPDATE pacientes SET 
-            nombres = $1, 
-            apellidos = $2, 
-            direccion = $3, 
-            telefonodomicilio = $4, 
-            telefonopersonal = $5, 
-            lugarnacimiento = $6, 
-            fechanacimiento = $7, 
-            sexo = $8, 
-            estadocivil = $9, 
-            ocupacion = $10, 
-            aseguradora = $11, 
-            habilitado = $12
-        WHERE idpaciente = $13 AND habilitado = true 
-        RETURNING *`,
-        [
-            patient.nombres, 
-            patient.apellidos, 
-            patient.direccion, 
-            patient.telefonodomicilio, 
-            patient.telefonopersonal,
-            patient.lugarnacimiento, 
-            patient.fechanacimiento, 
-            patient.sexo, 
-            patient.estadocivil, 
-            patient.ocupacion,
-            patient.aseguradora, 
-            patient.habilitado ?? true,
-            id
-        ]
+            `SELECT * FROM update_paciente($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)`,
+            [
+                id,
+                patient.nombres,
+                patient.apellidos,
+                patient.direccion,
+                patient.telefonodomicilio,
+                patient.telefonopersonal,
+                patient.lugarnacimiento,
+                patient.fechanacimiento,
+                patient.sexo,
+                patient.estadocivil,
+                patient.ocupacion,
+                patient.aseguradora,
+                patient.habilitado ?? true
+            ]
         );
-        
+
         if (result.rows.length === 0) {
             return null;
         }
-        
+
         return result.rows[0] as Patient;
     }
 
+
     async deletePatient(id: number): Promise<boolean> {
         const result = await this.db.query(
-            'UPDATE pacientes SET habilitado = false WHERE idpaciente = $1 AND habilitado = true',
+            'SELECT disable_paciente($1) AS success',
             [id]
         );
-        
-        return result.rowCount !== null && result.rowCount > 0;
+
+        return result.rows[0]?.success === true;
     }
 
-    async restorePatient(id: number): Promise<boolean> {
+
+   async restorePatient(id: number): Promise<boolean> {
         const result = await this.db.query(
-            'UPDATE pacientes SET habilitado = true WHERE idpaciente = $1 AND habilitado = false',
+            'SELECT enable_paciente($1) AS success',
             [id]
         );
-        return result.rowCount !== null && result.rowCount > 0;
+
+        return result.rows[0]?.success === true;
     }
+
 
     async deletePatientPermanently(id: number): Promise<boolean> {
         try {
             const result = await this.db.query(
-                'DELETE FROM pacientes WHERE idpaciente = $1 AND habilitado = false',
+                'SELECT delete_paciente_permanently($1) AS success',
                 [id]
             );
-            return result.rowCount !== null && result.rowCount > 0;
+            return result.rows[0]?.success === true;
         } catch (error) {
             console.error('Error permanently deleting patient:', error);
             throw error;
         }
     }
+
     async getPatientByClinicalRecordID(id: number): Promise<PatientClinicalRecord | null> {
         const result = await this.db.query(
             'SELECT * FROM get_clinical_record($1) WHERE habilitado = true',
